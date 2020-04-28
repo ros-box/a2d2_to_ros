@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(a2d2-to-ros)
+project(a2d2_to_ros)
 
 ## Set build type
 set(CMAKE_BUILD_TYPE RelWithDebInfo)
@@ -18,7 +18,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roscpp
-  ros-cnpy
+  ros_cnpy
 )
 
 ## System dependencies are found with CMake's conventions
@@ -112,7 +112,7 @@ find_package(RapidJSON REQUIRED)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES a2d2-to-ros
+  LIBRARIES a2d2_to_ros
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
 )
@@ -130,7 +130,7 @@ include_directories(
 )
 
 ## Declare a C++ library
-add_library(${PROJECT_NAME} src/${PROJECT_NAME}/lib_a2d2-to-ros.cpp)
+add_library(${PROJECT_NAME} src/${PROJECT_NAME}/lib_a2d2_to_ros.cpp)
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${RapidJSON_LIBRARIES}
@@ -144,7 +144,7 @@ target_link_libraries(${PROJECT_NAME}
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(${PROJECT_NAME}_node src/a2d2-to-ros.cpp)
+add_executable(${PROJECT_NAME}_node src/a2d2_to_ros.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
