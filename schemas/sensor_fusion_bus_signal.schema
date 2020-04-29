@@ -1,0 +1,392 @@
+{
+   "$schema": "http://json-schema.org/draft-04/schema#",
+   "title": "Bus Signals",
+   "description": "A2D2 Bus Signal Data Schema for Sensor Fusion Data Set",
+   "type": "object",
+   "patternProperties": {
+     "^acceleration_(x|y|z)$": {
+       "description": "Measured acceleration components in reference frame.",
+       "properties": {
+         "unit": {
+           "description": "Units of measure use for values.",
+           "type": "string",
+           "pattern": "^Unit_MeterPerSeconSquar$"
+         },
+         "values": {
+           "description": "Array of timestamp/value pairs.",
+           "type": "array",
+           "contains": {
+             "type": "array",
+             "minItems": 2,
+             "maxItems": 2,
+             "items": [
+               {
+                 "type": "integer",
+                 "minimum": 0
+               },
+               {
+                 "type": "number"
+               }
+             ]
+           }
+         }
+       },
+       "required": ["unit", "values"]
+     },
+     "^angular_velocity_omega_(x|y|z)$": {
+       "description": "Measured angular velocity components in reference frame.",
+       "properties": {
+         "unit": {
+           "description": "Units of measure use for values.",
+           "type": "string",
+           "pattern": "^Unit_DegreOfArcPerSecon$"
+         },
+         "values": {
+           "description": "Array of timestamp/value pairs.",
+           "type": "array",
+           "contains": {
+             "type": "array",
+             "minItems": 2,
+             "maxItems": 2,
+             "items": [
+               {
+                 "type": "integer",
+                 "minimum": 0
+               },
+               {
+                 "type": "number"
+               }
+             ]
+           }
+         }
+       },
+       "required": ["unit", "values"]
+     },
+     "^accelerator_pedal$": {
+       "description": "Measured position of the accelerator pedal.",
+       "properties": {
+         "unit": {
+           "description": "Units of measure use for values.",
+           "type": "string",
+           "pattern": "^Unit_PerCent$"
+         },
+         "values": {
+           "description": "Array of timestamp/value pairs.",
+           "type": "array",
+           "contains": {
+             "type": "array",
+             "minItems": 2,
+             "maxItems": 2,
+             "items": [
+               {
+                 "type": "integer",
+                 "minimum": 0
+               },
+               {
+                 "type": "number",
+                 "minimum": 0,
+                 "maximum": 100
+               }
+             ]
+           }
+         }
+       },
+       "required": ["unit", "values"]
+     },
+     "_sign$": {
+       "description": "Fields containing sign information.",
+       "properties": {
+         "unit": {
+           "description": "Units of measure use for values.",
+           "type": "null"
+         },
+         "values": {
+           "description": "Array of timestamp/value pairs.",
+           "type": "array",
+           "contains": {
+             "type": "array",
+             "minItems": 2,
+             "maxItems": 2,
+             "items": [
+               {
+                 "type": "integer",
+                 "minimum": 0
+               },
+               {
+                 "type": "integer",
+                 "minimum": 0,
+                 "maximum": 1
+               }
+             ]
+           }
+         }
+       },
+       "required": ["unit", "values"]
+     },
+     "^brake_pressure$": {
+       "description": "Brake pressure information.",
+       "properties": {
+         "unit": {
+           "description": "Units of measure use for values.",
+           "type": "string",
+           "pattern": "^Unit_Bar$"
+         },
+         "values": {
+           "description": "Array of timestamp/value pairs.",
+           "type": "array",
+           "contains": {
+             "type": "array",
+             "minItems": 2,
+             "maxItems": 2,
+             "items": [
+               {
+                 "type": "integer",
+                 "minimum": 0
+               },
+               {
+                 "type": "number"
+               }
+             ]
+           }
+         }
+       },
+       "required": ["unit", "values"]
+     },
+     "^distance_pulse_(rear|front)_(left|right)$": {
+       "description": "Ultrasonics?",
+       "properties": {
+         "unit": {
+           "description": "Units of measure use for values.",
+           "type": "null"
+         },
+         "values": {
+           "description": "Array of timestamp/value pairs.",
+           "type": "array",
+           "contains": {
+             "type": "array",
+             "minItems": 2,
+             "maxItems": 2,
+             "items": [
+               {
+                 "type": "integer",
+                 "minimum": 0
+               },
+               {
+                 "type": "integer"
+               }
+             ]
+           }
+         }
+       },
+       "required": ["unit", "values"]
+     },
+     "^latitude_degree$": {
+       "description": "Latitude coordinates.",
+       "properties": {
+         "unit": {
+           "description": "Units of measure use for values.",
+           "type": "string",
+           "pattern": "^Unit_DegreOfArc$"
+         },
+         "values": {
+           "description": "Array of timestamp/value pairs.",
+           "type": "array",
+           "contains": {
+             "type": "array",
+             "minItems": 2,
+             "maxItems": 2,
+             "items": [
+               {
+                 "type": "integer",
+                 "minimum": 0
+               },
+               {
+                 "type": "number",
+                 "minimum": -90,
+                 "maximum": 90
+               }
+             ]
+           }
+         }
+       },
+       "required": ["unit", "values"]
+     },
+     "^longitude_degree$": {
+       "description": "Longitude coordinates.",
+       "properties": {
+         "unit": {
+           "description": "Units of measure use for values.",
+           "type": "string",
+           "pattern": "^Unit_DegreOfArc$"
+         },
+         "values": {
+           "description": "Array of timestamp/value pairs.",
+           "type": "array",
+           "contains": {
+             "type": "array",
+             "minItems": 2,
+             "maxItems": 2,
+             "items": [
+               {
+                 "type": "integer",
+                 "minimum": 0
+               },
+               {
+                 "type": "number",
+                 "minimum": -180,
+                 "maximum": 180
+               }
+             ]
+           }
+         }
+       },
+       "required": ["unit", "values"]
+     },
+     "^(latitude|longitude)_direction$": {
+       "description": "?",
+       "properties": {
+         "unit": {
+           "description": "Units of measure use for values.",
+           "type": "null"
+         },
+         "values": {
+           "description": "Array of timestamp/value pairs.",
+           "type": "array",
+           "contains": {
+             "type": "array",
+             "minItems": 2,
+             "maxItems": 2,
+             "items": [
+               {
+                 "type": "integer",
+                 "minimum": 0
+               },
+               {
+                 "type": "number"
+               }
+             ]
+           }
+         }
+       },
+       "required": ["unit", "values"]
+     },
+     "^(roll|pitch)_angle$": {
+       "description": "Roll and pitch values.",
+       "properties": {
+         "unit": {
+           "description": "Units of measure use for values.",
+           "type": "string",
+           "pattern": "^Unit_DegreOfArc$"
+         },
+         "values": {
+           "description": "Array of timestamp/value pairs.",
+           "type": "array",
+           "contains": {
+             "type": "array",
+             "minItems": 2,
+             "maxItems": 2,
+             "items": [
+               {
+                 "type": "integer",
+                 "minimum": 0
+               },
+               {
+                 "type": "number",
+                 "minimum": 0,
+                 "maximum": 360,
+                 "exclusiveMaximum": true
+               }
+             ]
+           }
+         }
+       },
+       "required": ["unit", "values"]
+     },
+     "^steering_angle_calculated$": {
+       "description": "Steering angle.",
+       "properties": {
+         "unit": {
+           "description": "Units of measure use for values.",
+           "type": "string",
+           "pattern": "^Unit_DegreOfArc$"
+         },
+         "values": {
+           "description": "Array of timestamp/value pairs.",
+           "type": "array",
+           "contains": {
+             "type": "array",
+             "minItems": 2,
+             "maxItems": 2,
+             "items": [
+               {
+                 "type": "integer",
+                 "minimum": 0
+               },
+               {
+                 "type": "number",
+                 "minimum": 0,
+                 "maximum": 360,
+                 "exclusiveMaximum": true
+               }
+             ]
+           }
+         }
+       },
+       "required": ["unit", "values"]
+     },
+     "^vehicle_speed$": {
+       "description": "Longitudinal vehicle speed.",
+       "properties": {
+         "unit": {
+           "description": "Units of measure use for values.",
+           "type": "string",
+           "pattern": "^Unit_KiloMeterPerHour$"
+         },
+         "values": {
+           "description": "Array of timestamp/value pairs.",
+           "type": "array",
+           "contains": {
+             "type": "array",
+             "minItems": 2,
+             "maxItems": 2,
+             "items": [
+               {
+                 "type": "integer",
+                 "minimum": 0
+               },
+               {
+                 "type": "number",
+                 "minimum": 0
+               }
+             ]
+           }
+         }
+       },
+       "required": ["unit", "values"]
+     }
+   },
+  "required": [
+    "acceleration_x",
+    "acceleration_y",
+    "acceleration_z",
+    "angular_velocity_omega_x",
+    "angular_velocity_omega_y",
+    "angular_velocity_omega_z",
+    "accelerator_pedal",
+    "accelerator_pedal_gradient_sign",
+    "steering_angle_calculated_sign",
+    "brake_pressure",
+    "distance_pulse_front_left",
+    "distance_pulse_front_right",
+    "distance_pulse_rear_left",
+    "distance_pulse_rear_right",
+    "latitude_degree",
+    "longitude_degree",
+    "latitude_direction",
+    "longitude_direction",
+    "pitch_angle",
+    "roll_angle",
+    "steering_angle_calculated",
+    "vehicle_speed"
+  ]
+}
