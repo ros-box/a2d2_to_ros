@@ -19,6 +19,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   ros_cnpy
+  sensor_msgs
 )
 
 ## System dependencies are found with CMake's conventions
