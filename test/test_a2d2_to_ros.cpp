@@ -28,7 +28,7 @@
 #include <gtest/gtest.h>
 
 // uncomment this define to log warnings and errors
-// #define _ENABLE_A2D2_ROS_LOGGING_
+//#define _ENABLE_A2D2_ROS_LOGGING_
 #include "a2d2_to_ros/lib_a2d2_to_ros.hpp"
 
 static constexpr auto INF = std::numeric_limits<double>::infinity();
@@ -84,14 +84,6 @@ TEST(A2D2_to_ROS, validate_unit_value) {
   EXPECT_FALSE(validate_unit_value(Units::Unit_DegreOfArc, 720.0));
   EXPECT_FALSE(validate_unit_value(Units::Unit_DegreOfArc, NaN));
 
-  EXPECT_TRUE(validate_unit_value(Units::Unit_DegreOfArcPerSecon, 0.0));
-  EXPECT_TRUE(validate_unit_value(Units::Unit_DegreOfArcPerSecon, 359.0));
-  EXPECT_TRUE(validate_unit_value(Units::Unit_DegreOfArcPerSecon, 72.0));
-  EXPECT_FALSE(validate_unit_value(Units::Unit_DegreOfArcPerSecon, -1.0));
-  EXPECT_FALSE(validate_unit_value(Units::Unit_DegreOfArcPerSecon, 360.0));
-  EXPECT_FALSE(validate_unit_value(Units::Unit_DegreOfArcPerSecon, 720.0));
-  EXPECT_FALSE(validate_unit_value(Units::Unit_DegreOfArcPerSecon, NaN));
-
   EXPECT_TRUE(validate_unit_value(Units::Unit_Bar, 0.0));
   EXPECT_TRUE(validate_unit_value(Units::Unit_Bar, 9999999.0));
   EXPECT_FALSE(validate_unit_value(Units::Unit_Bar, INF));
@@ -110,6 +102,13 @@ TEST(A2D2_to_ROS, validate_unit_value) {
   EXPECT_FALSE(validate_unit_value(Units::Unit_MeterPerSeconSquar, -INF));
   EXPECT_FALSE(validate_unit_value(Units::Unit_MeterPerSeconSquar, INF));
   EXPECT_FALSE(validate_unit_value(Units::Unit_MeterPerSeconSquar, NaN));
+
+  EXPECT_TRUE(validate_unit_value(Units::Unit_DegreOfArcPerSecon, -100.0));
+  EXPECT_TRUE(validate_unit_value(Units::Unit_DegreOfArcPerSecon, 0.0));
+  EXPECT_TRUE(validate_unit_value(Units::Unit_DegreOfArcPerSecon, 100.0));
+  EXPECT_FALSE(validate_unit_value(Units::Unit_DegreOfArcPerSecon, -INF));
+  EXPECT_FALSE(validate_unit_value(Units::Unit_DegreOfArcPerSecon, INF));
+  EXPECT_FALSE(validate_unit_value(Units::Unit_DegreOfArcPerSecon, NaN));
 }
 
 //------------------------------------------------------------------------------

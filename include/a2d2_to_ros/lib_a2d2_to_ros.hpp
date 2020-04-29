@@ -75,9 +75,9 @@ Units get_unit_enum(const std::string& unit_name);
  * null                     \in [-\infty, \infty]
  * Unit_PerCent             \in [0, 100]
  * Unit_DegreOfArc          \in [0, 360)
- * Unit_DegreOfArcPerSecon  \in [0, 360)
  * Unit_Bar                 \in [0, \infty)
  * Unit_KiloMeterPerHour    \in [0, \infty)
+ * Unit_DegreOfArcPerSecon  \in (-\infty, \infty)
  * Unit_MeterPerSeconSquar  \in (-\infty, \infty)
  *
  * @return True iff the value is valid for the given units.
@@ -111,8 +111,7 @@ T validate_unit_value(Units u, const T& val) {
       }
       return valid;
     };
-    case Units::Unit_DegreOfArc:
-    case Units::Unit_DegreOfArcPerSecon: {
+    case Units::Unit_DegreOfArc: {
       const auto inside_min = (val >= ZERO);
       const auto inside_max = (val < MAX_DEGREE);
       const auto valid = (inside_min && inside_max);
@@ -131,6 +130,7 @@ T validate_unit_value(Units u, const T& val) {
       }
       return valid;
     };
+    case Units::Unit_DegreOfArcPerSecon:
     case Units::Unit_MeterPerSeconSquar: {
       const auto inside_min = (val > -INF);
       const auto inside_max = (val < INF);
