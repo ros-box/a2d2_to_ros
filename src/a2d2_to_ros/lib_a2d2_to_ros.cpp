@@ -24,6 +24,70 @@
 #include "a2d2_to_ros/lib_a2d2_to_ros.hpp"
 
 namespace a2d2_to_ros {
-}  // namespace a2d2_to_ros
 
+//------------------------------------------------------------------------------
+
+std::ostream& operator<<(std::ostream& os, Units u) {
+  switch (u) {
+    case Units::null:
+      os << "null";
+      break;
+    case Units::Unit_Bar:
+      os << "Unit_Bar";
+      break;
+    case Units::Unit_PerCent:
+      os << "Unit_PerCent";
+      break;
+    case Units::Unit_DegreOfArc:
+      os << "Unit_DegreOfArc";
+      break;
+    case Units::Unit_KiloMeterPerHour:
+      os << "Unit_KiloMeterPerHour";
+      break;
+    case Units::Unit_MeterPerSeconSquar:
+      os << "Unit_MeterPerSeconSquar";
+      break;
+    case Units::Unit_DegreOfArcPerSecon:
+      os << "Unit_DegreOfArcPerSecon";
+      break;
+    default:
+      os << "UNKNOWN";
+      break;
+  }
+  return os;
+}
+
+//------------------------------------------------------------------------------
+
+Units get_unit_enum(const std::string& unit_name) {
+  if (unit_name == "null") {
+    return Units::null;
+  }
+  if (unit_name == "Unit_Bar") {
+    return Units::Unit_Bar;
+  }
+  if (unit_name == "Unit_PerCent") {
+    return Units::Unit_PerCent;
+  }
+  if (unit_name == "Unit_DegreOfArc") {
+    return Units::Unit_DegreOfArc;
+  }
+  if (unit_name == "Unit_KiloMeterPerHour") {
+    return Units::Unit_KiloMeterPerHour;
+  }
+  if (unit_name == "Unit_MeterPerSeconSquar") {
+    return Units::Unit_MeterPerSeconSquar;
+  }
+  if (unit_name == "Unit_DegreOfArcPerSecon") {
+    return Units::Unit_DegreOfArcPerSecon;
+  }
+
+  X_ERROR("Unrecogized units name: '" << unit_name
+                                      << "'. Returning 'UNKNOWN'.");
+  return Units::UNKNOWN;
+}
+
+//------------------------------------------------------------------------------
+
+}  // namespace a2d2_to_ros
 
