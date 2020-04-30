@@ -22,7 +22,9 @@
  * IN THE SOFTWARE.
  */
 #include <limits>
+#include <set>
 #include <sstream>
+#include <unordered_map>
 
 #include <ros/console.h>
 #include <ros/ros.h>
@@ -38,6 +40,10 @@
 // uncomment this define to log warnings and errors
 #define _ENABLE_A2D2_ROS_LOGGING_
 #include "a2d2_to_ros/lib_a2d2_to_ros.hpp"
+
+typedef std::set<a2d2_to_ros::DataPair, a2d2_to_ros::DataPairTimeComparator>
+    DataPairSet;
+typedef std::unordered_map<std::string, DataPairSet> DataPairMap;
 
 namespace {
 const std::string OUTPUT_PATH =
@@ -121,6 +127,7 @@ int main(int argc, char* argv[]) {
     return EXIT_FAILURE;
   }
 
+  DataPairMap data_map;
   const rapidjson::Value& r = d_schema["required"];
   for (rapidjson::SizeType idx = 0; idx < r.Size(); ++idx) {
     if (!r[idx].IsString()) {
@@ -134,6 +141,8 @@ int main(int argc, char* argv[]) {
       ROS_FATAL_STREAM("Required field name at index " << idx << " is empty.");
       return EXIT_FAILURE;
     }
+
+    data_map[field_name] = DataPairSet();
   }
 
   // get topics (top-level required items in schema)
