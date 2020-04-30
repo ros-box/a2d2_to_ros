@@ -21,10 +21,13 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
+#include <sstream>
+
 #include <ros/console.h>
 #include <ros/ros.h>
 #include "rapidjson/document.h"
 #include "rapidjson/error/en.h"
+#include "rapidjson/schema.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
@@ -42,39 +45,63 @@ const std::string json_path =
 }  // namespace
 
 int main(int argc, char* argv[]) {
-  // get schema file string
-  const auto schema_string = a2d2_to_ros::get_json_file_as_string(schema_path);
-  if (schema_string.empty()) {
-    ROS_FATAL_STREAM("'" << schema_path << "' failed to open or is empty.");
-    return EXIT_FAILURE;
-  }
-
   // parse schema
   rapidjson::Document d_schema;
-  if (d_schema.Parse(schema_string.c_str()).HasParseError()) {
-    fprintf(stderr, "\nError(offset %u): %s\n",
-            static_cast<unsigned>(d_schema.GetErrorOffset()),
-            rapidjson::GetParseError_En(d_schema.GetParseError()));
-    return EXIT_FAILURE;
+  {
+    // get schema file string
+    const auto schema_string =
+        a2d2_to_ros::get_json_file_as_string(schema_path);
+    if (schema_string.empty()) {
+      ROS_FATAL_STREAM("'" << schema_path << "' failed to open or is empty.");
+      return EXIT_FAILURE;
+    }
+
+    if (d_schema.Parse(schema_string.c_str()).HasParseError()) {
+      fprintf(stderr, "\nError(offset %u): %s\n",
+              static_cast<unsigned>(d_schema.GetErrorOffset()),
+              rapidjson::GetParseError_En(d_schema.GetParseError()));
+      return EXIT_FAILURE;
+    }
   }
 
-  // get json file string
-  const auto json_string = a2d2_to_ros::get_json_file_as_string(json_path);
-  if (json_string.empty()) {
-    ROS_FATAL_STREAM("'" << json_path << "' failed to open or is empty.");
-    return EXIT_FAILURE;
-  }
+  rapidjson::SchemaDocument schema(d_schema);
 
   // parse json
   rapidjson::Document d_json;
-  if (d_json.Parse(json_string.c_str()).HasParseError()) {
-    fprintf(stderr, "\nError(offset %u): %s\n",
-            static_cast<unsigned>(d_json.GetErrorOffset()),
-            rapidjson::GetParseError_En(d_json.GetParseError()));
-    return EXIT_FAILURE;
+  {
+    // get json file string
+    const auto json_string = a2d2_to_ros::get_json_file_as_string(json_path);
+    if (json_string.empty()) {
+      ROS_FATAL_STREAM("'" << json_path << "' failed to open or is empty.");
+      return EXIT_FAILURE;
+    }
+
+    if (d_json.Parse(json_string.c_str()).HasParseError()) {
+      ROS_FATAL_STREAM("Error(offset "
+                       << static_cast<unsigned>(d_json.GetErrorOffset())
+                       << "): "
+                       << rapidjson::GetParseError_En(d_json.GetParseError()));
+      return EXIT_FAILURE;
+    }
   }
 
   ROS_INFO_STREAM("Loaded and parsed everything successfully.");
+
+  rapidjson::SchemaValidator validator(schema);
+  if (!d_json.Accept(validator)) {
+    rapidjson::StringBuffer sb;
+    validator.GetInvalidSchemaPointer().StringifyUriFragment(sb);
+    std::stringstream ss;
+    ss << "\nInvalid schema: " << sb.GetString() << "\n";
+    ss << "Invalid keyword: " << validator.GetInvalidSchemaKeyword() << "\n";
+    sb.Clear();
+    validator.GetInvalidDocumentPointer().StringifyUriFragment(sb);
+    ss << "Invalid document: " << sb.GetString() << "\n";
+    ROS_FATAL_STREAM(ss.str());
+    return EXIT_FAILURE;
+  }
+
+  ROS_INFO_STREAM("JSON data validated against schema, ready to convert.");
 
   // extract data
   // write to bag
