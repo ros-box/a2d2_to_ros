@@ -52,11 +52,24 @@ namespace a2d2_to_ros {
 struct DataPair {
   const std_msgs::Header header;
   const std_msgs::Float64 value;
+
+  /**
+   * @brief Factory method to build a DataPair.
+   * @pre time is valid according to valid_a2d2_timestamp.
+   */
   static DataPair build(double value, uint64_t time, std::string frame_id);
 
  private:
   DataPair(std_msgs::Header header, std_msgs::Float64 value);
 };  // struct DataPair
+
+/**
+ * @brief Compare two DataPair objects by timestamp.
+ * @note Operator returns true iff lhs < rhs.
+ */
+struct DataPairTimeComparator {
+  bool operator()(const DataPair& lhs, const DataPair& rhs) const;
+};  // struct DataPairComparator
 
 /**
  * @brief Test whether a given timestamp is covertible to ROS time.

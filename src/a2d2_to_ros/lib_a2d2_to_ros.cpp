@@ -39,6 +39,7 @@ DataPair DataPair::build(double value, uint64_t time, std::string frame_id) {
   std_msgs::Header header;
   header.seq = 0;
   header.frame_id = std::move(frame_id);
+  header.stamp = a2d2_timestamp_to_ros_time(time);
 
   std_msgs::Float64 val;
   val.data = value;
@@ -50,6 +51,13 @@ DataPair DataPair::build(double value, uint64_t time, std::string frame_id) {
 
 DataPair::DataPair(std_msgs::Header header, std_msgs::Float64 value)
     : header(std::move(header)), value(std::move(value)) {}
+
+//------------------------------------------------------------------------------
+
+bool DataPairTimeComparator::operator()(const DataPair& lhs,
+                                        const DataPair& rhs) const {
+  return (lhs.header.stamp < rhs.header.stamp);
+}
 
 //------------------------------------------------------------------------------
 
