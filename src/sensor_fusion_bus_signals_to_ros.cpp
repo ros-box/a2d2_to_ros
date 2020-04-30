@@ -36,10 +36,13 @@
 #include "a2d2_to_ros/lib_a2d2_to_ros.hpp"
 
 namespace {
-const std::string schema_path =
+const std::string OUTPUT_PATH =
+    "/home/maeve/data/a2d2/Ingolstadt/Bus "
+    "Signals/camera_lidar/20190401_145936/bus/20190401145936_bus_signals.bag";
+const std::string SCHEMA_PATH =
     "/home/maeve/catkin_ws/src/a2d2_to_ros/schemas/"
     "sensor_fusion_bus_signal.schema";
-const std::string json_path =
+const std::string JSON_PATH =
     "/home/maeve/data/a2d2/Ingolstadt/Bus "
     "Signals/camera_lidar/20190401_145936/bus/20190401145936_bus_signals.json";
 }  // namespace
@@ -50,9 +53,9 @@ int main(int argc, char* argv[]) {
   {
     // get schema file string
     const auto schema_string =
-        a2d2_to_ros::get_json_file_as_string(schema_path);
+        a2d2_to_ros::get_json_file_as_string(SCHEMA_PATH);
     if (schema_string.empty()) {
-      ROS_FATAL_STREAM("'" << schema_path << "' failed to open or is empty.");
+      ROS_FATAL_STREAM("'" << SCHEMA_PATH << "' failed to open or is empty.");
       return EXIT_FAILURE;
     }
 
@@ -70,9 +73,9 @@ int main(int argc, char* argv[]) {
   rapidjson::Document d_json;
   {
     // get json file string
-    const auto json_string = a2d2_to_ros::get_json_file_as_string(json_path);
+    const auto json_string = a2d2_to_ros::get_json_file_as_string(JSON_PATH);
     if (json_string.empty()) {
-      ROS_FATAL_STREAM("'" << json_path << "' failed to open or is empty.");
+      ROS_FATAL_STREAM("'" << JSON_PATH << "' failed to open or is empty.");
       return EXIT_FAILURE;
     }
 

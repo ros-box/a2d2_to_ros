@@ -31,9 +31,10 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <depend>roscpp</depend>
+  <depend>rosbag</depend>
+  <depend>sensor_msgs</depend>
   <depend>ros_cnpy</depend>
   <depend>rapidjson-dev</depend>
-  <depend>sensor_msgs</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

@@ -8,6 +8,7 @@ The idea is that there is an executubale for each sensor modality: camera, lidar
 
 ## Conventions
 
+* Each field in the JSON file corresponds to three topics in the generated bag: one topic publishes the original value, one topic publishes the value in ROS units, and the last publishes the timestamp of the data (as a header message). This convention was adopted instead of defining a custom message so that the rosbag can be used without any dependency beyond stock ROS.
 * Bus signal data is given the frame "bus".
 
 ## Notes
