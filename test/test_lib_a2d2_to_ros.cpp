@@ -23,6 +23,7 @@
  */
 #define _USE_MATH_DEFINES
 #include <cmath>
+#include <cstdint>
 #include <limits>
 
 #include <gtest/gtest.h>
@@ -33,8 +34,35 @@
 
 static constexpr auto INF = std::numeric_limits<double>::infinity();
 static constexpr auto NaN = std::numeric_limits<double>::quiet_NaN();
+static constexpr auto ONE_MILLION = static_cast<uint64_t>(1000000);
+static constexpr auto ONE_THOUSAND = static_cast<uint64_t>(1000);
 
 namespace a2d2_to_ros {
+
+//------------------------------------------------------------------------------
+
+TEST(A2D2_to_ROS, a2d2_timestamp_to_ros_time) {
+  constexpr auto TIME = static_cast<uint64_t>(1554122338652775);
+  const auto ros_time = a2d2_timestamp_to_ros_time(TIME);
+  const auto nsecs = ros_time.toNSec();
+  const auto test_secs = (nsecs / ONE_THOUSAND);
+  EXPECT_EQ(test_secs, TIME);
+}
+
+//------------------------------------------------------------------------------
+
+TEST(A2D2_to_ROS, valid_a2d2_timestamp) {
+  constexpr auto MAX = std::numeric_limits<uint64_t>::max();
+  constexpr auto TIME = static_cast<uint64_t>(1554122338652775);
+  EXPECT_FALSE(valid_a2d2_timestamp(MAX));
+  EXPECT_TRUE(valid_a2d2_timestamp(TIME));
+
+  constexpr auto BOUNDARY =
+      (static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) *
+       ONE_MILLION);
+  EXPECT_TRUE(valid_a2d2_timestamp(BOUNDARY));
+  EXPECT_FALSE(valid_a2d2_timestamp(BOUNDARY + ONE_MILLION));
+}
 
 //------------------------------------------------------------------------------
 

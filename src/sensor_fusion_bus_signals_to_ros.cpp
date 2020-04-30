@@ -21,10 +21,14 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
+#include <limits>
 #include <sstream>
 
 #include <ros/console.h>
 #include <ros/ros.h>
+#include <std_msgs/Float64.h>
+#include <std_msgs/Header.h>
+
 #include "rapidjson/document.h"
 #include "rapidjson/error/en.h"
 #include "rapidjson/schema.h"
@@ -45,6 +49,7 @@ const std::string SCHEMA_PATH =
 const std::string JSON_PATH =
     "/home/maeve/data/a2d2/Ingolstadt/Bus "
     "Signals/camera_lidar/20190401_145936/bus/20190401145936_bus_signals.json";
+const std::string FRAME_NAME = "bus";
 }  // namespace
 
 int main(int argc, char* argv[]) {
@@ -105,6 +110,33 @@ int main(int argc, char* argv[]) {
   }
 
   ROS_INFO_STREAM("JSON data validated against schema, ready to convert.");
+
+  const auto has_required = d_schema.HasMember("required");
+  const auto is_array = d_schema["required"].IsArray();
+  if (!has_required || !is_array) {
+    ROS_FATAL_STREAM(
+        "Schema either does not have a 'required' member, or the member is not "
+        "an array: HasMember('required'): "
+        << has_required << ", isArray(): " << is_array);
+    return EXIT_FAILURE;
+  }
+
+  const rapidjson::Value& r = d_schema["required"];
+  for (rapidjson::SizeType idx = 0; idx < r.Size(); ++idx) {
+    if (!r[idx].IsString()) {
+      ROS_FATAL_STREAM("Required field at index " << idx
+                                                  << " is not a string type.");
+      return EXIT_FAILURE;
+    }
+
+    const auto field_name = std::string(r[idx].GetString());
+    if (field_name.empty()) {
+      ROS_FATAL_STREAM("Required field name at index " << idx << " is empty.");
+      return EXIT_FAILURE;
+    }
+  }
+
+  // get topics (top-level required items in schema)
 
   // extract data
   // write to bag

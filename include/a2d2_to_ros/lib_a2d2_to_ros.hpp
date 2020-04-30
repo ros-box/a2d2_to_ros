@@ -37,16 +37,45 @@
 
 #define _USE_MATH_DEFINES
 #include <cmath>
+#include <cstdint>
 #include <iostream>
 #include <limits>
 #include <sstream>
 #include <string>
 
+#include <std_msgs/Float64.h>
+#include <std_msgs/Header.h>
+
 namespace a2d2_to_ros {
+
+/** @brief Convenience storage for timestamp/value pair. */
+struct DataPair {
+  const std_msgs::Header header;
+  const std_msgs::Float64 value;
+  static DataPair build(double value, uint64_t time, std::string frame_id);
+
+ private:
+  DataPair(std_msgs::Header header, std_msgs::Float64 value);
+};  // struct DataPair
+
+/**
+ * @brief Test whether a given timestamp is covertible to ROS time.
+ * @return True iff converting time to ros::Time will not causer overflow.
+ */
+bool valid_a2d2_timestamp(uint64_t time);
+
+/**
+ * @brief Convert Unix EPOCH milisecond stamps to ROS times.
+ * @pre Integer timestamp in microseconds.
+ * @pre time is valid according to valid_a2s2_timestamp
+ */
+ros::Time a2d2_timestamp_to_ros_time(uint64_t time);
 
 /**
  * @brief Load an entire JSON file into memory as a string.
  * @pre The file pointed to by path is valid JSON.
+ * @note This function has no test coverage.
+ * @note
  * @return The json text, or an empty string if loading the file failed.
  */
 std::string get_json_file_as_string(const std::string& path);
@@ -68,7 +97,7 @@ enum class Units {
 
 /**
  * @brief Print name of Units
- * @note This function has no test coverage. Its output is informative only.
+ * @note This function has no test coverage.
  */
 std::ostream& operator<<(std::ostream& os, Units u);
 

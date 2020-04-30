@@ -23,9 +23,50 @@
  */
 #include "a2d2_to_ros/lib_a2d2_to_ros.hpp"
 
+#include <cstdint>
 #include <fstream>
+#include <limits>
+#include <utility>
+
+static constexpr auto ONE_THOUSAND = static_cast<uint64_t>(1000);
+static constexpr auto ONE_MILLION = static_cast<uint64_t>(1000000);
 
 namespace a2d2_to_ros {
+
+//------------------------------------------------------------------------------
+
+DataPair DataPair::build(double value, uint64_t time, std::string frame_id) {
+  std_msgs::Header header;
+  header.seq = 0;
+  header.frame_id = std::move(frame_id);
+
+  std_msgs::Float64 val;
+  val.data = value;
+
+  return DataPair(header, val);
+}
+
+//------------------------------------------------------------------------------
+
+DataPair::DataPair(std_msgs::Header header, std_msgs::Float64 value)
+    : header(std::move(header)), value(std::move(value)) {}
+
+//------------------------------------------------------------------------------
+
+bool valid_a2d2_timestamp(uint64_t time) {
+  const auto secs = (time / ONE_MILLION);
+  return (secs <= std::numeric_limits<uint32_t>::max());
+}
+
+//------------------------------------------------------------------------------
+
+ros::Time a2d2_timestamp_to_ros_time(uint64_t time) {
+  const auto truncated_secs = (time / ONE_MILLION);
+  const auto mu_secs = (time - (truncated_secs * ONE_MILLION));
+  const auto n_secs = (mu_secs * ONE_THOUSAND);
+  return ros::Time(static_cast<uint32_t>(truncated_secs),
+                   static_cast<uint32_t>(n_secs));
+}
 
 //------------------------------------------------------------------------------
 
