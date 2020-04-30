@@ -2,6 +2,10 @@
 
 Utilities for converting A2D2 data sets to ROS bags.
 
+## Use
+
+The idea is that there is an executubale for each sensor modality: camera, lidar, and bus. Bag files are generated for these modalities independently and then merged (if desired) using standard ROS tools.
+
 ## Conventions
 
 * Bus signal data is given the frame "bus".
