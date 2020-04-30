@@ -1,5 +1,6 @@
 {
-   "$schema": "http://json-schema.org/draft-04/schema#",
+   "$id": "https://gitlab.com/MaplessAI/external/a2d2_to_ros/-/blob/master/schemas/sensor_fusion_bus_signal.schema",
+   "$schema": "http://json-schema.org/draft-07/schema#",
    "title": "Bus Signals",
    "description": "A2D2 Bus Signal Data Schema for Sensor Fusion Data Set",
    "type": "object",
