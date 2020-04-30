@@ -19,6 +19,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rosbag
+  std_msgs
   sensor_msgs
   ros_cnpy
 )
