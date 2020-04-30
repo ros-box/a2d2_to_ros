@@ -23,7 +23,22 @@
  */
 #include "a2d2_to_ros/lib_a2d2_to_ros.hpp"
 
+#include <fstream>
+
 namespace a2d2_to_ros {
+
+//------------------------------------------------------------------------------
+
+std::string get_json_file_as_string(const std::string& path) {
+  std::ifstream ifs(path);
+  if (!ifs.good()) {
+    return std::string("");
+  }
+
+  std::string content((std::istreambuf_iterator<char>(ifs)),
+                      (std::istreambuf_iterator<char>()));
+  return content;
+}
 
 //------------------------------------------------------------------------------
 

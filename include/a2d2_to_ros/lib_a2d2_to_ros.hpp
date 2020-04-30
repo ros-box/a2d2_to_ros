@@ -28,9 +28,11 @@
 #include <ros/console.h>
 #define X_WARN(s) ROS_WARN_STREAM(s)
 #define X_ERROR(s) ROS_ERROR_STREAM(s)
+#define X_FATAL(s) ROS_FATAL_STREAM(s)
 #else
 #define X_WARN(s)
 #define X_ERROR(s)
+#define X_FATAL(s)
 #endif
 
 #define _USE_MATH_DEFINES
@@ -41,6 +43,13 @@
 #include <string>
 
 namespace a2d2_to_ros {
+
+/**
+ * @brief Load an entire JSON file into memory as a string.
+ * @pre The file pointed to by path is valid JSON.
+ * @return The json text, or an empty string if loading the file failed.
+ */
+std::string get_json_file_as_string(const std::string& path);
 
 /**
  * @brief Unit in the unlabeled A2D2 data set.
