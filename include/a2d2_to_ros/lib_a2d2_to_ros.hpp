@@ -55,7 +55,7 @@ struct DataPair {
 
   /**
    * @brief Factory method to build a DataPair.
-   * @pre time is valid according to valid_a2d2_timestamp.
+   * @pre time is valid according to valid_ros_timestamp.
    */
   static DataPair build(double value, uint64_t time, std::string frame_id);
 
@@ -73,9 +73,9 @@ struct DataPairTimeComparator {
 
 /**
  * @brief Test whether a given timestamp is covertible to ROS time.
- * @return True iff converting time to ros::Time will not causer overflow.
+ * @return True iff converting time to ros::Time will not cause overflow.
  */
-bool valid_a2d2_timestamp(uint64_t time);
+bool valid_ros_timestamp(uint64_t time);
 
 /**
  * @brief Convert Unix EPOCH milisecond stamps to ROS times.

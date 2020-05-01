@@ -276,6 +276,16 @@ int main(int argc, char* argv[]) {
     for (rapidjson::SizeType idx = 0; idx < values.Size(); ++idx) {
       const rapidjson::Value& t_v = values[idx];
       const auto time = t_v[static_cast<rapidjson::SizeType>(0)].GetUint64();
+      if (!a2d2_to_ros::valid_ros_timestamp(time)) {
+        ROS_FATAL_STREAM("Timestamp "
+                         << time
+                         << " has unsupported magnitude: ROS does not support "
+                            "timestamps on or after 4294967296000000 "
+                            "(Sunday, February 7, 2106 6:28:16 AM GMT)\nCall "
+                            "Zager and Evans for details.");
+        return EXIT_FAILURE;
+      }
+
       const auto value = t_v[static_cast<rapidjson::SizeType>(1)].GetDouble();
       const auto data =
           a2d2_to_ros::DataPair::build(value, time, bus_frame_name);

@@ -62,9 +62,11 @@ bool DataPairTimeComparator::operator()(const DataPair& lhs,
 
 //------------------------------------------------------------------------------
 
-bool valid_a2d2_timestamp(uint64_t time) {
+bool valid_ros_timestamp(uint64_t time) {
   const auto secs = (time / ONE_MILLION);
-  return (secs <= std::numeric_limits<uint32_t>::max());
+  const auto boundary =
+      static_cast<uint64_t>(std::numeric_limits<uint32_t>::max());
+  return (secs <= boundary);
 }
 
 //------------------------------------------------------------------------------

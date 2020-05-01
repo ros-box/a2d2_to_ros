@@ -51,17 +51,17 @@ TEST(A2D2_to_ROS, a2d2_timestamp_to_ros_time) {
 
 //------------------------------------------------------------------------------
 
-TEST(A2D2_to_ROS, valid_a2d2_timestamp) {
+TEST(A2D2_to_ROS, valid_ros_timestamp) {
   constexpr auto MAX = std::numeric_limits<uint64_t>::max();
   constexpr auto TIME = static_cast<uint64_t>(1554122338652775);
-  EXPECT_FALSE(valid_a2d2_timestamp(MAX));
-  EXPECT_TRUE(valid_a2d2_timestamp(TIME));
+  EXPECT_FALSE(valid_ros_timestamp(MAX));
+  EXPECT_TRUE(valid_ros_timestamp(TIME));
 
   constexpr auto BOUNDARY =
       (static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) *
        ONE_MILLION);
-  EXPECT_TRUE(valid_a2d2_timestamp(BOUNDARY));
-  EXPECT_FALSE(valid_a2d2_timestamp(BOUNDARY + ONE_MILLION));
+  EXPECT_TRUE(valid_ros_timestamp(BOUNDARY));
+  EXPECT_FALSE(valid_ros_timestamp(BOUNDARY + ONE_MILLION));
 }
 
 //------------------------------------------------------------------------------
