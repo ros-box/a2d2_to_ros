@@ -54,9 +54,9 @@ typedef std::set<a2d2_to_ros::DataPair, a2d2_to_ros::DataPairTimeComparator>
 typedef std::unordered_map<std::string, std::tuple<std::string, DataPairSet>>
     DataPairMap;
 
-namespace {
-namespace po = boost::program_options;
-}  // namespace
+///
+/// Program constants and defaults.
+///
 
 static constexpr auto _PROGRAM_OPTIONS_LINE_LENGTH = 120u;
 static constexpr auto _INCLUDE_ORIGINAL = true;
@@ -70,8 +70,15 @@ static constexpr auto _ORIGINAL_UNITS_TOPIC = "original_units";
 static constexpr auto _VALUE_TOPIC = "value";
 static constexpr auto _HEADER_TOPC = "header";
 
+namespace {
+namespace po = boost::program_options;
+}  // namespace
+
 int main(int argc, char* argv[]) {
-  // Command line arguments
+  ///
+  /// Set up command line arguments
+  ///
+
   boost::optional<std::string> schema_path_opt;
   boost::optional<std::string> json_path_opt;
 
@@ -116,6 +123,10 @@ int main(int argc, char* argv[]) {
     return EXIT_FAILURE;
   }
 
+  ///
+  /// Get commandline parameters
+  ///
+
   const auto schema_path = *schema_path_opt;
   const auto json_path = *json_path_opt;
   const auto output_path = vm["output-path"].as<std::string>();
@@ -127,7 +138,10 @@ int main(int argc, char* argv[]) {
   const auto topic_prefix =
       (std::string(_DATASET_NAMESPACE) + "/" + file_basename);
 
-  // parse schema
+  ///
+  /// Get the JSON schema for the data set
+  ///
+
   rapidjson::Document d_schema;
   {
     // get schema file string
@@ -145,10 +159,12 @@ int main(int argc, char* argv[]) {
       return EXIT_FAILURE;
     }
   }
-
   rapidjson::SchemaDocument schema(d_schema);
 
-  // parse json
+  ///
+  /// Get the JSON data set
+  ///
+
   rapidjson::Document d_json;
   {
     // get json file string
@@ -167,7 +183,11 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  ROS_INFO_STREAM("Loaded and parsed everything successfully.");
+  ROS_INFO_STREAM("Loaded and parsed schema and data set successfully.");
+
+  ///
+  /// Validate the data set against the schema
+  ///
 
   rapidjson::SchemaValidator validator(schema);
   if (!d_json.Accept(validator)) {
@@ -185,82 +205,81 @@ int main(int argc, char* argv[]) {
 
   ROS_INFO_STREAM("JSON data validated against schema, ready to convert.");
 
-  const auto has_required = d_schema.HasMember("required");
-  const auto is_array = d_schema["required"].IsArray();
-  if (!has_required || !is_array) {
-    ROS_FATAL_STREAM(
-        "Schema either does not have a 'required' member, or the member is not "
-        "an array: HasMember('required'): "
-        << has_required << ", isArray(): " << is_array);
-    return EXIT_FAILURE;
+  ///
+  /// Ensure that the schema has necessary information for the bag file
+  ///
+
+  {
+    const auto has_required = d_schema.HasMember("required");
+    const auto is_array = d_schema["required"].IsArray();
+    const auto is_empty = (is_array && d_schema["required"].GetArray().Empty());
+    if (!has_required || !is_array || is_empty) {
+      ROS_FATAL_STREAM(
+          "Schema either does not have a 'required' member, or the member is "
+          "not "
+          "an array, or the array is empty: HasMember('required'): "
+          << has_required << ", isArray(): " << is_array
+          << ", Empty(): " << is_empty);
+      return EXIT_FAILURE;
+    }
+
+    const rapidjson::Value& r = d_schema["required"];
+    for (rapidjson::SizeType idx = 0; idx < r.Size(); ++idx) {
+      if (!r[idx].IsString()) {
+        ROS_FATAL_STREAM("Required field at index "
+                         << idx << " is not a string type.");
+        return EXIT_FAILURE;
+      }
+
+      const auto name = std::string(r[idx].GetString());
+      if (name.empty()) {
+        ROS_FATAL_STREAM("Required field name at index " << idx
+                                                         << " is empty.");
+        return EXIT_FAILURE;
+      }
+    }
   }
 
-  DataPairMap data_map;
+  ///
+  /// Get the field names from schema, retrieve data from DOM, write to bag.
+  /// This loop does not do error checking on the DOM because it should already
+  /// have been validated by the schema.
+  ///
+
+  rosbag::Bag bag;
+  std::set<ros::Time> stamps;
+  bag.open(output_path + "/" + file_basename + ".bag", rosbag::bagmode::Write);
   const rapidjson::Value& r = d_schema["required"];
   for (rapidjson::SizeType idx = 0; idx < r.Size(); ++idx) {
-    if (!r[idx].IsString()) {
-      ROS_FATAL_STREAM("Required field at index " << idx
-                                                  << " is not a string type.");
-      return EXIT_FAILURE;
-    }
+    const auto name = std::string(r[idx].GetString());
+    ROS_INFO_STREAM("Converting " << name << "...");
 
-    const auto field_name = std::string(r[idx].GetString());
-    if (field_name.empty()) {
-      ROS_FATAL_STREAM("Required field name at index " << idx << " is empty.");
-      return EXIT_FAILURE;
-    }
-
-    data_map[field_name] = std::make_tuple("", DataPairSet());
-  }
-
-  const auto get_units = [](const rapidjson::Value& obj) {
-    if (obj["unit"].IsNull()) {
-      return std::string("null");
-    }
-    return std::string(obj["unit"].GetString());
-  };
-
-  // get topics (top-level required items in schema)
-  for (const auto& pair : data_map) {
-    const auto name = pair.first.c_str();
-    const rapidjson::Value& obj = d_json[name].GetObject();
-    const auto units = get_units(obj);
+    const rapidjson::Value& obj = d_json[name.c_str()].GetObject();
     const rapidjson::Value& values = obj["values"];
+    const auto units = obj["unit"].IsNull() ? "null" : obj["unit"].GetString();
+    const auto units_enum = a2d2_to_ros::get_unit_enum(units);
 
-    DataPairSet data_set;
+    // if original data is included, publish the units
+    if (include_original) {
+      const rapidjson::Value& t_v = values[static_cast<rapidjson::SizeType>(0)];
+      const auto time = t_v[static_cast<rapidjson::SizeType>(0)].GetUint64();
+      const auto first_time = a2d2_to_ros::a2d2_timestamp_to_ros_time(time);
+
+      std_msgs::String units_msg;
+      units_msg.data = units;
+
+      bag.write(topic_prefix + "/" + name + "/" + _ORIGINAL_UNITS_TOPIC,
+                first_time, units_msg);
+    }
+
+    // publish data for each of the values in this field
     for (rapidjson::SizeType idx = 0; idx < values.Size(); ++idx) {
       const rapidjson::Value& t_v = values[idx];
       const auto time = t_v[static_cast<rapidjson::SizeType>(0)].GetUint64();
       const auto value = t_v[static_cast<rapidjson::SizeType>(1)].GetDouble();
-      data_set.insert(
-          a2d2_to_ros::DataPair::build(value, time, bus_frame_name));
-    }
+      const auto data =
+          a2d2_to_ros::DataPair::build(value, time, bus_frame_name);
 
-    data_map[pair.first] = std::make_tuple(units, std::move(data_set));
-  }
-
-  // write to bag
-  rosbag::Bag bag;
-  std::set<ros::Time> stamps;
-  bag.open(output_path + "/" + file_basename + ".bag", rosbag::bagmode::Write);
-  for (const auto& pair : data_map) {
-    ROS_INFO_STREAM("Converting " << pair.first << " data...");
-    const auto& name = pair.first;
-    const auto& units = std::get<0>(pair.second);
-    const auto& data_set = std::get<1>(pair.second);
-    if (data_set.empty()) {
-      continue;
-    }
-
-    const auto units_enum = a2d2_to_ros::get_unit_enum(units);
-    std_msgs::String units_msg;
-    units_msg.data = units;
-    const auto first_time = data_set.begin()->header.stamp;
-    if (include_original) {
-      bag.write(topic_prefix + "/" + name + "/" + _ORIGINAL_UNITS_TOPIC,
-                first_time, units_msg);
-    }
-    for (const auto& data : data_set) {
       const auto& stamp = data.header.stamp;
       stamps.insert(stamp);
       bag.write(topic_prefix + "/" + name + "/" + _HEADER_TOPC, stamp,
@@ -280,13 +299,20 @@ int main(int argc, char* argv[]) {
     }
   }
 
+  ///
+  /// Write a clock message for every unique timestamp in the data set
+  ///
+
   for (const auto& stamp : stamps) {
     rosgraph_msgs::Clock clock_msg;
     clock_msg.clock = stamp;
     bag.write(_CLOCK_TOPIC, stamp, clock_msg);
   }
 
-  bag.close();
+  ///
+  /// Finish the bag and exit
+  ///
 
+  bag.close();
   return EXIT_SUCCESS;
 }
