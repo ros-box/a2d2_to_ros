@@ -8,6 +8,8 @@ And the technical description of the data set at this page:
 
 https://arxiv.org/abs/2004.06320
 
+Answers, where available, are given directly below the questions. If a question has no answer below it, then it remains an open question.
+
 ## General
 
 1. Are all timestamps Unix Epoch time with microsecond units?
@@ -32,5 +34,5 @@ https://arxiv.org/abs/2004.06320
 ## Semantic segmentation bus signal data
 
 1. What is the `driving_direction` field and what do the values represent?
-1. What are do the values for the `gear` field represent?
+1. What do the values for the `gear` field represent?
 1. Are `steering_angle` and `steering_angle_sign` ground truth with respect to `steering_angle_calculated` and `steering_angle_calculated_sign`?
