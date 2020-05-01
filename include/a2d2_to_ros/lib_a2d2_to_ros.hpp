@@ -137,7 +137,7 @@ T to_ros_units(Units u, const T& val) {
       return (val * static_cast<T>(M_PI / 180.0));
       break;
     case Units::Unit_KiloMeterPerHour:
-      return (val * static_cast<T>(1000.0 / 60.0));
+      return (val * static_cast<T>(1000.0 / (60.0 * 60.0)));
       break;
     case Units::Unit_PerCent:
       return (val / static_cast<T>(100.0));
