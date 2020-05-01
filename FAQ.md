@@ -18,15 +18,15 @@ Answers, where available, are given directly below the questions. If a question 
 ## Frame conventions
 
 1. For the reference frame ***g*** (described in [Section 3.1](https://arxiv.org/pdf/2004.06320.pdf)):
+    1. Is the position of the origin fixed with respect to the vehicle?
     1. Is the z-axis is aligned to the gravity vector?
     1. Is the x-axis is aligned to vehicle heading?
-    1. Does the origin moves with the vehicle or is it fixed at record start time?
 
 ## Sensor fusion bus signal data
 
 1. What are the `distance_pulse_*` fields and what do the values represent?
 1. What are the `latitude_direction` and `longitude_direction` fields and what do the values represent?
-1. What are the conventions for the `steering_angle_calculated` values (i.e., what are min and max, and what is centered)?
+1. What are the conventions for the `steering_angle_calculated` values (i.e., in [0, 360) or [-180, 180), etc., and what value represents centered)?
 1. What are the conventions for the `*_sign` fields (e.g., does it follow [std::signbit](https://www.cplusplus.com/reference/cmath/signbit/) conventions)?
 1. Is `vehicle_speed` allowed to be negative? If not, how is driving in reverse indicated, or is it guaranteed that the vehicle never drives in reverse?
 1. What is the convention for `accelerator_pedal` percent values (i.e., is 0 or 100 fully depressed)?
