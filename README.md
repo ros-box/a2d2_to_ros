@@ -60,6 +60,7 @@ Available options are listed below. Arguments without default values are require
     * `value`: The value in the JSON file converted to ROS standard units as a [std\_msgs::Float64](http://docs.ros.org/api/std_msgs/html/msg/Float64.html) message
     * `header`: A [std\_msgs::Header](https://docs.ros.org/melodic/api/std_msgs/html/msg/Header.html) message that contains the timestamp of the recorded data
 * The `original_value` and `original_units` topics are not included if the converter is run with `--include-original-values false`
+* The `value` topic is not included if the converter is run with `--include-converted-values false`
 * The message time in the bag file is the same as the timestamp in the header message.
 * Each bag file contains a `/clock` topic that has a [rosgraph\_msgs::Clock](http://docs.ros.org/api/rosgraph_msgs/html/msg/Clock.html) message for each unique timestamp in the data set.
 * The output bag file is given the same basename as the input JSON file.
