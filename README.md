@@ -22,7 +22,9 @@ Example:
 $ rosrun a2d2_to_ros sensor_fusion_bus_signals --schema-path [PATH_TO_PACKAGE]/schemas/sensor_fusion_bus_signal.schema --json-path [PATH_TO_JSON_DATA_FILE]
 ```
 
-With this command a bag file will be generated and saved to wherever the script was run. To get a full list of usage options run with the `--help` flag:
+With this command a bag file will be generated and saved to wherever the script was run.
+
+To get a full list of usage options run with the `--help` flag:
 
 ```
 $ rosrun a2d2_to_ros sensor_fusion_bus_signals --help
