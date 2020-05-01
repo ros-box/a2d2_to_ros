@@ -6,6 +6,19 @@ The idea is that there is an executuable for each sensor modality: camera, lidar
 
 NOTE: Currently, there is only a converter for the [Sensor Fusion > Bus Signal](https://www.a2d2.audi/a2d2/en/download.html) data sets.
 
+## Requirements
+
+This package has the following dependencies in addition to standard ROS dependencies:
+
+* [RapidJSON](https://rapidjson.org/): used to load, parse, and validate the JSON data files
+* [ROS CNPY](https://gitlab.com/MaplessAI/external/ros_cnpy): used to load `.npz` files for lidar data
+
+The ROS CNPY package can be downloaded at the above link, and RapidJSON can be installed with:
+
+```
+$ rosdep install a2d2_to_ros --ignore-src -r -y
+```
+
 ## FAQ
 
 [FAQ.md](FAQ.md) contains common questions about the A2D2 data set.
@@ -14,9 +27,7 @@ NOTE: Currently, there is only a converter for the [Sensor Fusion > Bus Signal](
 
 This converter parses a bus signal data JSON file and outputs the data into a bag file.
 
-### JSON parsing and validation
-
-[RapidJSON](https://rapidjson.org/) is used to load, parse, and validate the JSON data files.
+### JSON validation
 
 A [JSON Schema](http://json-schema.org/) file is provided in [schemas/sensor\_fusion\_bus\_signal.schema](schemas/sensor_fusion_bus_signal.schema) to perform validation.
 
