@@ -89,9 +89,9 @@ int main(int argc, char* argv[]) {
       _PROGRAM_OPTIONS_LINE_LENGTH);
   desc.add_options()("help,h", "Print help and exit.")(
       "schema-path,s", po::value(&schema_path_opt)->required(),
-      "Absolute path to the JSON schema.")(
-      "json-path,j", po::value(&json_path_opt)->required(),
-      "Absolute path to the JSON data set file.")(
+      "Path to the JSON schema.")("json-path,j",
+                                  po::value(&json_path_opt)->required(),
+                                  "Path to the JSON data set file.")(
       "output-path,o", po::value<std::string>()->default_value(_OUTPUT_PATH),
       "Optional: Path for the output bag file.")(
       "bus-frame-name,b",

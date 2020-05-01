@@ -14,38 +14,43 @@ NOTE: Currently, there is only a converter for the [Sensor Fusion > Bus Signal](
 
 This converter parses a bus signal data JSON file and outputs the data into a bag file.
 
+### JSON parsing and validation
+
+[RapidJSON](https://rapidjson.org/) is used to load, parse, and validate the JSON data files.
+
+A [JSON Schema](http://json-schema.org/) file is provided in [schemas/sensor\_fusion\_bus\_signal.schema](schemas/sensor_fusion_bus_signal.schema) to perform validation.
+
 ### Usage
 
-Example:
+An example invocation is given below. For the example, assume the following locations:
+
+* Package: `~/catkin_ws/src/a2d2_to_ros`
+* Data set: `~/data/a2d2/Munich/Bus\ Signals`
 
 ```
-$ rosrun a2d2_to_ros sensor_fusion_bus_signals --schema-path [PATH_TO_PACKAGE]/schemas/sensor_fusion_bus_signal.schema --json-path [PATH_TO_JSON_DATA_FILE]
+$ rosrun a2d2_to_ros sensor_fusion_bus_signals --schema-path ~/catkin_ws/src/a2d2_to_ros/schemas/sensor_fusion_bus_signal.schema --json-path ~/data/a2d2/Munich/Bus\ Signals/camera_lidar/20190401_121727/bus/20190401121727_bus_signals.json
 ```
 
-With this command a bag file will be generated and saved to wherever the script was run.
+This command will create the following bag file:
 
-To get a full list of usage options run with the `--help` flag:
+```
+~/catkin_ws/src/a2d2_to_ros/20190401121727_bus_signals.bag
+```
+
+To get a full list of usage options, run with the `--help` switch:
 
 ```
 $ rosrun a2d2_to_ros sensor_fusion_bus_signals --help
 Convert sequential bus signal data to rosbag for the A2D2 Sensor Fusion data set. See README.md for details.
 Available options are listed below. Arguments without default values are required:
   -h [ --help ]                              Print help and exit.
-  -s [ --schema-path ] arg                   Absolute path to the JSON schema.
-  -j [ --json-path ] arg                     Absolute path to the JSON data set file.
+  -s [ --schema-path ] arg                   Path to the JSON schema.
+  -j [ --json-path ] arg                     Path to the JSON data set file.
   -o [ --output-path ] arg (=.)              Optional: Path for the output bag file.
   -b [ --bus-frame-name ] arg (=bus)         Optional: Frame name to use for bus signals.
   -v [ --include-original-values ] arg (=1)  Optional: Include the original data set values in their original units.
   -r [ --include-converted-values ] arg (=1) Optional: Include data set values converted to ROS standard units.
 ```
-
-
-
-### JSON parsing and validation
-
-[RapidJSON](https://rapidjson.org/) is used to load, parse, and validate the JSON data files.
-
-A [JSON Schema](http://json-schema.org/) file is provided in [schemas/sensor\_fusion\_bus\_signal.schema](schemas/sensor_fusion_bus_signal.schema) to perform validation.
 
 ### Bag file conventions
 
@@ -54,6 +59,7 @@ A [JSON Schema](http://json-schema.org/) file is provided in [schemas/sensor\_fu
     * `original_units`: The units of the original value recorded in the JSON file as a [std\_msgs::String](http://docs.ros.org/api/std_msgs/html/msg/String.html) message (this is published only once per bag file).
     * `value`: The value in the JSON file converted to ROS standard units as a [std\_msgs::Float64](http://docs.ros.org/api/std_msgs/html/msg/Float64.html) message
     * `header`: A [std\_msgs::Header](https://docs.ros.org/melodic/api/std_msgs/html/msg/Header.html) message that contains the timestamp of the recorded data
+* The `original_value` and `original_units` topics are not included if the converter is run with `--include-original-values false`
 * The message time in the bag file is the same as the timestamp in the header message.
 * Each bag file contains a `/clock` topic that has a [rosgraph\_msgs::Clock](http://docs.ros.org/api/rosgraph_msgs/html/msg/Clock.html) message for each unique timestamp in the data set.
 * The output bag file is given the same basename as the input JSON file.
