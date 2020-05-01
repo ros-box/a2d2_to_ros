@@ -24,12 +24,16 @@
 #include <limits>
 #include <set>
 #include <sstream>
+#include <tuple>
 #include <unordered_map>
 
 #include <ros/console.h>
 #include <ros/ros.h>
+#include <rosbag/bag.h>
+#include <rosgraph_msgs/Clock.h>
 #include <std_msgs/Float64.h>
 #include <std_msgs/Header.h>
+#include <std_msgs/String.h>
 
 #include "rapidjson/document.h"
 #include "rapidjson/error/en.h"
@@ -43,9 +47,16 @@
 
 typedef std::set<a2d2_to_ros::DataPair, a2d2_to_ros::DataPairTimeComparator>
     DataPairSet;
-typedef std::unordered_map<std::string, DataPairSet> DataPairMap;
+typedef std::unordered_map<std::string, std::tuple<std::string, DataPairSet>>
+    DataPairMap;
 
 namespace {
+const std::string CLOCK_TOPIC = "/clock";
+const std::string ORIGINAL_VALUE_TOPIC = "original_value";
+const std::string ORIGINAL_UNITS_TOPIC = "original_units";
+const std::string VALUE_TOPIC = "ros_value";
+const std::string HEADER_TOPC = "header";
+
 const std::string OUTPUT_PATH =
     "/home/maeve/data/a2d2/Ingolstadt/Bus "
     "Signals/camera_lidar/20190401_145936/bus/20190401145936_bus_signals.bag";
@@ -142,13 +153,70 @@ int main(int argc, char* argv[]) {
       return EXIT_FAILURE;
     }
 
-    data_map[field_name] = DataPairSet();
+    data_map[field_name] = std::make_tuple("", DataPairSet());
   }
 
-  // get topics (top-level required items in schema)
+  const auto get_units = [](const rapidjson::Value& obj) {
+    if (obj["unit"].IsNull()) {
+      return std::string("null");
+    }
+    return std::string(obj["unit"].GetString());
+  };
 
-  // extract data
+  // get topics (top-level required items in schema)
+  for (const auto& pair : data_map) {
+    const auto name = pair.first.c_str();
+    const rapidjson::Value& obj = d_json[name].GetObject();
+    const auto units = get_units(obj);
+    const rapidjson::Value& values = obj["values"];
+
+    DataPairSet data_set;
+    for (rapidjson::SizeType idx = 0; idx < values.Size(); ++idx) {
+      const rapidjson::Value& t_v = values[idx];
+      const auto time = t_v[static_cast<rapidjson::SizeType>(0)].GetUint64();
+      const auto value = t_v[static_cast<rapidjson::SizeType>(1)].GetDouble();
+      data_set.insert(a2d2_to_ros::DataPair::build(value, time, FRAME_NAME));
+    }
+
+    data_map[pair.first] = std::make_tuple(units, std::move(data_set));
+  }
+
   // write to bag
-  // done
+  rosbag::Bag bag;
+  bag.open("test.bag", rosbag::bagmode::Write);
+  for (const auto& pair : data_map) {
+    ROS_INFO_STREAM("Converting " << pair.first << " data...");
+    const auto& name = pair.first;
+    const auto& units = std::get<0>(pair.second);
+    const auto& data_set = std::get<1>(pair.second);
+    if (data_set.empty()) {
+      continue;
+    }
+
+    const auto units_enum = a2d2_to_ros::get_unit_enum(units);
+    std_msgs::String units_msg;
+    units_msg.data = units;
+    const auto first_time = data_set.begin()->header.stamp;
+    bag.write(name + "/" + ORIGINAL_UNITS_TOPIC, first_time, units_msg);
+    for (const auto& data : data_set) {
+      rosgraph_msgs::Clock clock_msg;
+      clock_msg.clock = data.header.stamp;
+      //      bag.write(CLOCK_TOPIC, data.header.stamp, clock_msg); don't do
+      //      this; collect all unique timestamps into single set, write them
+      //      separately
+      bag.write(name + "/" + HEADER_TOPC, data.header.stamp, data.header);
+      bag.write(name + "/" + ORIGINAL_VALUE_TOPIC, data.header.stamp,
+                data.value);
+
+      const auto ros_value =
+          a2d2_to_ros::to_ros_units(units_enum, data.value.data);
+      std_msgs::Float64 ros_value_msg;
+      ros_value_msg.data = ros_value;
+      bag.write(name + "/" + VALUE_TOPIC, data.header.stamp, ros_value_msg);
+    }
+  }
+
+  bag.close();
+
   return EXIT_SUCCESS;
 }

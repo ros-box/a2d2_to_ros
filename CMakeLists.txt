@@ -21,6 +21,7 @@ find_package(catkin REQUIRED COMPONENTS
   rosbag
   std_msgs
   sensor_msgs
+  rosgraph_msgs
   ros_cnpy
 )
 

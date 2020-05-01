@@ -34,6 +34,7 @@
   <depend>rosbag</depend>
   <depend>std_msgs</depend>
   <depend>sensor_msgs</depend>
+  <depend>rosgraph_msgs</depend>
   <depend>ros_cnpy</depend>
   <depend>rapidjson-dev</depend>
 
