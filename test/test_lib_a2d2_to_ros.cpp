@@ -82,65 +82,6 @@ TEST(A2D2_to_ROS, get_unit_enum) {
 
 //------------------------------------------------------------------------------
 
-TEST(A2D2_to_ROS, validate_unit_value) {
-  EXPECT_FALSE(validate_unit_value(static_cast<Units>(-1), -100.0));
-  EXPECT_FALSE(validate_unit_value(static_cast<Units>(-1), 0.0));
-  EXPECT_FALSE(validate_unit_value(static_cast<Units>(-1), 100.0));
-  EXPECT_FALSE(validate_unit_value(static_cast<Units>(-1), -INF));
-  EXPECT_FALSE(validate_unit_value(static_cast<Units>(-1), INF));
-  EXPECT_FALSE(validate_unit_value(static_cast<Units>(-1), NaN));
-
-  EXPECT_TRUE(validate_unit_value(Units::null, -100.0));
-  EXPECT_TRUE(validate_unit_value(Units::null, 0.0));
-  EXPECT_TRUE(validate_unit_value(Units::null, 100.0));
-  EXPECT_TRUE(validate_unit_value(Units::null, -INF));
-  EXPECT_TRUE(validate_unit_value(Units::null, INF));
-  EXPECT_FALSE(validate_unit_value(Units::null, NaN));
-
-  EXPECT_TRUE(validate_unit_value(Units::Unit_PerCent, 0.0));
-  EXPECT_TRUE(validate_unit_value(Units::Unit_PerCent, 43.0));
-  EXPECT_TRUE(validate_unit_value(Units::Unit_PerCent, 100.0));
-  EXPECT_FALSE(validate_unit_value(Units::Unit_PerCent, -0.1));
-  EXPECT_FALSE(validate_unit_value(Units::Unit_PerCent, 100.01));
-  EXPECT_FALSE(validate_unit_value(Units::Unit_PerCent, NaN));
-
-  EXPECT_TRUE(validate_unit_value(Units::Unit_DegreOfArc, 0.0));
-  EXPECT_TRUE(validate_unit_value(Units::Unit_DegreOfArc, 359.0));
-  EXPECT_TRUE(validate_unit_value(Units::Unit_DegreOfArc, 72.0));
-  EXPECT_FALSE(validate_unit_value(Units::Unit_DegreOfArc, -1.0));
-  EXPECT_FALSE(validate_unit_value(Units::Unit_DegreOfArc, 360.0));
-  EXPECT_FALSE(validate_unit_value(Units::Unit_DegreOfArc, 720.0));
-  EXPECT_FALSE(validate_unit_value(Units::Unit_DegreOfArc, NaN));
-
-  EXPECT_TRUE(validate_unit_value(Units::Unit_Bar, 0.0));
-  EXPECT_TRUE(validate_unit_value(Units::Unit_Bar, 9999999.0));
-  EXPECT_FALSE(validate_unit_value(Units::Unit_Bar, INF));
-  EXPECT_FALSE(validate_unit_value(Units::Unit_Bar, -0.5));
-  EXPECT_FALSE(validate_unit_value(Units::Unit_Bar, NaN));
-
-  EXPECT_TRUE(validate_unit_value(Units::Unit_KiloMeterPerHour, 0.0));
-  EXPECT_TRUE(validate_unit_value(Units::Unit_KiloMeterPerHour, 9999999.0));
-  EXPECT_FALSE(validate_unit_value(Units::Unit_KiloMeterPerHour, INF));
-  EXPECT_FALSE(validate_unit_value(Units::Unit_KiloMeterPerHour, -0.5));
-  EXPECT_FALSE(validate_unit_value(Units::Unit_KiloMeterPerHour, NaN));
-
-  EXPECT_TRUE(validate_unit_value(Units::Unit_MeterPerSeconSquar, -100.0));
-  EXPECT_TRUE(validate_unit_value(Units::Unit_MeterPerSeconSquar, 0.0));
-  EXPECT_TRUE(validate_unit_value(Units::Unit_MeterPerSeconSquar, 100.0));
-  EXPECT_FALSE(validate_unit_value(Units::Unit_MeterPerSeconSquar, -INF));
-  EXPECT_FALSE(validate_unit_value(Units::Unit_MeterPerSeconSquar, INF));
-  EXPECT_FALSE(validate_unit_value(Units::Unit_MeterPerSeconSquar, NaN));
-
-  EXPECT_TRUE(validate_unit_value(Units::Unit_DegreOfArcPerSecon, -100.0));
-  EXPECT_TRUE(validate_unit_value(Units::Unit_DegreOfArcPerSecon, 0.0));
-  EXPECT_TRUE(validate_unit_value(Units::Unit_DegreOfArcPerSecon, 100.0));
-  EXPECT_FALSE(validate_unit_value(Units::Unit_DegreOfArcPerSecon, -INF));
-  EXPECT_FALSE(validate_unit_value(Units::Unit_DegreOfArcPerSecon, INF));
-  EXPECT_FALSE(validate_unit_value(Units::Unit_DegreOfArcPerSecon, NaN));
-}
-
-//------------------------------------------------------------------------------
-
 TEST(A2D2_to_ROS, to_ros_units) {
   const auto deg_to_rad = [](double deg) { return (deg * (M_PI / 180.0)); };
   const auto kph_to_mps = [](double kph) { return (kph * (1000.0 / 60.0)); };
@@ -148,8 +89,6 @@ TEST(A2D2_to_ROS, to_ros_units) {
 
   {
     constexpr auto val = 36.37;
-    ASSERT_TRUE(validate_unit_value(Units::Unit_DegreOfArc, val));
-    ASSERT_TRUE(validate_unit_value(Units::Unit_DegreOfArcPerSecon, val));
     EXPECT_EQ(to_ros_units(Units::Unit_DegreOfArc, val), deg_to_rad(val));
     EXPECT_EQ(to_ros_units(Units::Unit_DegreOfArcPerSecon, val),
               deg_to_rad(val));
@@ -157,21 +96,16 @@ TEST(A2D2_to_ROS, to_ros_units) {
 
   {
     constexpr auto val = 15.0;
-    ASSERT_TRUE(validate_unit_value(Units::Unit_KiloMeterPerHour, val));
     EXPECT_EQ(to_ros_units(Units::Unit_KiloMeterPerHour, val), kph_to_mps(val));
   }
 
   {
     constexpr auto val = 99.1;
-    ASSERT_TRUE(validate_unit_value(Units::Unit_PerCent, val));
     EXPECT_EQ(to_ros_units(Units::Unit_PerCent, val), percent_to_unit(val));
   }
 
   {
     constexpr auto val = 13.05;
-    ASSERT_TRUE(validate_unit_value(Units::null, val));
-    ASSERT_TRUE(validate_unit_value(Units::Unit_Bar, val));
-    ASSERT_TRUE(validate_unit_value(Units::Unit_MeterPerSeconSquar, val));
     EXPECT_EQ(to_ros_units(Units::null, val), val);
     EXPECT_EQ(to_ros_units(Units::Unit_Bar, val), val);
     EXPECT_EQ(to_ros_units(Units::Unit_MeterPerSeconSquar, val), val);
