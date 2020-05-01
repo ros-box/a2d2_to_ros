@@ -84,7 +84,9 @@ TEST(A2D2_to_ROS, get_unit_enum) {
 
 TEST(A2D2_to_ROS, to_ros_units) {
   const auto deg_to_rad = [](double deg) { return (deg * (M_PI / 180.0)); };
-  const auto kph_to_mps = [](double kph) { return (kph * (1000.0 / 60.0)); };
+  const auto kph_to_mps = [](double kph) {
+    return (kph * (1000.0 / (60.0 * 60.0)));
+  };
   const auto percent_to_unit = [](double percent) { return (percent / 100.0); };
 
   {
