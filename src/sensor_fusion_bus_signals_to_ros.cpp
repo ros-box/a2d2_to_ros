@@ -27,6 +27,10 @@
 #include <tuple>
 #include <unordered_map>
 
+#include <boost/filesystem/convenience.hpp>  // TODO(jeff): use std::filesystem in C++17
+#include <boost/optional.hpp>
+#include <boost/program_options.hpp>
+
 #include <ros/console.h>
 #include <ros/ros.h>
 #include <rosbag/bag.h>
@@ -51,33 +55,86 @@ typedef std::unordered_map<std::string, std::tuple<std::string, DataPairSet>>
     DataPairMap;
 
 namespace {
-const std::string CLOCK_TOPIC = "/clock";
-const std::string ORIGINAL_VALUE_TOPIC = "original_value";
-const std::string ORIGINAL_UNITS_TOPIC = "original_units";
-const std::string VALUE_TOPIC = "ros_value";
-const std::string HEADER_TOPC = "header";
-
-const std::string OUTPUT_PATH =
-    "/home/maeve/data/a2d2/Ingolstadt/Bus "
-    "Signals/camera_lidar/20190401_145936/bus/20190401145936_bus_signals.bag";
-const std::string SCHEMA_PATH =
-    "/home/maeve/catkin_ws/src/a2d2_to_ros/schemas/"
-    "sensor_fusion_bus_signal.schema";
-const std::string JSON_PATH =
-    "/home/maeve/data/a2d2/Ingolstadt/Bus "
-    "Signals/camera_lidar/20190401_145936/bus/20190401145936_bus_signals.json";
-const std::string FRAME_NAME = "bus";
+namespace po = boost::program_options;
 }  // namespace
 
+static constexpr auto _PROGRAM_OPTIONS_LINE_LENGTH = 120u;
+static constexpr auto _INCLUDE_ORIGINAL = true;
+static constexpr auto _INCLUDE_CONVERTED = true;
+static constexpr auto _CLOCK_TOPIC = "/clock";
+static constexpr auto _BUS_FRAME_NAME = "bus";
+static constexpr auto _OUTPUT_PATH = ".";
+static constexpr auto _DATASET_NAMESPACE = "/a2d2";
+static constexpr auto _ORIGINAL_VALUE_TOPIC = "original_value";
+static constexpr auto _ORIGINAL_UNITS_TOPIC = "original_units";
+static constexpr auto _VALUE_TOPIC = "value";
+static constexpr auto _HEADER_TOPC = "header";
+
 int main(int argc, char* argv[]) {
+  // Command line arguments
+  boost::optional<std::string> schema_path_opt;
+  boost::optional<std::string> json_path_opt;
+
+  po::options_description desc(
+      "Convert sequential bus signal data to rosbag for the A2D2 Sensor Fusion "
+      "data set. See README.md for details.\nAvailable options are listed "
+      "below. Arguments without default values are required",
+      _PROGRAM_OPTIONS_LINE_LENGTH);
+  desc.add_options()("help,h", "Print help and exit.")(
+      "schema-path,s", po::value(&schema_path_opt)->required(),
+      "Absolute path to the JSON schema.")(
+      "json-path,j", po::value(&json_path_opt)->required(),
+      "Absolute path to the JSON data set file.")(
+      "output-path,o", po::value<std::string>()->default_value(_OUTPUT_PATH),
+      "Optional: Path for the output bag file.")(
+      "bus-frame-name,b",
+      po::value<std::string>()->default_value(_BUS_FRAME_NAME),
+      "Optional: Frame name to use for bus signals.")(
+      "include-original-values,v",
+      po::value<bool>()->default_value(_INCLUDE_ORIGINAL),
+      "Optional: Include the original data set values in their original "
+      "units.")(
+      "include-converted-values,r",
+      po::value<bool>()->default_value(_INCLUDE_CONVERTED),
+      "Optional: Include data set values converted to ROS standard units.");
+
+  po::variables_map vm;
+  po::store(po::parse_command_line(argc, argv, desc), vm);
+
+  const auto help_requested = vm.count("help");
+  if (help_requested) {
+    std::cout << desc << "\n";
+    return EXIT_SUCCESS;
+  }
+
+  try {
+    po::notify(vm);
+  } catch (boost::program_options::required_option& e) {
+    std::cerr << "Ensure that all required options are specified: " << e.what()
+              << "\n\n";
+    std::cerr << desc << "\n";
+    return EXIT_FAILURE;
+  }
+
+  const auto schema_path = *schema_path_opt;
+  const auto json_path = *json_path_opt;
+  const auto output_path = vm["output-path"].as<std::string>();
+  const auto include_original = vm["include-original-values"].as<bool>();
+  const auto include_converted = vm["include-converted-values"].as<bool>();
+  const auto bus_frame_name = vm["bus-frame-name"].as<std::string>();
+
+  const auto file_basename = boost::filesystem::basename(json_path);
+  const auto topic_prefix =
+      (std::string(_DATASET_NAMESPACE) + "/" + file_basename);
+
   // parse schema
   rapidjson::Document d_schema;
   {
     // get schema file string
     const auto schema_string =
-        a2d2_to_ros::get_json_file_as_string(SCHEMA_PATH);
+        a2d2_to_ros::get_json_file_as_string(schema_path);
     if (schema_string.empty()) {
-      ROS_FATAL_STREAM("'" << SCHEMA_PATH << "' failed to open or is empty.");
+      ROS_FATAL_STREAM("'" << schema_path << "' failed to open or is empty.");
       return EXIT_FAILURE;
     }
 
@@ -95,9 +152,9 @@ int main(int argc, char* argv[]) {
   rapidjson::Document d_json;
   {
     // get json file string
-    const auto json_string = a2d2_to_ros::get_json_file_as_string(JSON_PATH);
+    const auto json_string = a2d2_to_ros::get_json_file_as_string(json_path);
     if (json_string.empty()) {
-      ROS_FATAL_STREAM("'" << JSON_PATH << "' failed to open or is empty.");
+      ROS_FATAL_STREAM("'" << json_path << "' failed to open or is empty.");
       return EXIT_FAILURE;
     }
 
@@ -175,7 +232,8 @@ int main(int argc, char* argv[]) {
       const rapidjson::Value& t_v = values[idx];
       const auto time = t_v[static_cast<rapidjson::SizeType>(0)].GetUint64();
       const auto value = t_v[static_cast<rapidjson::SizeType>(1)].GetDouble();
-      data_set.insert(a2d2_to_ros::DataPair::build(value, time, FRAME_NAME));
+      data_set.insert(
+          a2d2_to_ros::DataPair::build(value, time, bus_frame_name));
     }
 
     data_map[pair.first] = std::make_tuple(units, std::move(data_set));
@@ -183,7 +241,8 @@ int main(int argc, char* argv[]) {
 
   // write to bag
   rosbag::Bag bag;
-  bag.open("test.bag", rosbag::bagmode::Write);
+  std::set<ros::Time> stamps;
+  bag.open(output_path + "/" + file_basename + ".bag", rosbag::bagmode::Write);
   for (const auto& pair : data_map) {
     ROS_INFO_STREAM("Converting " << pair.first << " data...");
     const auto& name = pair.first;
@@ -197,23 +256,34 @@ int main(int argc, char* argv[]) {
     std_msgs::String units_msg;
     units_msg.data = units;
     const auto first_time = data_set.begin()->header.stamp;
-    bag.write(name + "/" + ORIGINAL_UNITS_TOPIC, first_time, units_msg);
-    for (const auto& data : data_set) {
-      rosgraph_msgs::Clock clock_msg;
-      clock_msg.clock = data.header.stamp;
-      //      bag.write(CLOCK_TOPIC, data.header.stamp, clock_msg); don't do
-      //      this; collect all unique timestamps into single set, write them
-      //      separately
-      bag.write(name + "/" + HEADER_TOPC, data.header.stamp, data.header);
-      bag.write(name + "/" + ORIGINAL_VALUE_TOPIC, data.header.stamp,
-                data.value);
-
-      const auto ros_value =
-          a2d2_to_ros::to_ros_units(units_enum, data.value.data);
-      std_msgs::Float64 ros_value_msg;
-      ros_value_msg.data = ros_value;
-      bag.write(name + "/" + VALUE_TOPIC, data.header.stamp, ros_value_msg);
+    if (include_original) {
+      bag.write(topic_prefix + "/" + name + "/" + _ORIGINAL_UNITS_TOPIC,
+                first_time, units_msg);
     }
+    for (const auto& data : data_set) {
+      const auto& stamp = data.header.stamp;
+      stamps.insert(stamp);
+      bag.write(topic_prefix + "/" + name + "/" + _HEADER_TOPC, stamp,
+                data.header);
+      if (include_original) {
+        bag.write(topic_prefix + "/" + name + "/" + _ORIGINAL_VALUE_TOPIC,
+                  stamp, data.value);
+      }
+      if (include_converted) {
+        const auto ros_value =
+            a2d2_to_ros::to_ros_units(units_enum, data.value.data);
+        std_msgs::Float64 ros_value_msg;
+        ros_value_msg.data = ros_value;
+        bag.write(topic_prefix + "/" + name + "/" + _VALUE_TOPIC, stamp,
+                  ros_value_msg);
+      }
+    }
+  }
+
+  for (const auto& stamp : stamps) {
+    rosgraph_msgs::Clock clock_msg;
+    clock_msg.clock = stamp;
+    bag.write(_CLOCK_TOPIC, stamp, clock_msg);
   }
 
   bag.close();

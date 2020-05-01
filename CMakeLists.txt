@@ -27,6 +27,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 ## System dependencies are found with CMake's conventions
 find_package(RapidJSON REQUIRED)
+find_package(Boost REQUIRED COMPONENTS system)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -130,6 +131,7 @@ catkin_package(
 include_directories(
  include
  ${catkin_INCLUDE_DIRS}
+ ${Boost_INCLUDE_DIRS}
  ${RapidJSON_INCLUDE_DIRS}
 )
 
@@ -137,6 +139,7 @@ include_directories(
 add_library(${PROJECT_NAME} src/${PROJECT_NAME}/lib_a2d2_to_ros.cpp)
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
   ${RapidJSON_LIBRARIES}
 )
 
@@ -166,6 +169,7 @@ set_target_properties(${PROJECT_NAME}_sensor_fusion_bus_signals
 target_link_libraries(${PROJECT_NAME}_sensor_fusion_bus_signals
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
   ${RapidJSON_LIBRARIES}
 )
 
