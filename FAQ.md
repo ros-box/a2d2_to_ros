@@ -26,7 +26,7 @@ Answers, where available, are given directly below the questions. If a question 
 
 1. What are the `distance_pulse_*` fields and what do the values represent?
 1. What are the `latitude_direction` and `longitude_direction` fields and what do the values represent?
-1. What are the conventions for the `steering_angle_calculated` values (i.e., what are the min/max and what is centered)?
+1. What are the conventions for the `steering_angle_calculated` values (i.e., what are min and max, and what is centered)?
 1. What are the conventions for the `*_sign` fields (e.g., does it follow [std::signbit](https://www.cplusplus.com/reference/cmath/signbit/) conventions)?
 1. Is `vehicle_speed` allowed to be negative? If not, how is driving in reverse indicated, or is it guaranteed that the vehicle never drives in reverse?
 1. What is the convention for `accelerator_pedal` percent values (i.e., is 0 or 100 fully depressed)?
