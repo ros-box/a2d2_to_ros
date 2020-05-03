@@ -257,7 +257,6 @@ int main(int argc, char* argv[]) {
     const rapidjson::Value& obj = d_json[name.c_str()].GetObject();
     const rapidjson::Value& values = obj["values"];
     const auto units = obj["unit"].IsNull() ? "null" : obj["unit"].GetString();
-    const auto units_enum = a2d2_to_ros::get_unit_enum(units);
 
     // if original data is included, publish the units
     if (include_original) {
@@ -300,7 +299,7 @@ int main(int argc, char* argv[]) {
       }
       if (include_converted) {
         const auto ros_value =
-            a2d2_to_ros::to_ros_units(units_enum, data.value.data);
+            a2d2_to_ros::to_ros_units(units, data.value.data);
         std_msgs::Float64 ros_value_msg;
         ros_value_msg.data = ros_value;
         bag.write(topic_prefix + "/" + name + "/" + _VALUE_TOPIC, stamp,

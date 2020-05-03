@@ -109,12 +109,6 @@ enum class Units {
 };
 
 /**
- * @brief Print name of Units
- * @note This function has no test coverage.
- */
-std::ostream& operator<<(std::ostream& os, Units u);
-
-/**
  * @brief Convert a string unit name to enum.
  * @return An enum value of the string or UNKNOWN if no match is found.
  */
@@ -130,7 +124,8 @@ Units get_unit_enum(const std::string& unit_name);
  * value is undefined if pre-condition is not satisfied.
  */
 template <typename T>
-T to_ros_units(Units u, const T& val) {
+T to_ros_units(const std::string& unit_name, const T& val) {
+  const auto u = get_unit_enum(unit_name);
   switch (u) {
     case Units::Unit_DegreOfArc:
     case Units::Unit_DegreOfArcPerSecon:
@@ -148,8 +143,8 @@ T to_ros_units(Units u, const T& val) {
       return val;
       break;
     default:
-      X_ERROR("Unrecognized unit enum value '"
-              << u << "', cannot convert. Returning NaN.");
+      X_ERROR("Unrecognized units name '"
+              << unit_name << "', cannot convert. Returning NaN.");
       return std::numeric_limits<T>::quiet_NaN();
       break;
   }

@@ -91,31 +91,30 @@ TEST(A2D2_to_ROS, to_ros_units) {
 
   {
     constexpr auto val = 36.37;
-    EXPECT_EQ(to_ros_units(Units::Unit_DegreOfArc, val), deg_to_rad(val));
-    EXPECT_EQ(to_ros_units(Units::Unit_DegreOfArcPerSecon, val),
-              deg_to_rad(val));
+    EXPECT_EQ(to_ros_units("Unit_DegreOfArc", val), deg_to_rad(val));
+    EXPECT_EQ(to_ros_units("Unit_DegreOfArcPerSecon", val), deg_to_rad(val));
   }
 
   {
     constexpr auto val = 15.0;
-    EXPECT_EQ(to_ros_units(Units::Unit_KiloMeterPerHour, val), kph_to_mps(val));
+    EXPECT_EQ(to_ros_units("Unit_KiloMeterPerHour", val), kph_to_mps(val));
   }
 
   {
     constexpr auto val = 99.1;
-    EXPECT_EQ(to_ros_units(Units::Unit_PerCent, val), percent_to_unit(val));
+    EXPECT_EQ(to_ros_units("Unit_PerCent", val), percent_to_unit(val));
   }
 
   {
     constexpr auto val = 13.05;
-    EXPECT_EQ(to_ros_units(Units::null, val), val);
-    EXPECT_EQ(to_ros_units(Units::Unit_Bar, val), val);
-    EXPECT_EQ(to_ros_units(Units::Unit_MeterPerSeconSquar, val), val);
+    EXPECT_EQ(to_ros_units("null", val), val);
+    EXPECT_EQ(to_ros_units("Unit_Bar", val), val);
+    EXPECT_EQ(to_ros_units("Unit_MeterPerSeconSquar", val), val);
   }
 
   {
     constexpr auto val = 0.0;
-    const auto ros_units = to_ros_units(Units::UNKNOWN, val);
+    const auto ros_units = to_ros_units("UNKNOWN", val);
     EXPECT_TRUE(std::isnan(ros_units));
   }
 }
