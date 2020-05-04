@@ -14,6 +14,7 @@ Answers, where available, are given directly below the questions. If a question 
 
 1. Are all timestamps Unix Epoch time with microsecond units?
 1. What is the precision of real-valued data (e.g., 32-bit, 64-bit, etc.)?
+1. Are the labeled data a subset of the unlabeled data, or are they different sets?
 
 ## Frame conventions
 
