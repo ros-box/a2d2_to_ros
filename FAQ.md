@@ -34,10 +34,11 @@ Answers, where available, are given directly below the questions. If a question 
 
 ## Sensor fusion lidar data
 
-1. What are the following lidar fields:
+1. What are the following lidar fields and what are their units:
     1. `pcloud_attr.rectime`?
     1. `pcloud_attr.boundary`?
     1. `pcloud_attr.valid`?
+1. What are the units for `pcloud_attr.reflectance`? The values seems to be integral.
 
 ## Semantic segmentation bus signal data
 
