@@ -61,7 +61,7 @@ int main(int argc, char* argv[]) {
       _PROGRAM_OPTIONS_LINE_LENGTH);
   desc.add_options()("help,h", "Print help and exit.")(
       "data-path,d", po::value(&data_path_opt)->required(),
-      "Path to the lidar data file.")(
+      "Path to the lidar data files.")(
       "output-path,o", po::value<std::string>()->default_value(_OUTPUT_PATH),
       "Optional: Path for the output bag file.");
 
