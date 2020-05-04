@@ -139,8 +139,6 @@ include_directories(
 add_library(${PROJECT_NAME} src/${PROJECT_NAME}/lib_a2d2_to_ros.cpp)
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-  ${RapidJSON_LIBRARIES}
 )
 
 ## Add cmake target dependencies of the library
