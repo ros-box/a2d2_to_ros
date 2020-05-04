@@ -90,7 +90,11 @@ int main(int argc, char* argv[]) {
   const auto data_path = *data_path_opt;
   const auto output_path = vm["output-path"].as<std::string>();
 
-  const auto file_basename = boost::filesystem::basename(data_path);
+  boost::filesystem::path d(data_path);
+  const auto timestamp = d.parent_path().parent_path().filename().string();
+
+  const auto file_basename =
+      (timestamp + "_" + boost::filesystem::basename(data_path));
   const auto topic_prefix =
       (std::string(_DATASET_NAMESPACE) + "/" + file_basename);
 
