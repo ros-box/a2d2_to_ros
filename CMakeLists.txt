@@ -151,6 +151,8 @@ target_link_libraries(${PROJECT_NAME}
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(${PROJECT_NAME}_sensor_fusion_bus_signals
   src/sensor_fusion_bus_signals_to_ros.cpp)
+add_executable(${PROJECT_NAME}_sensor_fusion_lidar
+  src/sensor_fusion_lidar_to_ros.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -158,6 +160,8 @@ add_executable(${PROJECT_NAME}_sensor_fusion_bus_signals
 ## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
 set_target_properties(${PROJECT_NAME}_sensor_fusion_bus_signals
   PROPERTIES OUTPUT_NAME sensor_fusion_bus_signals PREFIX "")
+set_target_properties(${PROJECT_NAME}_sensor_fusion_lidar
+  PROPERTIES OUTPUT_NAME sensor_fusion_lidar PREFIX "")
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -169,6 +173,11 @@ target_link_libraries(${PROJECT_NAME}_sensor_fusion_bus_signals
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
   ${RapidJSON_LIBRARIES}
+)
+target_link_libraries(${PROJECT_NAME}_sensor_fusion_lidar
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
 )
 
 #############
