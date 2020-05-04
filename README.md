@@ -36,10 +36,10 @@ A [JSON Schema](http://json-schema.org/) file is provided in [schemas/sensor\_fu
 An example invocation is given below. For the example, assume the following locations:
 
 * Package: `~/catkin_ws/src/a2d2_to_ros`
-* Data set: `~/data/a2d2/Munich/Bus\ Signals`
+* Data set: `~/data/a2d2/Munich`
 
 ```
-$ rosrun a2d2_to_ros sensor_fusion_bus_signals --schema-path ~/catkin_ws/src/a2d2_to_ros/schemas/sensor_fusion_bus_signal.schema --json-path ~/data/a2d2/Munich/Bus\ Signals/camera_lidar/20190401_121727/bus/20190401121727_bus_signals.json
+$ rosrun a2d2_to_ros sensor_fusion_bus_signals --schema-path ~/catkin_ws/src/a2d2_to_ros/schemas/sensor_fusion_bus_signal.schema --json-path ~/data/a2d2/Munich/camera_lidar/20190401_121727/bus/20190401121727_bus_signals.json
 ```
 
 This command will create the following bag file:
