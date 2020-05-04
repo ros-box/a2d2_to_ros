@@ -32,6 +32,13 @@ Answers, where available, are given directly below the questions. If a question 
 1. Is `vehicle_speed` allowed to be negative? If not, how is driving in reverse indicated, or is it guaranteed that the vehicle never drives in reverse?
 1. What is the convention for `accelerator_pedal` percent values (i.e., is 0 or 100 fully depressed)?
 
+## Sensor fusion lidar data
+
+1. What are the following lidar fields:
+    1. `pcloud_attr.rectime`?
+    1. `pcloud_attr.boundary`?
+    1. `pcloud_attr.valid`?
+
 ## Semantic segmentation bus signal data
 
 1. What is the `driving_direction` field and what do the values represent?
