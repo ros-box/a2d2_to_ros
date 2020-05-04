@@ -248,7 +248,8 @@ int main(int argc, char* argv[]) {
 
   rosbag::Bag bag;
   std::set<ros::Time> stamps;
-  bag.open(output_path + "/" + file_basename + ".bag", rosbag::bagmode::Write);
+  const auto bag_name = output_path + "/" + file_basename + ".bag";
+  bag.open(bag_name, rosbag::bagmode::Write);
   const rapidjson::Value& r = d_schema["required"];
   for (rapidjson::SizeType idx = 0; idx < r.Size(); ++idx) {
     const auto name = std::string(r[idx].GetString());
