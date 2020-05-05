@@ -37,16 +37,52 @@
 
 #define _USE_MATH_DEFINES
 #include <cmath>
+
+#include <array>
 #include <cstdint>
 #include <iostream>
 #include <limits>
+#include <map>
 #include <sstream>
 #include <string>
 
 #include <std_msgs/Float64.h>
 #include <std_msgs/Header.h>
+#include "ros_cnpy/cnpy.h"
 
 namespace a2d2_to_ros {
+namespace lidar {
+constexpr auto POINTS_IDX = 0;
+constexpr auto AZIMUTH_IDX = 1;
+constexpr auto BOUNDARY_IDX = 2;
+constexpr auto COL_IDX = 3;
+constexpr auto DEPTH_IDX = 4;
+constexpr auto DISTANCE_IDX = 5;
+constexpr auto ID_IDX = 6;
+constexpr auto RECTIME_IDX = 7;
+constexpr auto REFLECTANCE_IDX = 8;
+constexpr auto ROW_IDX = 9;
+constexpr auto TIMESTAMP_IDX = 10;
+constexpr auto VALID_DIX = 11;
+
+constexpr auto ROW_SHAPE_IDX = 0;
+constexpr auto COL_SHAPE_IDX = 1;
+}  // namespace lidar
+
+/**
+ * @briefGet a list of expected field names for npz lidar data.
+ * @note This function has no test coverage.
+ */
+std::array<std::string, 12> get_npz_fields();
+
+/**
+ * @brief Check that lidar npz data has expected structure.
+ * @note This function has no test coverage.
+ * @return true iff the npz has exactly the fields from get_npz_fields, and if
+ * the point field is M x 3 in size and all other fields are M x 1 in size,
+ * where 'M' is defined as the row count of the points field.
+ */
+bool verify_npz_structure(const std::map<std::string, cnpy::NpyArray>& npz);
 
 /** @brief Convenience storage for timestamp/value pair. */
 struct DataPair {

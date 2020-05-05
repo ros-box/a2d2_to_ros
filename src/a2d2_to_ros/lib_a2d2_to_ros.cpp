@@ -23,6 +23,7 @@
  */
 #include "a2d2_to_ros/lib_a2d2_to_ros.hpp"
 
+#include <array>
 #include <cstdint>
 #include <fstream>
 #include <limits>
@@ -32,6 +33,89 @@ static constexpr auto ONE_THOUSAND = static_cast<uint64_t>(1000);
 static constexpr auto ONE_MILLION = static_cast<uint64_t>(1000000);
 
 namespace a2d2_to_ros {
+
+//------------------------------------------------------------------------------
+
+std::array<std::string, 12> get_npz_fields() {
+  return {"pcloud_points",           "pcloud_attr.azimuth",
+          "pcloud_attr.boundary",    "pcloud_attr.col",
+          "pcloud_attr.depth",       "pcloud_attr.distance",
+          "pcloud_attr.lidar_id",    "pcloud_attr.rectime",
+          "pcloud_attr.reflectance", "pcloud_attr.row",
+          "pcloud_attr.timestamp",   "pcloud_attr.valid"};
+}
+
+//------------------------------------------------------------------------------
+
+bool verify_npz_structure(const std::map<std::string, cnpy::NpyArray>& npz) {
+  ///
+  /// Make sure all required fields are there
+  ///
+
+  const auto fields = get_npz_fields();
+  if (npz.size() != fields.size()) {
+    X_ERROR("Expected npz to have " << fields.size() << " fields, but it has "
+                                    << npz.size());
+    return false;
+  }
+
+  for (const auto& f : fields) {
+    if (npz.find(f) == std::end(npz)) {
+      X_ERROR("Expected npz to have field '" << f << "', but it does not.");
+      return false;
+    }
+  }
+
+  ///
+  /// Make sure all fields have expected shape
+  ///
+
+  const auto points_field_name = fields[lidar::POINTS_IDX];
+
+  // this cannot throw if the fields check passes
+  const auto& points_shape = npz.at(points_field_name).shape;
+
+  if (points_shape.size() != 2) {
+    X_ERROR("Points array must have exactly two dimensions. Instead it has "
+            << points_shape.size());
+    return false;
+  }
+
+  if (points_shape[lidar::COL_SHAPE_IDX] != 3) {
+    X_ERROR(
+        "Points in the points array must have three dimensions. Instead they "
+        "have "
+        << points_shape[COL_DIM]);
+    return false;
+  }
+
+  for (const auto& p : npz) {
+    const auto& field = p.first;
+    // this one is already checked
+    if (field == points_field_name) {
+      continue;
+    }
+
+    // this cannot throw if the fields check passes
+    const auto& shape = npz.at(field).shape;
+
+    if (shape.size() != 1) {
+      X_ERROR(
+          "Expected " << field
+                      << " data to have exactly one dimension. Instead it has "
+                      << shape.size());
+      return false;
+    }
+
+    if (shape[lidar::ROW_SHAPE_IDX] != points_shape[lidar::ROW_SHAPE_IDX]) {
+      X_ERROR("Expected " << field << " to have exactly " << points_shape[0]
+                          << " rows. Instead it has " << shape[ROW_DIM]);
+      return false;
+    }
+  }
+
+  return true;
+}
 
 //------------------------------------------------------------------------------
 
