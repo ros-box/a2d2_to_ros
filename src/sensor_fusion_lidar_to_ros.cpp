@@ -21,6 +21,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
+#include <set>
+
 #include <boost/filesystem/convenience.hpp>  // TODO(jeff): use std::filesystem in C++17
 #include <boost/optional.hpp>
 #include <boost/program_options.hpp>
@@ -34,6 +36,7 @@
 // uncomment this define to log warnings and errors
 #define _ENABLE_A2D2_ROS_LOGGING_
 #include "a2d2_to_ros/lib_a2d2_to_ros.hpp"
+#include "ros_cnpy/cnpy.h"
 
 ///
 /// Program constants and defaults.
@@ -43,6 +46,7 @@ static constexpr auto _PROGRAM_OPTIONS_LINE_LENGTH = 120u;
 static constexpr auto _CLOCK_TOPIC = "/clock";
 static constexpr auto _OUTPUT_PATH = ".";
 static constexpr auto _DATASET_NAMESPACE = "/a2d2";
+static constexpr auto _INCLUDE_DEPTH_MAP = false;
 
 namespace {
 namespace po = boost::program_options;
@@ -63,7 +67,10 @@ int main(int argc, char* argv[]) {
       "data-path,d", po::value(&data_path_opt)->required(),
       "Path to the lidar data files.")(
       "output-path,o", po::value<std::string>()->default_value(_OUTPUT_PATH),
-      "Optional: Path for the output bag file.");
+      "Optional: Path for the output bag file.")(
+      "include-depth-map,m",
+      po::value<bool>()->default_value(_INCLUDE_DEPTH_MAP),
+      "Optional: Publish a depth map version of the lidar data.");
 
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -89,6 +96,7 @@ int main(int argc, char* argv[]) {
 
   const auto data_path = *data_path_opt;
   const auto output_path = vm["output-path"].as<std::string>();
+  const auto include_depth_map = vm["include-depth-map"].as<bool>();
 
   boost::filesystem::path d(data_path);
   const auto timestamp = d.parent_path().parent_path().filename().string();
@@ -99,13 +107,62 @@ int main(int argc, char* argv[]) {
       (std::string(_DATASET_NAMESPACE) + "/" + file_basename);
 
   ///
-  /// Convert lidar data to PointCloud messages
+  /// Get list of .npz file names
   ///
+
+  std::set<std::string> files;
+  boost::filesystem::directory_iterator it{d};
+  while (it != boost::filesystem::directory_iterator{}) {
+    const auto path = it->path().string();
+    const auto extension = it->path().extension().string();
+    ++it;
+    if (extension != ".npz") {
+      continue;
+    }
+    files.insert(path);
+  }
+
+  ///
+  /// Load each npz file, convert to PointCloud2 message, write to bag
+  ///
+
+  rosbag::Bag bag;
   const auto bag_name = output_path + "/" + file_basename + ".bag";
+  bag.open(bag_name, rosbag::bagmode::Write);
+  for (const auto& f : files) {
+    cnpy::npz_t npz;
+    try {
+      npz = cnpy::npz_load(f);
+    } catch (const std::exception& e) {
+      ROS_FATAL_STREAM(e.what());
+      return EXIT_FAILURE;
+    }
 
-  std::cout << "input: " << data_path << std::endl;
-  std::cout << "output: " << bag_name << std::endl;
+    const auto& points = npz["pcloud_points"];
+    const auto& azimuth = npz["pcloud_attr.azimuth"];
+    const auto& boundary = npz["pcloud_attr.boundary"];
+    const auto& col = npz["pcloud_attr.col"];
+    const auto& depth = npz["pcloud_attr.depth"];
+    const auto& distance = npz["pcloud_attr.distance"];
+    const auto& lidar_id = npz["pcloud_attr.lidar_id"];
+    const auto& rectime = npz["pcloud_attr.rectime"];
+    const auto& reflectance = npz["pcloud_attr.reflectance"];
+    const auto& row = npz["pcloud_attr.row"];
+    const auto& timestamp = npz["pcloud_attr.timestamp"];
+    const auto& valid = npz["pcloud_attr.valid"];
 
-  // bag.close();
+    for (auto r = 0; r < points.shape[0]; ++r) {
+      const auto data = points.data<double>();
+      for (auto c = 0; c < points.shape[1]; ++c) {
+        const auto idx = a2d2_to_ros::flatten_2d_index(points.shape[1], r, c);
+        std::cout << data[idx] << ", ";
+      }
+      std::cout << std::endl;
+    }
+
+    break;
+  }
+
+  bag.close();
   return EXIT_SUCCESS;
 }
