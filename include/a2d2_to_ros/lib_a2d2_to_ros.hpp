@@ -71,8 +71,14 @@ constexpr auto ROW_SHAPE_IDX = 0;
 constexpr auto COL_SHAPE_IDX = 1;
 }  // namespace lidar
 
-sensor_msgs::PointCloud2 initialize_pc2_msg_no_header(
-    bool is_dense, const uint32_t num_points);
+/**
+ * @brief Build a PointCloud2 message for storing points from a single npz file.
+ * @return A property configured and sized, but uninitialized, PointCloud2
+ * message object.
+ */
+sensor_msgs::PointCloud2 build_pc2_msg(std::string frame, ros::Time timestamp,
+                                       bool is_dense,
+                                       const uint32_t num_points);
 
 /**
  * @brief Get the frame of the data from its filename.

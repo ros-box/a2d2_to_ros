@@ -38,9 +38,13 @@ namespace a2d2_to_ros {
 
 //------------------------------------------------------------------------------
 
-sensor_msgs::PointCloud2 initialize_pc2_msg_no_header(
-    bool is_dense, const uint32_t num_points) {
+sensor_msgs::PointCloud2 build_pc2_msg(std::string frame, ros::Time timestamp,
+                                       bool is_dense,
+                                       const uint32_t num_points) {
   sensor_msgs::PointCloud2 msg;
+  msg.header.seq = static_cast<uint32_t>(0);
+  msg.header.stamp = timestamp;
+  msg.header.frame_id = std::move(frame);
   msg.height = static_cast<uint32_t>(1);
   msg.width = num_points;
 
