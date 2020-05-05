@@ -41,6 +41,59 @@ namespace a2d2_to_ros {
 
 //------------------------------------------------------------------------------
 
+TEST(A2D2_to_ROS, flatten_2d_index) {
+  /**
+   * 0  1  2  3  4
+   * 5  6  7  8  9
+   * 10 11 12 13 14
+   */
+  constexpr auto WIDTH = 5;
+
+  {
+    constexpr auto idx = 8;
+    constexpr auto row = 1;
+    constexpr auto col = 3;
+    EXPECT_EQ(idx, flatten_2d_index(WIDTH, row, col));
+  }
+
+  {
+    constexpr auto idx = 11;
+    constexpr auto row = 2;
+    constexpr auto col = 1;
+    EXPECT_EQ(idx, flatten_2d_index(WIDTH, row, col));
+  }
+
+  {
+    constexpr auto idx = 0;
+    constexpr auto row = 0;
+    constexpr auto col = 0;
+    EXPECT_EQ(idx, flatten_2d_index(WIDTH, row, col));
+  }
+
+  {
+    constexpr auto idx = 14;
+    constexpr auto row = 2;
+    constexpr auto col = 4;
+    EXPECT_EQ(idx, flatten_2d_index(WIDTH, row, col));
+  }
+
+  {
+    constexpr auto idx = 5;
+    constexpr auto row = 1;
+    constexpr auto col = 0;
+    EXPECT_EQ(idx, flatten_2d_index(WIDTH, row, col));
+  }
+
+  {
+    constexpr auto idx = 1;
+    constexpr auto row = 0;
+    constexpr auto col = 1;
+    EXPECT_EQ(idx, flatten_2d_index(WIDTH, row, col));
+  }
+}
+
+//------------------------------------------------------------------------------
+
 TEST(A2D2_to_ROS, a2d2_timestamp_to_ros_time) {
   constexpr auto TIME = static_cast<uint64_t>(1554122338652775);
   const auto ros_time = a2d2_timestamp_to_ros_time(TIME);
