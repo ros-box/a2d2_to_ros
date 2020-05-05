@@ -46,6 +46,8 @@
 #include <sstream>
 #include <string>
 
+#include <sensor_msgs/PointCloud2.h>
+#include <sensor_msgs/point_cloud2_iterator.h>
 #include <std_msgs/Float64.h>
 #include <std_msgs/Header.h>
 #include "ros_cnpy/cnpy.h"
@@ -68,6 +70,32 @@ constexpr auto VALID_DIX = 11;
 constexpr auto ROW_SHAPE_IDX = 0;
 constexpr auto COL_SHAPE_IDX = 1;
 }  // namespace lidar
+
+sensor_msgs::PointCloud2 initialize_pc2_msg_no_header(
+    bool is_dense, const uint32_t num_points);
+
+/**
+ * @brief Test whether int64_t data is all non-negative.
+ * @note This function has no test coverage.
+ * @pre template parameter T must match the underlying data type.
+ */
+template <typename T>
+bool all_non_negative(const cnpy::NpyArray& field) {
+  auto good = true;
+  const auto vals = field.data<T>();
+  for (auto i = 0; i < field.shape[lidar::ROW_SHAPE_IDX]; ++i) {
+    const auto is_non_negative = (vals[i] >= static_cast<T>(0));
+    good = (good && is_non_negative);
+  }
+  return good;
+}
+
+/**
+ * @brief Check whether the valid array has any false values.
+ * @note This function has no test coverage.
+ * @pre The underlying type is bool.
+ */
+bool any_lidar_points_invalid(const cnpy::NpyArray& valid);
 
 /**
  * @briefGet a list of expected field names for npz lidar data.

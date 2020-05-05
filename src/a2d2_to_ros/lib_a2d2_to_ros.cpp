@@ -21,8 +21,10 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
+#define _ENABLE_A2D2_ROS_LOGGING_
 #include "a2d2_to_ros/lib_a2d2_to_ros.hpp"
 
+#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <fstream>
@@ -33,6 +35,66 @@ static constexpr auto ONE_THOUSAND = static_cast<uint64_t>(1000);
 static constexpr auto ONE_MILLION = static_cast<uint64_t>(1000000);
 
 namespace a2d2_to_ros {
+
+//------------------------------------------------------------------------------
+
+sensor_msgs::PointCloud2 initialize_pc2_msg_no_header(
+    bool is_dense, const uint32_t num_points) {
+  sensor_msgs::PointCloud2 msg;
+  msg.height = static_cast<uint32_t>(1);
+  msg.width = num_points;
+
+  // cnpy uses little endian format
+  msg.is_bigendian = false;
+
+  msg.point_step = (13 * sizeof(double) + sizeof(uint8_t));
+  msg.row_step = (3 * msg.point_step);
+  msg.is_dense = is_dense;
+
+  const auto fields = get_npz_fields();
+  sensor_msgs::PointCloud2Modifier modifier(msg);
+  modifier.setPointCloud2Fields(
+      14, "x", 1, sensor_msgs::PointField::FLOAT64, "y", 1,
+      sensor_msgs::PointField::FLOAT64, "z", 1,
+      sensor_msgs::PointField::FLOAT64,
+      fields[a2d2_to_ros::lidar::AZIMUTH_IDX].c_str(), 1,
+      sensor_msgs::PointField::FLOAT64,
+      fields[a2d2_to_ros::lidar::BOUNDARY_IDX].c_str(), 1,
+      sensor_msgs::PointField::FLOAT64,
+      fields[a2d2_to_ros::lidar::COL_IDX].c_str(), 1,
+      sensor_msgs::PointField::FLOAT64,
+      fields[a2d2_to_ros::lidar::DEPTH_IDX].c_str(), 1,
+      sensor_msgs::PointField::FLOAT64,
+      fields[a2d2_to_ros::lidar::DISTANCE_IDX].c_str(), 1,
+      sensor_msgs::PointField::FLOAT64,
+      fields[a2d2_to_ros::lidar::ID_IDX].c_str(), 1,
+      sensor_msgs::PointField::FLOAT64,
+      fields[a2d2_to_ros::lidar::RECTIME_IDX].c_str(), 1,
+      sensor_msgs::PointField::FLOAT64,
+      fields[a2d2_to_ros::lidar::ROW_IDX].c_str(), 1,
+      sensor_msgs::PointField::FLOAT64,
+      fields[a2d2_to_ros::lidar::ROW_IDX].c_str(), 1,
+      sensor_msgs::PointField::FLOAT64,
+      fields[a2d2_to_ros::lidar::TIMESTAMP_IDX].c_str(), 1,
+      sensor_msgs::PointField::FLOAT64,
+      fields[a2d2_to_ros::lidar::VALID_DIX].c_str(), 1,
+      sensor_msgs::PointField::UINT8);
+
+  modifier.resize(msg.width);
+
+  return msg;
+}
+
+//------------------------------------------------------------------------------
+
+bool any_lidar_points_invalid(const cnpy::NpyArray& valid) {
+  auto all_valid = true;
+  const auto v = valid.data<bool>();
+  for (auto i = 0; i < valid.shape[lidar::ROW_SHAPE_IDX]; ++i) {
+    all_valid = (all_valid && v[i]);
+  }
+  return !all_valid;
+}
 
 //------------------------------------------------------------------------------
 
@@ -85,37 +147,69 @@ bool verify_npz_structure(const std::map<std::string, cnpy::NpyArray>& npz) {
     X_ERROR(
         "Points in the points array must have three dimensions. Instead they "
         "have "
-        << points_shape[COL_DIM]);
+        << points_shape[lidar::COL_SHAPE_IDX]);
     return false;
   }
 
   for (const auto& p : npz) {
-    const auto& field = p.first;
+    const auto& field_name = p.first;
+    const auto& field_values = p.second;
     // this one is already checked
-    if (field == points_field_name) {
+    if (field_name == points_field_name) {
       continue;
     }
 
-    // this cannot throw if the fields check passes
-    const auto& shape = npz.at(field).shape;
+    const auto& shape = field_values.shape;
 
     if (shape.size() != 1) {
       X_ERROR(
-          "Expected " << field
+          "Expected " << field_name
                       << " data to have exactly one dimension. Instead it has "
                       << shape.size());
       return false;
     }
 
     if (shape[lidar::ROW_SHAPE_IDX] != points_shape[lidar::ROW_SHAPE_IDX]) {
-      X_ERROR("Expected " << field << " to have exactly " << points_shape[0]
-                          << " rows. Instead it has " << shape[ROW_DIM]);
+      X_ERROR("Expected " << field_name << " to have exactly "
+                          << points_shape[0] << " rows. Instead it has "
+                          << shape[lidar::ROW_SHAPE_IDX]);
+      return false;
+    }
+
+    ///
+    /// Make sure fields have expected sign
+    ///
+
+    auto sign_error = false;
+
+    const auto is_timestamp = (field_name == fields[lidar::TIMESTAMP_IDX]);
+    const auto is_rectime = (field_name == fields[lidar::RECTIME_IDX]);
+    const auto is_lidar_id = (field_name == fields[lidar::ID_IDX]);
+    if (is_timestamp || is_rectime || is_lidar_id) {
+      const auto non_negative = all_non_negative<int64_t>(field_values);
+      sign_error = (sign_error || !non_negative);
+    }
+
+    const auto is_row = (field_name == fields[lidar::ROW_IDX]);
+    const auto is_col = (field_name == fields[lidar::COL_IDX]);
+    const auto is_depth = (field_name == fields[lidar::DEPTH_IDX]);
+    const auto is_distance = (field_name == fields[lidar::DISTANCE_IDX]);
+    // TODO(jeff): figure out whether row/col can be negative
+    if (/* is_row || is_col ||*/ is_depth || is_distance) {
+      const auto non_negative = all_non_negative<double>(field_values);
+      sign_error = (sign_error || !non_negative);
+    }
+
+    if (sign_error) {
+      X_ERROR("Expected " << field_name
+                          << " to be strictly non-negative. Instead, it has "
+                             "negative values.");
       return false;
     }
   }
 
   return true;
-}
+}  // namespace a2d2_to_ros
 
 //------------------------------------------------------------------------------
 
