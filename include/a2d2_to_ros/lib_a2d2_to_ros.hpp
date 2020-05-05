@@ -72,6 +72,11 @@ struct DataPairTimeComparator {
 };  // struct DataPairComparator
 
 /**
+ * @brief Convert a 2D index to a 1D index according to CNPY convention.
+ */
+size_t flatten_2d_index(size_t width, size_t row, size_t col);
+
+/**
  * @brief Test whether a given timestamp is covertible to ROS time.
  * @return True iff converting time to ros::Time will not cause overflow.
  */

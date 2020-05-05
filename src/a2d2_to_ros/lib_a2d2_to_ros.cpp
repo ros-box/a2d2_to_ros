@@ -61,6 +61,12 @@ bool DataPairTimeComparator::operator()(const DataPair& lhs,
 
 //------------------------------------------------------------------------------
 
+size_t flatten_2d_index(size_t width, size_t row, size_t col) {
+  return ((row * width) + col);
+}
+
+//------------------------------------------------------------------------------
+
 bool valid_ros_timestamp(uint64_t time) {
   const auto secs = (time / ONE_MILLION);
   const auto boundary =
