@@ -40,6 +40,9 @@ Answers, where available, are given directly below the questions. If a question 
     1. `pcloud_attr.valid`?
 1. What are the units for `pcloud_attr.reflectance`? Why are the values integral?
 1. Are the `pcloud_attr.rectime` and `pcloud_attr.timestamp` intentionally `int64` and not `uint64`?
+1. Are the points in the point cloud ordered in any way? If so, what is the ordering?
+1. Are `pcloud_attr.depth` and `pcloud_attr.distance` strictly non-negative?
+1. Are `pcloud_attr.row` and `pcloud_attr.col` supposed to be non-negative? At least `pcloud_attr.col` has negative values in the Munich sensor fusion data set.
 
 ## Semantic segmentation bus signal data
 
