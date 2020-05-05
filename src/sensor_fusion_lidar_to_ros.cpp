@@ -21,6 +21,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
+#include <algorithm>
 #include <set>
 
 #include <boost/filesystem/convenience.hpp>  // TODO(jeff): use std::filesystem in C++17
@@ -31,7 +32,7 @@
 #include <ros/ros.h>
 #include <rosbag/bag.h>
 #include <rosgraph_msgs/Clock.h>
-#include <sensor_msgs/PointCloud.h>
+#include <sensor_msgs/PointCloud2.h>
 
 // uncomment this define to log warnings and errors
 #define _ENABLE_A2D2_ROS_LOGGING_
@@ -172,6 +173,45 @@ int main(int argc, char* argv[]) {
     ///
     /// Build pointcloud message
     ///
+
+    const auto max_a2d2_timestamp =
+        a2d2_to_ros::get_max_value<int64_t>(timestamp);
+    const auto max_timestamp = a2d2_to_ros::a2d2_timestamp_to_ros_time(
+        static_cast<uint64_t>(max_a2d2_timestamp));
+
+    const auto frame = a2d2_to_ros::frame_from_filename(f);
+    if (frame.empty()) {
+      ROS_FATAL_STREAM("Could not find frame name in filename: "
+                       << f << ". Cannot continue.");
+      bag.close();
+      return EXIT_FAILURE;
+    }
+
+    const auto is_dense = a2d2_to_ros::any_lidar_points_invalid(valid);
+    const auto num_points = points.shape[a2d2_to_ros::lidar::ROW_SHAPE_IDX];
+    auto msg = a2d2_to_ros::build_pc2_msg(frame, max_timestamp, is_dense,
+                                          static_cast<uint32_t>(num_points));
+
+    // TODO(jeff): make a utility function to return a struct of these iterators
+    sensor_msgs::PointCloud2Iterator<double> iter_x(msg, "x");
+    sensor_msgs::PointCloud2Iterator<double> iter_y(msg, "y");
+    sensor_msgs::PointCloud2Iterator<double> iter_z(msg, "z");
+    sensor_msgs::PointCloud2Iterator<double> iter_azimuth(msg, "z");
+
+#if 0
+       sensor_msgs::PointCloud2Iterator<uint8_t> iter_r(cloud_msg, "r");
+   sensor_msgs::PointCloud2Iterator<uint8_t> iter_g(cloud_msg, "g");
+   sensor_msgs::PointCloud2Iterator<uint8_t> iter_b(cloud_msg, "b");
+   // Fill the PointCloud2
+   for(size_t i=0; i<n_points; ++i, ++iter_x, ++iter_y, ++iter_z, ++iter_r, ++iter_g, ++iter_b) {
+     *iter_x = point_data[3*i+0];
+     *iter_y = point_data[3*i+1];
+     *iter_z = point_data[3*i+2];
+     *iter_r = color_data[3*i+0];
+     *iter_g = color_data[3*i+1];
+     *iter_b = color_data[3*i+2];
+   }
+#endif
 
     for (auto r = 0; r < points.shape[0]; ++r) {
       const auto data = points.data<double>();
