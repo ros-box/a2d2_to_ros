@@ -75,6 +75,13 @@ sensor_msgs::PointCloud2 initialize_pc2_msg_no_header(
     bool is_dense, const uint32_t num_points);
 
 /**
+ * @brief Get the frame of the data from its filename.
+ * @return The empty string if a frame name is not present or if multiple
+ * different names are present.
+ */
+std::string frame_from_filename(const std::string& filename);
+
+/**
  * @brief Test whether int64_t data is all non-negative.
  * @note This function has no test coverage.
  * @pre template parameter T must match the underlying data type.
@@ -91,6 +98,21 @@ bool all_non_negative(const cnpy::NpyArray& field) {
 }
 
 /**
+ * @brief Get the maximum value of a given field
+ * @note This function has no test coverage.
+ * @pre template parameter T must match the underlying data type.
+ */
+template <typename T>
+T get_max_value(const cnpy::NpyArray& field) {
+  auto t = static_cast<T>(0);
+  const auto vals = field.data<T>();
+  for (auto i = 0; i < field.shape[lidar::ROW_SHAPE_IDX]; ++i) {
+    t = std::max(t, vals[i]);
+  }
+  return t;
+}
+
+/**
  * @brief Check whether the valid array has any false values.
  * @note This function has no test coverage.
  * @pre The underlying type is bool.
@@ -98,7 +120,13 @@ bool all_non_negative(const cnpy::NpyArray& field) {
 bool any_lidar_points_invalid(const cnpy::NpyArray& valid);
 
 /**
- * @briefGet a list of expected field names for npz lidar data.
+ * @brief Get a list of sensor frame names.
+ * @note This function has no test coverage.
+ */
+std::array<std::string, 6> get_sensor_frame_names();
+
+/**
+ * @brief Get a list of expected field names for npz lidar data.
  * @note This function has no test coverage.
  */
 std::array<std::string, 12> get_npz_fields();

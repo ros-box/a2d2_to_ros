@@ -87,6 +87,28 @@ sensor_msgs::PointCloud2 initialize_pc2_msg_no_header(
 
 //------------------------------------------------------------------------------
 
+std::string frame_from_filename(const std::string& filename) {
+  const auto frames = get_sensor_frame_names();
+
+  const auto filename_has_frame = [&filename](const std::string& frame) {
+    return (filename.find(frame) != std::string::npos);
+  };
+
+  const auto num_found =
+      std::count_if(std::begin(frames), std::end(frames), filename_has_frame);
+  if (num_found != 1) {
+    return "";
+  }
+
+  const auto it =
+      std::find_if(std::begin(frames), std::end(frames), filename_has_frame);
+
+  const auto idx = (it - std::begin(frames));
+  return frames[idx];
+}
+
+//------------------------------------------------------------------------------
+
 bool any_lidar_points_invalid(const cnpy::NpyArray& valid) {
   auto all_valid = true;
   const auto v = valid.data<bool>();
@@ -94,6 +116,13 @@ bool any_lidar_points_invalid(const cnpy::NpyArray& valid) {
     all_valid = (all_valid && v[i]);
   }
   return !all_valid;
+}
+
+//------------------------------------------------------------------------------
+
+std::array<std::string, 6> get_sensor_frame_names() {
+  return {"frontcenter", "frontleft", "frontright",
+          "sideleft",    "sideright", "rearcenter"};
 }
 
 //------------------------------------------------------------------------------
