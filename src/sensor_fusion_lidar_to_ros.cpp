@@ -126,10 +126,16 @@ int main(int argc, char* argv[]) {
   /// Load each npz file, convert to PointCloud2 message, write to bag
   ///
 
+  const auto fields = a2d2_to_ros::get_npz_fields();
+
   rosbag::Bag bag;
   const auto bag_name = output_path + "/" + file_basename + ".bag";
   bag.open(bag_name, rosbag::bagmode::Write);
   for (const auto& f : files) {
+    ///
+    /// Load and verify the data
+    ///
+
     cnpy::npz_t npz;
     try {
       npz = cnpy::npz_load(f);
@@ -138,26 +144,40 @@ int main(int argc, char* argv[]) {
       return EXIT_FAILURE;
     }
 
-    const auto& points = npz["pcloud_points"];
-    const auto& azimuth = npz["pcloud_attr.azimuth"];
-    const auto& boundary = npz["pcloud_attr.boundary"];
-    const auto& col = npz["pcloud_attr.col"];
-    const auto& depth = npz["pcloud_attr.depth"];
-    const auto& distance = npz["pcloud_attr.distance"];
-    const auto& lidar_id = npz["pcloud_attr.lidar_id"];
-    const auto& rectime = npz["pcloud_attr.rectime"];
-    const auto& reflectance = npz["pcloud_attr.reflectance"];
-    const auto& row = npz["pcloud_attr.row"];
-    const auto& timestamp = npz["pcloud_attr.timestamp"];
-    const auto& valid = npz["pcloud_attr.valid"];
+    const auto npz_structure_valid = a2d2_to_ros::verify_npz_structure(npz);
+    if (!npz_structure_valid) {
+      ROS_FATAL_STREAM(
+          "Encountered unexpected structure in the data. Cannot continue.");
+      return EXIT_FAILURE;
+    } else {
+      ROS_INFO_STREAM("Successfully loaded npz data from:\n" << f);
+    }
+
+    // for convenience
+    const auto& points = npz[fields[a2d2_to_ros::lidar::POINTS_IDX]];
+    const auto& azimuth = npz[fields[a2d2_to_ros::lidar::AZIMUTH_IDX]];
+    const auto& boundary = npz[fields[a2d2_to_ros::lidar::BOUNDARY_IDX]];
+    const auto& col = npz[fields[a2d2_to_ros::lidar::COL_IDX]];
+    const auto& depth = npz[fields[a2d2_to_ros::lidar::DEPTH_IDX]];
+    const auto& distance = npz[fields[a2d2_to_ros::lidar::DISTANCE_IDX]];
+    const auto& lidar_id = npz[fields[a2d2_to_ros::lidar::ID_IDX]];
+    const auto& rectime = npz[fields[a2d2_to_ros::lidar::RECTIME_IDX]];
+    const auto& reflectance = npz[fields[a2d2_to_ros::lidar::REFLECTANCE_IDX]];
+    const auto& row = npz[fields[a2d2_to_ros::lidar::ROW_IDX]];
+    const auto& timestamp = npz[fields[a2d2_to_ros::lidar::TIMESTAMP_IDX]];
+    const auto& valid = npz[fields[a2d2_to_ros::lidar::VALID_DIX]];
+
+    ///
+    /// Build pointcloud message
+    ///
 
     for (auto r = 0; r < points.shape[0]; ++r) {
       const auto data = points.data<double>();
       for (auto c = 0; c < points.shape[1]; ++c) {
         const auto idx = a2d2_to_ros::flatten_2d_index(points.shape[1], r, c);
-        std::cout << data[idx] << ", ";
+        //        std::cout << data[idx] << ", ";
       }
-      std::cout << std::endl;
+      //      std::cout << std::endl;
     }
 
     break;
