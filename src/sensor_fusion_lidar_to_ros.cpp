@@ -141,6 +141,7 @@ int main(int argc, char* argv[]) {
       npz = cnpy::npz_load(f);
     } catch (const std::exception& e) {
       ROS_FATAL_STREAM(e.what());
+      bag.close();
       return EXIT_FAILURE;
     }
 
@@ -148,6 +149,7 @@ int main(int argc, char* argv[]) {
     if (!npz_structure_valid) {
       ROS_FATAL_STREAM(
           "Encountered unexpected structure in the data. Cannot continue.");
+      bag.close();
       return EXIT_FAILURE;
     } else {
       ROS_INFO_STREAM("Successfully loaded npz data from:\n" << f);
