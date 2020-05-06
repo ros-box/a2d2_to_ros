@@ -70,6 +70,7 @@ constexpr auto VALID_DIX = 11;
 constexpr auto ROW_SHAPE_IDX = 0;
 constexpr auto COL_SHAPE_IDX = 1;
 
+/** @brief Explicit notion of data types. */
 struct Types {
   typedef double Point;
   typedef double Azimuth;
@@ -80,16 +81,27 @@ struct Types {
   typedef int64_t LidarId;
   typedef int64_t Rectime;
   typedef int64_t Reflectance;
-  typedef int64_t Row;
+  typedef double Row;
   typedef int64_t Timestamp;
   typedef bool Valid;
 };  // struct Types
 }  // namespace lidar
 
+/** @brief convenience object for interacting with point cloud iterators. */
 struct A2D2_PointCloudIterators {
   A2D2_PointCloudIterators(sensor_msgs::PointCloud2& msg,
                            const std::array<std::string, 12>& fields);
+
+  /** @brief Convenience overload to in-place pre-increment all iterators. */
   void operator++();
+
+  /**
+   * @brief Print all current values to stream.
+   * @pre All iterators point to valid values.
+   */
+  friend std::ostream& operator<<(std::ostream& os,
+                                  const A2D2_PointCloudIterators& iters);
+
   sensor_msgs::PointCloud2Iterator<lidar::Types::Point> x;
   sensor_msgs::PointCloud2Iterator<lidar::Types::Point> y;
   sensor_msgs::PointCloud2Iterator<lidar::Types::Point> z;

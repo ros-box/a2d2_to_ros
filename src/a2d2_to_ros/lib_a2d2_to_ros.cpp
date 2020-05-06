@@ -76,6 +76,22 @@ void A2D2_PointCloudIterators::operator++() {
 
 //------------------------------------------------------------------------------
 
+std::ostream& operator<<(std::ostream& os,
+                         const A2D2_PointCloudIterators& iters) {
+  os << "{";
+  os << "x: " << *(iters.x) << ", y: " << *(iters.y) << ", z: " << *(iters.z)
+     << ", azimuth: " << *(iters.azimuth) << ", boundary: " << *(iters.boundary)
+     << ", col: " << *(iters.col) << ", depth: " << *(iters.depth)
+     << ", distance: " << *(iters.distance)
+     << ", lidar_id: " << *(iters.lidar_id) << ", rectime: " << *(iters.rectime)
+     << ", reflectance: " << *(iters.reflectance) << ", row: " << *(iters.row)
+     << ", timestamp: " << *(iters.timestamp) << ", valid: " << *(iters.valid);
+  os << "}";
+  return os;
+}
+
+//------------------------------------------------------------------------------
+
 sensor_msgs::PointCloud2 build_pc2_msg(std::string frame, ros::Time timestamp,
                                        bool is_dense,
                                        const uint32_t num_points) {
@@ -279,6 +295,28 @@ bool verify_npz_structure(const std::map<std::string, cnpy::NpyArray>& npz) {
                           << " to be strictly non-negative. Instead, it has "
                              "negative values.");
       return false;
+    }
+
+    ///
+    /// Make sure times are compatible with ROS
+    /// TODO(jeff): Add rectime here once it's verified that that's a timestamp
+    ///
+    if (is_timestamp) {
+      const auto length = field_values.shape[lidar::ROW_SHAPE_IDX];
+      const auto& data = field_values.data<lidar::Types::Timestamp>();
+      for (auto i = 0; i < length; ++i) {
+        // preceding checks guarantee data is non-negative
+        const auto t = static_cast<uint64_t>(data[i]);
+        if (!valid_ros_timestamp(t)) {
+          X_ERROR("Timestamp "
+                  << t
+                  << " has unsupported magnitude: ROS does not support "
+                     "timestamps on or after 4294967296000000 "
+                     "(Sunday, February 7, 2106 6:28:16 AM GMT)\nCall "
+                     "Zager and Evans for details.");
+          return false;
+        }
+      }
     }
   }
 
