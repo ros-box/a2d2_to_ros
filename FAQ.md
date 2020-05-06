@@ -44,6 +44,7 @@ Answers, where available, are given directly below the questions. If a question 
 1. Are the points in the point cloud ordered in any way? If so, what is the ordering?
 1. Are `pcloud_attr.depth` and `pcloud_attr.distance` strictly non-negative?
 1. Are `pcloud_attr.row` and `pcloud_attr.col` supposed to be non-negative? At least `pcloud_attr.col` has negative values in the Munich sensor fusion data set.
+1. Are the points motion compensated already?
 
 ## Semantic segmentation bus signal data
 
