@@ -38,6 +38,44 @@ namespace a2d2_to_ros {
 
 //------------------------------------------------------------------------------
 
+A2D2_PointCloudIterators::A2D2_PointCloudIterators(
+    sensor_msgs::PointCloud2& msg, const std::array<std::string, 12>& fields)
+    : x(msg, "x"),
+      y(msg, "y"),
+      z(msg, "z"),
+      azimuth(msg, fields[lidar::AZIMUTH_IDX]),
+      boundary(msg, fields[lidar::BOUNDARY_IDX]),
+      col(msg, fields[lidar::COL_IDX]),
+      depth(msg, fields[lidar::DEPTH_IDX]),
+      distance(msg, fields[lidar::DISTANCE_IDX]),
+      lidar_id(msg, fields[lidar::ID_IDX]),
+      rectime(msg, fields[lidar::RECTIME_IDX]),
+      reflectance(msg, fields[lidar::REFLECTANCE_IDX]),
+      row(msg, fields[lidar::ROW_IDX]),
+      timestamp(msg, fields[lidar::TIMESTAMP_IDX]),
+      valid(msg, fields[lidar::VALID_DIX]) {}
+
+//------------------------------------------------------------------------------
+
+void A2D2_PointCloudIterators::operator++() {
+  ++x;
+  ++y;
+  ++z;
+  ++azimuth;
+  ++boundary;
+  ++col;
+  ++depth;
+  ++distance;
+  ++lidar_id;
+  ++rectime;
+  ++reflectance;
+  ++row;
+  ++timestamp;
+  ++valid;
+}
+
+//------------------------------------------------------------------------------
+
 sensor_msgs::PointCloud2 build_pc2_msg(std::string frame, ros::Time timestamp,
                                        bool is_dense,
                                        const uint32_t num_points) {
@@ -51,7 +89,10 @@ sensor_msgs::PointCloud2 build_pc2_msg(std::string frame, ros::Time timestamp,
   // cnpy uses little endian format
   msg.is_bigendian = false;
 
-  msg.point_step = (13 * sizeof(double) + sizeof(uint8_t));
+  // use double for int64_t; PointField does not define a 64-bit integer type
+  // use uint8_t for bool; PointField does not define a bool type
+  msg.point_step = ((13 * sizeof(double)) + sizeof(uint8_t));
+
   msg.row_step = (3 * msg.point_step);
   msg.is_dense = is_dense;
 
@@ -77,7 +118,7 @@ sensor_msgs::PointCloud2 build_pc2_msg(std::string frame, ros::Time timestamp,
       sensor_msgs::PointField::FLOAT64,
       fields[a2d2_to_ros::lidar::ROW_IDX].c_str(), 1,
       sensor_msgs::PointField::FLOAT64,
-      fields[a2d2_to_ros::lidar::ROW_IDX].c_str(), 1,
+      fields[a2d2_to_ros::lidar::REFLECTANCE_IDX].c_str(), 1,
       sensor_msgs::PointField::FLOAT64,
       fields[a2d2_to_ros::lidar::TIMESTAMP_IDX].c_str(), 1,
       sensor_msgs::PointField::FLOAT64,

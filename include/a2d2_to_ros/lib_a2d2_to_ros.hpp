@@ -69,7 +69,42 @@ constexpr auto VALID_DIX = 11;
 
 constexpr auto ROW_SHAPE_IDX = 0;
 constexpr auto COL_SHAPE_IDX = 1;
+
+struct Types {
+  typedef double Point;
+  typedef double Azimuth;
+  typedef int64_t Boundary;
+  typedef double Col;
+  typedef double Depth;
+  typedef double Distance;
+  typedef int64_t LidarId;
+  typedef int64_t Rectime;
+  typedef int64_t Reflectance;
+  typedef int64_t Row;
+  typedef int64_t Timestamp;
+  typedef bool Valid;
+};  // struct Types
 }  // namespace lidar
+
+struct A2D2_PointCloudIterators {
+  A2D2_PointCloudIterators(sensor_msgs::PointCloud2& msg,
+                           const std::array<std::string, 12>& fields);
+  void operator++();
+  sensor_msgs::PointCloud2Iterator<lidar::Types::Point> x;
+  sensor_msgs::PointCloud2Iterator<lidar::Types::Point> y;
+  sensor_msgs::PointCloud2Iterator<lidar::Types::Point> z;
+  sensor_msgs::PointCloud2Iterator<lidar::Types::Azimuth> azimuth;
+  sensor_msgs::PointCloud2Iterator<lidar::Types::Boundary> boundary;
+  sensor_msgs::PointCloud2Iterator<lidar::Types::Col> col;
+  sensor_msgs::PointCloud2Iterator<lidar::Types::Depth> depth;
+  sensor_msgs::PointCloud2Iterator<lidar::Types::Distance> distance;
+  sensor_msgs::PointCloud2Iterator<lidar::Types::LidarId> lidar_id;
+  sensor_msgs::PointCloud2Iterator<lidar::Types::Rectime> rectime;
+  sensor_msgs::PointCloud2Iterator<lidar::Types::Reflectance> reflectance;
+  sensor_msgs::PointCloud2Iterator<lidar::Types::Row> row;
+  sensor_msgs::PointCloud2Iterator<lidar::Types::Timestamp> timestamp;
+  sensor_msgs::PointCloud2Iterator<lidar::Types::Valid> valid;
+};  // struct A2D2_PointCloudIterators
 
 /**
  * @brief Build a PointCloud2 message for storing points from a single npz file.
@@ -104,13 +139,30 @@ bool all_non_negative(const cnpy::NpyArray& field) {
 }
 
 /**
+ * @brief Get the minimum value of a given field
+ * @note This function has no test coverage.
+ * @pre template parameter T must match the underlying data type.
+ * @return The minimum value or std::numeric_limits<T>::max() if field is empty.
+ */
+template <typename T>
+T get_min_value(const cnpy::NpyArray& field) {
+  auto t = std::numeric_limits<T>::max();
+  const auto vals = field.data<T>();
+  for (auto i = 0; i < field.shape[lidar::ROW_SHAPE_IDX]; ++i) {
+    t = std::min(t, vals[i]);
+  }
+  return t;
+}
+
+/**
  * @brief Get the maximum value of a given field
  * @note This function has no test coverage.
  * @pre template parameter T must match the underlying data type.
+ * @return The maximum value or std::numeric_limits<T>::min() if field is empty.
  */
 template <typename T>
 T get_max_value(const cnpy::NpyArray& field) {
-  auto t = static_cast<T>(0);
+  auto t = std::numeric_limits<T>::min();
   const auto vals = field.data<T>();
   for (auto i = 0; i < field.shape[lidar::ROW_SHAPE_IDX]; ++i) {
     t = std::max(t, vals[i]);

@@ -158,6 +158,8 @@ int main(int argc, char* argv[]) {
 
     // for convenience
     const auto& points = npz[fields[a2d2_to_ros::lidar::POINTS_IDX]];
+    const auto& timestamp = npz[fields[a2d2_to_ros::lidar::TIMESTAMP_IDX]];
+    const auto& valid = npz[fields[a2d2_to_ros::lidar::VALID_DIX]];
     const auto& azimuth = npz[fields[a2d2_to_ros::lidar::AZIMUTH_IDX]];
     const auto& boundary = npz[fields[a2d2_to_ros::lidar::BOUNDARY_IDX]];
     const auto& col = npz[fields[a2d2_to_ros::lidar::COL_IDX]];
@@ -167,15 +169,14 @@ int main(int argc, char* argv[]) {
     const auto& rectime = npz[fields[a2d2_to_ros::lidar::RECTIME_IDX]];
     const auto& reflectance = npz[fields[a2d2_to_ros::lidar::REFLECTANCE_IDX]];
     const auto& row = npz[fields[a2d2_to_ros::lidar::ROW_IDX]];
-    const auto& timestamp = npz[fields[a2d2_to_ros::lidar::TIMESTAMP_IDX]];
-    const auto& valid = npz[fields[a2d2_to_ros::lidar::VALID_DIX]];
 
     ///
     /// Build pointcloud message
     ///
 
     const auto max_a2d2_timestamp =
-        a2d2_to_ros::get_max_value<int64_t>(timestamp);
+        a2d2_to_ros::get_max_value<a2d2_to_ros::lidar::Types::Timestamp>(
+            timestamp);
     const auto max_timestamp = a2d2_to_ros::a2d2_timestamp_to_ros_time(
         static_cast<uint64_t>(max_a2d2_timestamp));
 
@@ -188,38 +189,65 @@ int main(int argc, char* argv[]) {
     }
 
     const auto is_dense = a2d2_to_ros::any_lidar_points_invalid(valid);
-    const auto num_points = points.shape[a2d2_to_ros::lidar::ROW_SHAPE_IDX];
+    const auto n_points = points.shape[a2d2_to_ros::lidar::ROW_SHAPE_IDX];
     auto msg = a2d2_to_ros::build_pc2_msg(frame, max_timestamp, is_dense,
-                                          static_cast<uint32_t>(num_points));
+                                          static_cast<uint32_t>(n_points));
 
-    // TODO(jeff): make a utility function to return a struct of these iterators
-    sensor_msgs::PointCloud2Iterator<double> iter_x(msg, "x");
-    sensor_msgs::PointCloud2Iterator<double> iter_y(msg, "y");
-    sensor_msgs::PointCloud2Iterator<double> iter_z(msg, "z");
-    sensor_msgs::PointCloud2Iterator<double> iter_azimuth(msg, "z");
+    auto iters = a2d2_to_ros::A2D2_PointCloudIterators(msg, fields);
+    for (auto row = 0; row < n_points; ++row, ++iters) {
+      {
+        ///
+        /// Fill in point data
+        ///
 
-#if 0
-       sensor_msgs::PointCloud2Iterator<uint8_t> iter_r(cloud_msg, "r");
-   sensor_msgs::PointCloud2Iterator<uint8_t> iter_g(cloud_msg, "g");
-   sensor_msgs::PointCloud2Iterator<uint8_t> iter_b(cloud_msg, "b");
-   // Fill the PointCloud2
-   for(size_t i=0; i<n_points; ++i, ++iter_x, ++iter_y, ++iter_z, ++iter_r, ++iter_g, ++iter_b) {
-     *iter_x = point_data[3*i+0];
-     *iter_y = point_data[3*i+1];
-     *iter_z = point_data[3*i+2];
-     *iter_r = color_data[3*i+0];
-     *iter_g = color_data[3*i+1];
-     *iter_b = color_data[3*i+2];
-   }
-#endif
+        constexpr auto X_POS = 0;
+        constexpr auto Y_POS = 1;
+        constexpr auto Z_POS = 2;
+        const auto row_step = points.shape[a2d2_to_ros::lidar::COL_SHAPE_IDX];
 
-    for (auto r = 0; r < points.shape[0]; ++r) {
-      const auto data = points.data<double>();
-      for (auto c = 0; c < points.shape[1]; ++c) {
-        const auto idx = a2d2_to_ros::flatten_2d_index(points.shape[1], r, c);
-        //        std::cout << data[idx] << ", ";
+        const auto data = points.data<a2d2_to_ros::lidar::Types::Point>();
+        const auto x_idx = a2d2_to_ros::flatten_2d_index(row_step, row, X_POS);
+        const auto y_idx = a2d2_to_ros::flatten_2d_index(row_step, row, Y_POS);
+        const auto z_idx = a2d2_to_ros::flatten_2d_index(row_step, row, Z_POS);
+
+        *(iters.x) = data[x_idx];
+        *(iters.y) = data[y_idx];
+        *(iters.z) = data[z_idx];
       }
-      //      std::cout << std::endl;
+
+      {
+        ///
+        /// Fill in azimuth data
+        ///
+
+        const auto data = azimuth.data<a2d2_to_ros::lidar::Types::Azimuth>();
+        *(iters.azimuth) = data[row];
+      }
+
+      {
+        ///
+        /// Fill in boundary data
+        ///
+
+        const auto data = boundary.data<a2d2_to_ros::lidar::Types::Boundary>();
+        *(iters.boundary) = data[row];
+      }
+    }
+
+    {
+      const auto max_boundary =
+          a2d2_to_ros::get_max_value<a2d2_to_ros::lidar::Types::Boundary>(
+              boundary);
+      const auto min_boundary =
+          a2d2_to_ros::get_min_value<a2d2_to_ros::lidar::Types::Boundary>(
+              boundary);
+      std::cout << "boundary range: [" << min_boundary << ", " << max_boundary
+                << "]" << std::endl;
+      auto test = a2d2_to_ros::A2D2_PointCloudIterators(msg, fields);
+      for (auto row = 0; row < n_points; ++row, ++test) {
+        std::cout << *test.x << ", " << *test.y << ", " << *test.z << "; "
+                  << *test.azimuth << "; " << *test.boundary << std::endl;
+      }
     }
 
     break;
