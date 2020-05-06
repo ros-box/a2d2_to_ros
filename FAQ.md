@@ -38,6 +38,7 @@ Answers, where available, are given directly below the questions. If a question 
     1. `pcloud_attr.rectime`?
     1. `pcloud_attr.boundary`?
     1. `pcloud_attr.valid`?
+1. Is `pcloud_attr.boundary` always 0 or 1?
 1. What are the units for `pcloud_attr.reflectance`? Why are the values integral?
 1. Are the `pcloud_attr.rectime` and `pcloud_attr.timestamp` intentionally `int64` and not `uint64`?
 1. Are the points in the point cloud ordered in any way? If so, what is the ordering?
