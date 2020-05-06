@@ -25,6 +25,7 @@ Answers, where available, are given directly below the questions. If a question 
 
 ## Sensor fusion bus signal data
 
+1. There is no `yaw_angle` field; is there supposed to be?
 1. What are the `distance_pulse_*` fields and what do the values represent?
 1. What are the `latitude_direction` and `longitude_direction` fields and what do the values represent?
 1. What are the conventions for the `steering_angle_calculated` values (i.e., what are min and max, and what is centered)?
