@@ -129,6 +129,9 @@ int main(int argc, char* argv[]) {
 
   const auto fields = a2d2_to_ros::get_npz_fields();
 
+  ROS_INFO_STREAM("Attempting to convert point cloud data...");
+
+  std::set<ros::Time> stamps;
   rosbag::Bag bag;
   const auto bag_name = output_path + "/" + file_basename + ".bag";
   bag.open(bag_name, rosbag::bagmode::Write);
@@ -153,27 +156,20 @@ int main(int argc, char* argv[]) {
       bag.close();
       return EXIT_FAILURE;
     } else {
-      ROS_INFO_STREAM("Successfully loaded npz data from:\n" << f);
+      // ROS_INFO_STREAM("Successfully loaded npz data from:\n" << f);
     }
-
-    // for convenience
-    const auto& points = npz[fields[a2d2_to_ros::lidar::POINTS_IDX]];
-    const auto& timestamp = npz[fields[a2d2_to_ros::lidar::TIMESTAMP_IDX]];
-    const auto& valid = npz[fields[a2d2_to_ros::lidar::VALID_DIX]];
-    const auto& azimuth = npz[fields[a2d2_to_ros::lidar::AZIMUTH_IDX]];
-    const auto& boundary = npz[fields[a2d2_to_ros::lidar::BOUNDARY_IDX]];
-    const auto& col = npz[fields[a2d2_to_ros::lidar::COL_IDX]];
-    const auto& depth = npz[fields[a2d2_to_ros::lidar::DEPTH_IDX]];
-    const auto& distance = npz[fields[a2d2_to_ros::lidar::DISTANCE_IDX]];
-    const auto& lidar_id = npz[fields[a2d2_to_ros::lidar::ID_IDX]];
-    const auto& rectime = npz[fields[a2d2_to_ros::lidar::RECTIME_IDX]];
-    const auto& reflectance = npz[fields[a2d2_to_ros::lidar::REFLECTANCE_IDX]];
-    const auto& row = npz[fields[a2d2_to_ros::lidar::ROW_IDX]];
 
     ///
     /// Build pointcloud message
     ///
 
+    // capture these up front; they provide meta information about the data
+    const auto& points = npz[fields[a2d2_to_ros::lidar::POINTS_IDX]];
+    const auto& timestamp = npz[fields[a2d2_to_ros::lidar::TIMESTAMP_IDX]];
+    const auto& valid = npz[fields[a2d2_to_ros::lidar::VALID_DIX]];
+
+    // TODO(jeff): this is not the right timestamp. need to use the timestamps
+    // contained in the corresponding camera data set.
     const auto max_a2d2_timestamp =
         a2d2_to_ros::get_max_value<a2d2_to_ros::lidar::Types::Timestamp>(
             timestamp);
@@ -193,13 +189,17 @@ int main(int argc, char* argv[]) {
     auto msg = a2d2_to_ros::build_pc2_msg(frame, max_timestamp, is_dense,
                                           static_cast<uint32_t>(n_points));
 
+    ///
+    /// Fill in the point cloud message
+    ///
+
     auto iters = a2d2_to_ros::A2D2_PointCloudIterators(msg, fields);
     for (auto row = 0; row < n_points; ++row, ++iters) {
-      {
-        ///
-        /// Fill in point data
-        ///
+      ///
+      /// Point data
+      ///
 
+      {
         constexpr auto X_POS = 0;
         constexpr auto Y_POS = 1;
         constexpr auto Z_POS = 2;
@@ -215,26 +215,81 @@ int main(int argc, char* argv[]) {
         *(iters.z) = data[z_idx];
       }
 
-      {
-        ///
-        /// Fill in azimuth data
-        ///
+      ///
+      /// Scalar data
+      ///
 
+      {
+        const auto& azimuth = npz[fields[a2d2_to_ros::lidar::AZIMUTH_IDX]];
         const auto data = azimuth.data<a2d2_to_ros::lidar::Types::Azimuth>();
         *(iters.azimuth) = data[row];
       }
 
       {
-        ///
-        /// Fill in boundary data
-        ///
-
+        const auto& boundary = npz[fields[a2d2_to_ros::lidar::BOUNDARY_IDX]];
         const auto data = boundary.data<a2d2_to_ros::lidar::Types::Boundary>();
         *(iters.boundary) = data[row];
       }
+
+      {
+        const auto& image_col = npz[fields[a2d2_to_ros::lidar::COL_IDX]];
+        const auto data = image_col.data<a2d2_to_ros::lidar::Types::Col>();
+        *(iters.col) = data[row];
+      }
+
+      {
+        const auto& depth = npz[fields[a2d2_to_ros::lidar::DEPTH_IDX]];
+        const auto data = depth.data<a2d2_to_ros::lidar::Types::Depth>();
+        *(iters.depth) = data[row];
+      }
+
+      {
+        const auto& distance = npz[fields[a2d2_to_ros::lidar::DISTANCE_IDX]];
+        const auto data = distance.data<a2d2_to_ros::lidar::Types::Distance>();
+        *(iters.distance) = data[row];
+      }
+
+      {
+        const auto& lidar_id = npz[fields[a2d2_to_ros::lidar::ID_IDX]];
+        const auto data = lidar_id.data<a2d2_to_ros::lidar::Types::LidarId>();
+        *(iters.lidar_id) = data[row];
+      }
+
+      {
+        const auto& rectime = npz[fields[a2d2_to_ros::lidar::RECTIME_IDX]];
+        const auto data = rectime.data<a2d2_to_ros::lidar::Types::Rectime>();
+        *(iters.rectime) = data[row];
+      }
+
+      {
+        const auto& reflectance =
+            npz[fields[a2d2_to_ros::lidar::REFLECTANCE_IDX]];
+        const auto data =
+            reflectance.data<a2d2_to_ros::lidar::Types::Reflectance>();
+        *(iters.reflectance) = data[row];
+      }
+
+      {
+        const auto& image_row = npz[fields[a2d2_to_ros::lidar::ROW_IDX]];
+        const auto data = image_row.data<a2d2_to_ros::lidar::Types::Row>();
+        *(iters.row) = data[row];
+      }
+
+      {
+        const auto data =
+            timestamp.data<a2d2_to_ros::lidar::Types::Timestamp>();
+        *(iters.timestamp) = data[row];
+      }
+
+      {
+        const auto data = valid.data<a2d2_to_ros::lidar::Types::Valid>();
+        *(iters.valid) = data[row];
+      }
     }
 
+#if 0
     {
+      const auto& boundary = npz[fields[a2d2_to_ros::lidar::BOUNDARY_IDX]];
       const auto max_boundary =
           a2d2_to_ros::get_max_value<a2d2_to_ros::lidar::Types::Boundary>(
               boundary);
@@ -245,14 +300,41 @@ int main(int argc, char* argv[]) {
                 << "]" << std::endl;
       auto test = a2d2_to_ros::A2D2_PointCloudIterators(msg, fields);
       for (auto row = 0; row < n_points; ++row, ++test) {
-        std::cout << *test.x << ", " << *test.y << ", " << *test.z << "; "
-                  << *test.azimuth << "; " << *test.boundary << std::endl;
+        std::cout << test << std::endl;
       }
+      break;
     }
+#endif
 
-    break;
+    ///
+    /// Write message to bag file
+    ///
+
+    // message time is the max timestamp of all points in the message
+    bag.write(topic_prefix + "/" + file_basename, msg.header.stamp, msg);
+
+    if (stamps.find(msg.header.stamp) != std::end(stamps)) {
+      // TODO(jeff): this should probably be a fatal error
+      ROS_WARN_STREAM("Duplicate message timestamp: " << msg.header.stamp);
+    }
+    stamps.insert(msg.header.stamp);
+
+    ROS_INFO_STREAM("Processed: " << f);
+  }
+
+  ///
+  /// Write a clock message for every unique timestamp in the data set
+  ///
+
+  ROS_INFO_STREAM("Adding " << _CLOCK_TOPIC << " topic...");
+  for (const auto& stamp : stamps) {
+    rosgraph_msgs::Clock clock_msg;
+    clock_msg.clock = stamp;
+    bag.write(_CLOCK_TOPIC, stamp, clock_msg);
   }
 
   bag.close();
+
+  ROS_INFO_STREAM("Done.");
   return EXIT_SUCCESS;
 }
