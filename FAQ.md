@@ -52,3 +52,18 @@ Answers, where available, are given directly below the questions. If a question 
 1. What is the `driving_direction` field and what do the values represent?
 1. What do the values for the `gear` field represent?
 1. Are `steering_angle` and `steering_angle_sign` ground truth with respect to `steering_angle_calculated` and `steering_angle_calculated_sign`?
+
+## Discrepancies with online tutorial
+
+These items have to do with variations between the data and the [tutorial](https://www.a2d2.audi/a2d2/en/tutorial.html).
+
+### Questions
+
+1. The JSON info file associated with each camera image has the additional fields `image_zoom` and `pcld_view` that are not listed in the tutorial; what are they?
+
+### Notes
+
+1. The tutorial lists the lidar data fields as:  
+`['azimuth', 'row', 'lidar_id', 'depth', 'reflectance', 'col', 'points', 'timestamp', 'distance']`  
+In the data set they are:  
+`['pcloud_points', 'pcloud_attr.rectime', 'pcloud_attr.azimuth', 'pcloud_attr.reflectance', 'pcloud_attr.boundary', 'pcloud_attr.lidar_id', 'pcloud_attr.timestamp', 'pcloud_attr.valid', 'pcloud_attr.row', 'pcloud_attr.col', 'pcloud_attr.distance', 'pcloud_attr.depth']`
