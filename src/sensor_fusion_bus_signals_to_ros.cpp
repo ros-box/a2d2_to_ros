@@ -43,7 +43,6 @@
 #include "rapidjson/error/en.h"
 #include "rapidjson/schema.h"
 #include "rapidjson/stringbuffer.h"
-#include "rapidjson/writer.h"
 
 // uncomment this define to log warnings and errors
 #define _ENABLE_A2D2_ROS_LOGGING_
