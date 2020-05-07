@@ -37,6 +37,7 @@
 #include "rapidjson/document.h"
 #include "rapidjson/error/en.h"
 #include "rapidjson/schema.h"
+#include "rapidjson/stringbuffer.h"
 
 // uncomment this define to log warnings and errors
 #define _ENABLE_A2D2_ROS_LOGGING_
@@ -52,6 +53,9 @@ static constexpr auto _CLOCK_TOPIC = "/clock";
 static constexpr auto _OUTPUT_PATH = ".";
 static constexpr auto _DATASET_NAMESPACE = "/a2d2";
 static constexpr auto _INCLUDE_DEPTH_MAP = false;
+static constexpr auto _CAMERA_INFO_SCHEMA_PATH =
+    "/home/maeve/catkin_ws/src/a2d2_to_ros/schemas/"
+    "sensor_fusion_camera_frame.schema";
 
 namespace {
 namespace po = boost::program_options;
@@ -132,6 +136,30 @@ int main(int argc, char* argv[]) {
   }
 
   ///
+  /// Get the JSON schema for the camera frame info files
+  ///
+
+  rapidjson::Document camera_frame_d;
+  {
+    // get schema file string
+    const auto schema_string =
+        a2d2_to_ros::get_json_file_as_string(_CAMERA_INFO_SCHEMA_PATH);
+    if (schema_string.empty()) {
+      ROS_FATAL_STREAM("'" << _CAMERA_INFO_SCHEMA_PATH
+                           << "' failed to open or is empty.");
+      return EXIT_FAILURE;
+    }
+
+    if (camera_frame_d.Parse(schema_string.c_str()).HasParseError()) {
+      fprintf(stderr, "\nError(offset %u): %s\n",
+              static_cast<unsigned>(camera_frame_d.GetErrorOffset()),
+              rapidjson::GetParseError_En(camera_frame_d.GetParseError()));
+      return EXIT_FAILURE;
+    }
+  }
+  rapidjson::SchemaDocument camera_frame_schema(camera_frame_d);
+
+  ///
   /// Load each npz file, convert to PointCloud2 message, write to bag
   ///
 
@@ -149,8 +177,19 @@ int main(int argc, char* argv[]) {
     ///
 
     {
+      const auto p = boost::filesystem::path(f);
+      const auto b = boost::filesystem::basename(p);
+      const auto camera_basename = a2d2_to_ros::camera_name_from_lidar_name(b);
+      if (camera_basename.empty()) {
+        ROS_FATAL_STREAM(
+            "Failed to get camera file corresponding to lidar file: "
+            << f << ". Cannot continue.");
+        return EXIT_FAILURE;
+      }
+
       rapidjson::Document d_json;
-      const auto camera_data_file = camera_path + "/" + file_basename + ".json";
+      const auto camera_data_file =
+          camera_path + "/" + camera_basename + ".json";
       // get json file string
       const auto json_string =
           a2d2_to_ros::get_json_file_as_string(camera_data_file);
@@ -167,6 +206,28 @@ int main(int argc, char* argv[]) {
             << "): " << rapidjson::GetParseError_En(d_json.GetParseError()));
         return EXIT_FAILURE;
       }
+
+      ///
+      /// Validate the data set against the schema
+      ///
+
+      rapidjson::SchemaValidator validator(camera_frame_schema);
+      if (!d_json.Accept(validator)) {
+        rapidjson::StringBuffer sb;
+        validator.GetInvalidSchemaPointer().StringifyUriFragment(sb);
+        std::stringstream ss;
+        ss << "\nInvalid schema: " << sb.GetString() << "\n";
+        ss << "Invalid keyword: " << validator.GetInvalidSchemaKeyword()
+           << "\n";
+        sb.Clear();
+        validator.GetInvalidDocumentPointer().StringifyUriFragment(sb);
+        ss << "Invalid document: " << sb.GetString() << "\n";
+        ROS_FATAL_STREAM(ss.str());
+        return EXIT_FAILURE;
+      } else {
+        ROS_INFO_STREAM("Validated: " << camera_data_file);
+      }
+      return EXIT_SUCCESS;
     }
 
     ///

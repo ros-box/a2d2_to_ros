@@ -1,0 +1,98 @@
+{
+  "$id": "",
+  "$schema":"http://json-schema.org/draft-07/schema#",
+  "title": "Camera Frame Info",
+  "description": "A2D2 Camera Frame Info Schema for Sensor Fusion Data Set",
+  "type": "object",
+  "properties": {
+    "cam_tstamp": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "cam_name": {
+      "type": "string",
+      "pattern": "^(front_center|front_left|front_right|side_left|side_right|rear_center)$"
+    },
+    "image_zoom": {
+      "type": "number"
+    },
+    "image_png": {
+      "type": "string"
+    },
+    "pcld_npz": {
+      "type": "string"
+    },
+    "pcld_view": {
+      "type": "object",
+      "properties": {
+        "origin": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": [
+            { "type": "number" },
+            { "type": "number" },
+            { "type": "number" }
+          ]
+        },
+        "x-axis": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": [
+            { "type": "number" },
+            { "type": "number" },
+            { "type": "number" }
+          ]
+        },
+        "y-axis": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": [
+            { "type": "number" },
+            { "type": "number" },
+            { "type": "number" }
+          ]
+        }
+      },
+      "required": [ "origin", "x-axis", "y-axis" ]
+    },
+    "lidar_ids": {
+      "type": "object",
+      "properties": {
+        "0": {
+          "type": "string",
+          "pattern": "^(front_center|front_left|front_right|rear_left|rear_right)$"
+        },
+        "1": {
+          "type": "string",
+          "pattern": "^(front_center|front_left|front_right|rear_left|rear_right)$"
+        },
+        "2": {
+          "type": "string",
+          "pattern": "^(front_center|front_left|front_right|rear_left|rear_right)$"
+        },
+        "3": {
+          "type": "string",
+          "pattern": "^(front_center|front_left|front_right|rear_left|rear_right)$"
+        },
+        "4": {
+          "type": "string",
+          "pattern": "^(front_center|front_left|front_right|rear_left|rear_right)$"
+        }
+      },
+      "required": [ "0", "1", "2", "3", "4" ]
+    }
+  },
+  "required": [
+    "cam_tstamp",
+    "cam_name",
+    "image_zoom",
+    "image_png",
+    "pcld_npz",
+    "pcld_view",
+    "lidar_ids"
+  ]
+}
+
