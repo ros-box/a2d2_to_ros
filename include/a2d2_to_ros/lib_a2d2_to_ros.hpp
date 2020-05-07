@@ -128,6 +128,14 @@ sensor_msgs::PointCloud2 build_pc2_msg(std::string frame, ros::Time timestamp,
                                        const uint32_t num_points);
 
 /**
+ * @brief Get camera file basename corresponding to the given lidar basename.
+ * @pre The input must be a basename (no directory and no extension)
+ * @return The basename with 'lidar' replaced by 'camera', or the empty string
+ * if 'lidar' is not present in the input.
+ */
+std::string camera_name_from_lidar_name(const std::string& basename);
+
+/**
  * @brief Get the frame of the data from its filename.
  * @return The empty string if a frame name is not present or if multiple
  * different names are present.

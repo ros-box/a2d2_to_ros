@@ -148,6 +148,19 @@ sensor_msgs::PointCloud2 build_pc2_msg(std::string frame, ros::Time timestamp,
 
 //------------------------------------------------------------------------------
 
+std::string camera_name_from_lidar_name(const std::string& basename) {
+  auto camera_basename = basename;
+  const auto lidar = std::string("lidar");
+  try {
+    const auto pos = basename.find(lidar);
+    return camera_basename.replace(pos, lidar.length(), "camera");
+  } catch (...) {
+    return "";
+  }
+}
+
+//------------------------------------------------------------------------------
+
 std::string frame_from_filename(const std::string& filename) {
   const auto frames = get_sensor_frame_names();
 

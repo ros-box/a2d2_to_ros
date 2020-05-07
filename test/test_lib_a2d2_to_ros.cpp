@@ -41,6 +41,32 @@ namespace a2d2_to_ros {
 
 //------------------------------------------------------------------------------
 
+TEST(A2D2_to_ROS, camera_name_from_lidar_name) {
+  {
+    const auto name = std::string("20190401145936_lidar_frontcenter_000000080");
+    const auto camera_name = camera_name_from_lidar_name(name);
+    const auto camera_name_expected =
+        std::string("20190401145936_camera_frontcenter_000000080");
+    EXPECT_EQ(camera_name, camera_name_expected);
+  }
+
+  {
+    const auto name = std::string("lidar");
+    const auto camera_name = camera_name_from_lidar_name(name);
+    const auto camera_name_expected = std::string("camera");
+    EXPECT_EQ(camera_name, camera_name_expected);
+  }
+
+  {
+    const auto name = std::string("20190401145936_ldar_frontcenter_000000080");
+    const auto camera_name = camera_name_from_lidar_name(name);
+    const auto camera_name_expected = std::string("");
+    EXPECT_EQ(camera_name, camera_name_expected);
+  }
+}
+
+//------------------------------------------------------------------------------
+
 TEST(A2D2_to_ROS, frame_from_filename) {
   {
     const auto frame_expected = "frontcenter";
