@@ -94,6 +94,21 @@ std::ostream& operator<<(std::ostream& os,
 
 //------------------------------------------------------------------------------
 
+sensor_msgs::ImagePtr depth_image_from_a2d2_pointcloud(
+    sensor_msgs::PointCloud2& pc) {
+  const auto fields = get_npz_fields();
+  auto iters = A2D2_PointCloudIterators(pc, fields);
+  // TODO(jeff):
+  // 1. schema for sensor config json
+  // 2. parse sensor config json
+  // 3. pass in resolution
+  // 4. convert to message
+  // 5. done
+  return sensor_msgs::ImagePtr();
+}
+
+//------------------------------------------------------------------------------
+
 sensor_msgs::PointCloud2 build_pc2_msg(std::string frame, ros::Time timestamp,
                                        bool is_dense,
                                        const uint32_t num_points) {
@@ -139,7 +154,7 @@ sensor_msgs::PointCloud2 build_pc2_msg(std::string frame, ros::Time timestamp,
       fields[a2d2_to_ros::lidar::TIMESTAMP_IDX].c_str(), 1,
       lidar::WriteTypes::MSG_INT64,
       fields[a2d2_to_ros::lidar::VALID_DIX].c_str(), 1,
-      sensor_msgs::PointField::UINT8);
+      lidar::WriteTypes::MSG_UINT8);
 
   modifier.resize(msg.width);
 

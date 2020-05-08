@@ -46,6 +46,8 @@
 #include <sstream>
 #include <string>
 
+#include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/Image.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/point_cloud2_iterator.h>
 #include <std_msgs/Float64.h>
@@ -95,13 +97,14 @@ struct ReadTypes {
 /** @brief Explicit notion of data types. */
 struct WriteTypes {
 #ifdef _USE_FLOAT64_
-//  typedef double FLOAT;
-//  static const uint8_t MSG_FLOAT = sensor_msgs::PointField::FLOAT64;
+  typedef double FLOAT;
+  static const uint8_t MSG_FLOAT = sensor_msgs::PointField::FLOAT64;
 #else
   typedef float FLOAT;
   static const uint8_t MSG_FLOAT = sensor_msgs::PointField::FLOAT32;
 #endif
   static const uint8_t MSG_INT64 = sensor_msgs::PointField::FLOAT64;
+  static const uint8_t MSG_UINT8 = sensor_msgs::PointField::UINT8;
   typedef int64_t INT64;
   typedef uint8_t UINT8;
 
@@ -153,6 +156,9 @@ struct A2D2_PointCloudIterators {
   sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Timestamp> timestamp;
   sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Valid> valid;
 };  // struct A2D2_PointCloudIterators
+
+sensor_msgs::ImagePtr depth_image_from_a2d2_pointcloud(
+    sensor_msgs::PointCloud2& pc);
 
 /**
  * @brief Build a PointCloud2 message for storing points from a single npz file.
