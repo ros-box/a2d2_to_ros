@@ -37,6 +37,7 @@
   <depend>rosgraph_msgs</depend>
   <depend>ros_cnpy</depend>
   <depend>rapidjson-dev</depend>
+  <depend>cv_bridge</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
