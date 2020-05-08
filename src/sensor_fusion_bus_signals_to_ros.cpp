@@ -312,6 +312,7 @@ int main(int argc, char* argv[]) {
   /// Write a clock message for every unique timestamp in the data set
   ///
 
+  ROS_INFO_STREAM("Adding " << _CLOCK_TOPIC << " topic...");
   for (const auto& stamp : stamps) {
     rosgraph_msgs::Clock clock_msg;
     clock_msg.clock = stamp;
