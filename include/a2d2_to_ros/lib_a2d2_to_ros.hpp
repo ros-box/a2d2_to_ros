@@ -71,20 +71,56 @@ constexpr auto ROW_SHAPE_IDX = 0;
 constexpr auto COL_SHAPE_IDX = 1;
 
 /** @brief Explicit notion of data types. */
-struct Types {
-  typedef double Point;
-  typedef double Azimuth;
-  typedef int64_t Boundary;
-  typedef double Col;
-  typedef double Depth;
-  typedef double Distance;
-  typedef int64_t LidarId;
-  typedef int64_t Rectime;
-  typedef int64_t Reflectance;
-  typedef double Row;
-  typedef int64_t Timestamp;
-  typedef bool Valid;
-};  // struct Types
+struct ReadTypes {
+  typedef double FLOAT;
+  typedef int64_t INT64;
+  typedef bool BOOL;
+
+  typedef FLOAT Point;
+  typedef FLOAT Azimuth;
+  typedef FLOAT Col;
+  typedef FLOAT Depth;
+  typedef FLOAT Distance;
+  typedef FLOAT Row;
+
+  typedef INT64 Boundary;
+  typedef INT64 LidarId;
+  typedef INT64 Rectime;
+  typedef INT64 Reflectance;
+  typedef INT64 Timestamp;
+
+  typedef BOOL Valid;
+};  // struct ReadTypes
+
+/** @brief Explicit notion of data types. */
+struct WriteTypes {
+#ifdef _USE_FLOAT64_
+//  typedef double FLOAT;
+//  static const uint8_t MSG_FLOAT = sensor_msgs::PointField::FLOAT64;
+#else
+  typedef float FLOAT;
+  static const uint8_t MSG_FLOAT = sensor_msgs::PointField::FLOAT32;
+#endif
+  static const uint8_t MSG_INT64 = sensor_msgs::PointField::FLOAT64;
+  typedef int64_t INT64;
+  typedef uint8_t UINT8;
+
+  typedef FLOAT Point;
+  typedef FLOAT Azimuth;
+  typedef FLOAT Col;
+  typedef FLOAT Depth;
+  typedef FLOAT Distance;
+  typedef FLOAT Row;
+
+  typedef INT64 Boundary;
+  typedef INT64 LidarId;
+  typedef INT64 Rectime;
+  typedef INT64 Reflectance;
+  typedef INT64 Timestamp;
+
+  typedef UINT8 Valid;
+};  // struct ReadTypes
+
 }  // namespace lidar
 
 /** @brief convenience object for interacting with point cloud iterators. */
@@ -102,20 +138,20 @@ struct A2D2_PointCloudIterators {
   friend std::ostream& operator<<(std::ostream& os,
                                   const A2D2_PointCloudIterators& iters);
 
-  sensor_msgs::PointCloud2Iterator<lidar::Types::Point> x;
-  sensor_msgs::PointCloud2Iterator<lidar::Types::Point> y;
-  sensor_msgs::PointCloud2Iterator<lidar::Types::Point> z;
-  sensor_msgs::PointCloud2Iterator<lidar::Types::Azimuth> azimuth;
-  sensor_msgs::PointCloud2Iterator<lidar::Types::Boundary> boundary;
-  sensor_msgs::PointCloud2Iterator<lidar::Types::Col> col;
-  sensor_msgs::PointCloud2Iterator<lidar::Types::Depth> depth;
-  sensor_msgs::PointCloud2Iterator<lidar::Types::Distance> distance;
-  sensor_msgs::PointCloud2Iterator<lidar::Types::LidarId> lidar_id;
-  sensor_msgs::PointCloud2Iterator<lidar::Types::Rectime> rectime;
-  sensor_msgs::PointCloud2Iterator<lidar::Types::Reflectance> reflectance;
-  sensor_msgs::PointCloud2Iterator<lidar::Types::Row> row;
-  sensor_msgs::PointCloud2Iterator<lidar::Types::Timestamp> timestamp;
-  sensor_msgs::PointCloud2Iterator<lidar::Types::Valid> valid;
+  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Point> x;
+  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Point> y;
+  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Point> z;
+  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Azimuth> azimuth;
+  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Boundary> boundary;
+  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Col> col;
+  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Depth> depth;
+  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Distance> distance;
+  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::LidarId> lidar_id;
+  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Rectime> rectime;
+  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Reflectance> reflectance;
+  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Row> row;
+  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Timestamp> timestamp;
+  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Valid> valid;
 };  // struct A2D2_PointCloudIterators
 
 /**

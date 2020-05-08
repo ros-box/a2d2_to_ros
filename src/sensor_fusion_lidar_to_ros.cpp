@@ -39,6 +39,9 @@
 #include "rapidjson/schema.h"
 #include "rapidjson/stringbuffer.h"
 
+// uncomment to use 64-bit instead of 32-bit width for floats in point cloud;
+// really need full precision, best to leave it 32-bit
+//#define _USE_FLOAT64_
 // uncomment this define to log warnings and errors
 #define _ENABLE_A2D2_ROS_LOGGING_
 #include "a2d2_to_ros/lib_a2d2_to_ros.hpp"
@@ -53,9 +56,7 @@ static constexpr auto _CLOCK_TOPIC = "/clock";
 static constexpr auto _OUTPUT_PATH = ".";
 static constexpr auto _DATASET_NAMESPACE = "/a2d2";
 static constexpr auto _INCLUDE_DEPTH_MAP = false;
-static constexpr auto _CAMERA_INFO_SCHEMA_PATH =
-    "/home/maeve/catkin_ws/src/a2d2_to_ros/schemas/"
-    "sensor_fusion_camera_frame.schema";
+static constexpr auto _VERBOSE = false;
 
 namespace {
 namespace po = boost::program_options;
@@ -66,6 +67,7 @@ int main(int argc, char* argv[]) {
   /// Set up command line arguments
   ///
 
+  boost::optional<std::string> camera_frame_schema_path_opt;
   boost::optional<std::string> lidar_path_opt;
   boost::optional<std::string> camera_path_opt;
   po::options_description desc(
@@ -78,11 +80,17 @@ int main(int argc, char* argv[]) {
       "Path to the lidar data files.")(
       "camera-data-path,c", po::value(&camera_path_opt)->required(),
       "Path to the camera data files (for timestamp information).")(
+      "frame-info-schema-path,s",
+      po::value(&camera_frame_schema_path_opt)->required(),
+      "Path to the JSON schema for camera frame info files.")(
       "output-path,o", po::value<std::string>()->default_value(_OUTPUT_PATH),
       "Optional: Path for the output bag file.")(
       "include-depth-map,m",
       po::value<bool>()->default_value(_INCLUDE_DEPTH_MAP),
-      "Optional: Publish a depth map version of the lidar data.");
+      "Optional: Publish a depth map version of the lidar data.")(
+      "verbose,v", po::value<bool>()->default_value(_VERBOSE),
+      "Optional: Write name of each file to logger after it is successfully "
+      "processed.");
 
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -106,10 +114,12 @@ int main(int argc, char* argv[]) {
   /// Get commandline parameters
   ///
 
+  const auto camera_frame_schema_path = *camera_frame_schema_path_opt;
   const auto camera_path = *camera_path_opt;
   const auto lidar_path = *lidar_path_opt;
   const auto output_path = vm["output-path"].as<std::string>();
   const auto include_depth_map = vm["include-depth-map"].as<bool>();
+  const auto verbose = vm["verbose"].as<bool>();
 
   boost::filesystem::path d(lidar_path);
   const auto timestamp = d.parent_path().parent_path().filename().string();
@@ -143,9 +153,9 @@ int main(int argc, char* argv[]) {
   {
     // get schema file string
     const auto schema_string =
-        a2d2_to_ros::get_json_file_as_string(_CAMERA_INFO_SCHEMA_PATH);
+        a2d2_to_ros::get_json_file_as_string(camera_frame_schema_path);
     if (schema_string.empty()) {
-      ROS_FATAL_STREAM("'" << _CAMERA_INFO_SCHEMA_PATH
+      ROS_FATAL_STREAM("'" << camera_frame_schema_path
                            << "' failed to open or is empty.");
       return EXIT_FAILURE;
     }
@@ -165,7 +175,8 @@ int main(int argc, char* argv[]) {
 
   const auto fields = a2d2_to_ros::get_npz_fields();
 
-  ROS_INFO_STREAM("Attempting to convert point cloud data...");
+  ROS_INFO_STREAM(
+      "Attempting to convert point cloud data. This may take a while...");
 
   std::set<ros::Time> stamps;
   rosbag::Bag bag;
@@ -176,6 +187,7 @@ int main(int argc, char* argv[]) {
     /// Get camera data file for timestamp information
     ///
 
+    ros::Time frame_timestamp_ros;
     {
       const auto p = boost::filesystem::path(f);
       const auto b = boost::filesystem::basename(p);
@@ -184,6 +196,7 @@ int main(int argc, char* argv[]) {
         ROS_FATAL_STREAM(
             "Failed to get camera file corresponding to lidar file: "
             << f << ". Cannot continue.");
+        bag.close();
         return EXIT_FAILURE;
       }
 
@@ -196,6 +209,7 @@ int main(int argc, char* argv[]) {
       if (json_string.empty()) {
         ROS_FATAL_STREAM("'" << camera_data_file
                              << "' failed to open or is empty.");
+        bag.close();
         return EXIT_FAILURE;
       }
 
@@ -204,6 +218,7 @@ int main(int argc, char* argv[]) {
             "Error(offset "
             << static_cast<unsigned>(d_json.GetErrorOffset())
             << "): " << rapidjson::GetParseError_En(d_json.GetParseError()));
+        bag.close();
         return EXIT_FAILURE;
       }
 
@@ -223,11 +238,15 @@ int main(int argc, char* argv[]) {
         validator.GetInvalidDocumentPointer().StringifyUriFragment(sb);
         ss << "Invalid document: " << sb.GetString() << "\n";
         ROS_FATAL_STREAM(ss.str());
+        bag.close();
         return EXIT_FAILURE;
       } else {
-        ROS_INFO_STREAM("Validated: " << camera_data_file);
+        // ROS_INFO_STREAM("Validated: " << camera_data_file);
       }
-      return EXIT_SUCCESS;
+
+      const auto frame_timestamp = d_json["cam_tstamp"].GetUint64();
+      frame_timestamp_ros =
+          a2d2_to_ros::a2d2_timestamp_to_ros_time(frame_timestamp);
     }
 
     ///
@@ -262,14 +281,6 @@ int main(int argc, char* argv[]) {
     const auto& timestamp = npz[fields[a2d2_to_ros::lidar::TIMESTAMP_IDX]];
     const auto& valid = npz[fields[a2d2_to_ros::lidar::VALID_DIX]];
 
-    // TODO(jeff): this is not the right timestamp. need to use the timestamps
-    // contained in the corresponding camera data set.
-    const auto max_a2d2_timestamp =
-        a2d2_to_ros::get_max_value<a2d2_to_ros::lidar::Types::Timestamp>(
-            timestamp);
-    const auto max_timestamp = a2d2_to_ros::a2d2_timestamp_to_ros_time(
-        static_cast<uint64_t>(max_a2d2_timestamp));
-
     const auto frame = a2d2_to_ros::frame_from_filename(f);
     if (frame.empty()) {
       ROS_FATAL_STREAM("Could not find frame name in filename: "
@@ -280,7 +291,7 @@ int main(int argc, char* argv[]) {
 
     const auto is_dense = a2d2_to_ros::any_lidar_points_invalid(valid);
     const auto n_points = points.shape[a2d2_to_ros::lidar::ROW_SHAPE_IDX];
-    auto msg = a2d2_to_ros::build_pc2_msg(frame, max_timestamp, is_dense,
+    auto msg = a2d2_to_ros::build_pc2_msg(frame, frame_timestamp_ros, is_dense,
                                           static_cast<uint32_t>(n_points));
 
     ///
@@ -299,14 +310,17 @@ int main(int argc, char* argv[]) {
         constexpr auto Z_POS = 2;
         const auto row_step = points.shape[a2d2_to_ros::lidar::COL_SHAPE_IDX];
 
-        const auto data = points.data<a2d2_to_ros::lidar::Types::Point>();
+        const auto data = points.data<a2d2_to_ros::lidar::ReadTypes::Point>();
         const auto x_idx = a2d2_to_ros::flatten_2d_index(row_step, row, X_POS);
         const auto y_idx = a2d2_to_ros::flatten_2d_index(row_step, row, Y_POS);
         const auto z_idx = a2d2_to_ros::flatten_2d_index(row_step, row, Z_POS);
 
-        *(iters.x) = data[x_idx];
-        *(iters.y) = data[y_idx];
-        *(iters.z) = data[z_idx];
+        *(iters.x) =
+            static_cast<a2d2_to_ros::lidar::WriteTypes::Point>(data[x_idx]);
+        *(iters.y) =
+            static_cast<a2d2_to_ros::lidar::WriteTypes::Point>(data[y_idx]);
+        *(iters.z) =
+            static_cast<a2d2_to_ros::lidar::WriteTypes::Point>(data[z_idx]);
       }
 
       ///
@@ -315,69 +329,84 @@ int main(int argc, char* argv[]) {
 
       {
         const auto& azimuth = npz[fields[a2d2_to_ros::lidar::AZIMUTH_IDX]];
-        const auto data = azimuth.data<a2d2_to_ros::lidar::Types::Azimuth>();
+        const auto data =
+            azimuth.data<a2d2_to_ros::lidar::ReadTypes::Azimuth>();
         *(iters.azimuth) = data[row];
       }
 
       {
         const auto& boundary = npz[fields[a2d2_to_ros::lidar::BOUNDARY_IDX]];
-        const auto data = boundary.data<a2d2_to_ros::lidar::Types::Boundary>();
-        *(iters.boundary) = data[row];
+        const auto data =
+            boundary.data<a2d2_to_ros::lidar::ReadTypes::Boundary>();
+        *(iters.boundary) =
+            static_cast<a2d2_to_ros::lidar::WriteTypes::Boundary>(data[row]);
       }
 
       {
         const auto& image_col = npz[fields[a2d2_to_ros::lidar::COL_IDX]];
-        const auto data = image_col.data<a2d2_to_ros::lidar::Types::Col>();
-        *(iters.col) = data[row];
+        const auto data = image_col.data<a2d2_to_ros::lidar::ReadTypes::Col>();
+        *(iters.col) =
+            static_cast<a2d2_to_ros::lidar::WriteTypes::Col>(data[row]);
       }
 
       {
         const auto& depth = npz[fields[a2d2_to_ros::lidar::DEPTH_IDX]];
-        const auto data = depth.data<a2d2_to_ros::lidar::Types::Depth>();
-        *(iters.depth) = data[row];
+        const auto data = depth.data<a2d2_to_ros::lidar::ReadTypes::Depth>();
+        *(iters.depth) =
+            static_cast<a2d2_to_ros::lidar::WriteTypes::Depth>(data[row]);
       }
 
       {
         const auto& distance = npz[fields[a2d2_to_ros::lidar::DISTANCE_IDX]];
-        const auto data = distance.data<a2d2_to_ros::lidar::Types::Distance>();
-        *(iters.distance) = data[row];
+        const auto data =
+            distance.data<a2d2_to_ros::lidar::ReadTypes::Distance>();
+        *(iters.distance) =
+            static_cast<a2d2_to_ros::lidar::WriteTypes::Distance>(data[row]);
       }
 
       {
         const auto& lidar_id = npz[fields[a2d2_to_ros::lidar::ID_IDX]];
-        const auto data = lidar_id.data<a2d2_to_ros::lidar::Types::LidarId>();
-        *(iters.lidar_id) = data[row];
+        const auto data =
+            lidar_id.data<a2d2_to_ros::lidar::ReadTypes::LidarId>();
+        *(iters.lidar_id) =
+            static_cast<a2d2_to_ros::lidar::WriteTypes::LidarId>(data[row]);
       }
 
       {
         const auto& rectime = npz[fields[a2d2_to_ros::lidar::RECTIME_IDX]];
-        const auto data = rectime.data<a2d2_to_ros::lidar::Types::Rectime>();
-        *(iters.rectime) = data[row];
+        const auto data =
+            rectime.data<a2d2_to_ros::lidar::ReadTypes::Rectime>();
+        *(iters.rectime) =
+            static_cast<a2d2_to_ros::lidar::WriteTypes::Rectime>(data[row]);
       }
 
       {
         const auto& reflectance =
             npz[fields[a2d2_to_ros::lidar::REFLECTANCE_IDX]];
         const auto data =
-            reflectance.data<a2d2_to_ros::lidar::Types::Reflectance>();
-        *(iters.reflectance) = data[row];
+            reflectance.data<a2d2_to_ros::lidar::ReadTypes::Reflectance>();
+        *(iters.reflectance) =
+            static_cast<a2d2_to_ros::lidar::WriteTypes::Reflectance>(data[row]);
       }
 
       {
         const auto& image_row = npz[fields[a2d2_to_ros::lidar::ROW_IDX]];
-        const auto data = image_row.data<a2d2_to_ros::lidar::Types::Row>();
-        *(iters.row) = data[row];
+        const auto data = image_row.data<a2d2_to_ros::lidar::ReadTypes::Row>();
+        *(iters.row) =
+            static_cast<a2d2_to_ros::lidar::WriteTypes::Row>(data[row]);
       }
 
       {
         const auto data =
-            timestamp.data<a2d2_to_ros::lidar::Types::Timestamp>();
-        *(iters.timestamp) = data[row];
+            timestamp.data<a2d2_to_ros::lidar::ReadTypes::Timestamp>();
+        *(iters.timestamp) =
+            static_cast<a2d2_to_ros::lidar::WriteTypes::Timestamp>(data[row]);
       }
 
       {
-        const auto data = valid.data<a2d2_to_ros::lidar::Types::Valid>();
-        *(iters.valid) = data[row];
+        const auto data = valid.data<a2d2_to_ros::lidar::ReadTypes::Valid>();
+        *(iters.valid) =
+            static_cast<a2d2_to_ros::lidar::WriteTypes::Valid>(data[row]);
       }
     }
 
@@ -385,10 +414,10 @@ int main(int argc, char* argv[]) {
     {
       const auto& boundary = npz[fields[a2d2_to_ros::lidar::BOUNDARY_IDX]];
       const auto max_boundary =
-          a2d2_to_ros::get_max_value<a2d2_to_ros::lidar::Types::Boundary>(
+          a2d2_to_ros::get_max_value<a2d2_to_ros::lidar::ReadTypes::Boundary>(
               boundary);
       const auto min_boundary =
-          a2d2_to_ros::get_min_value<a2d2_to_ros::lidar::Types::Boundary>(
+          a2d2_to_ros::get_min_value<a2d2_to_ros::lidar::ReadTypes::Boundary>(
               boundary);
       std::cout << "boundary range: [" << min_boundary << ", " << max_boundary
                 << "]" << std::endl;
@@ -406,14 +435,10 @@ int main(int argc, char* argv[]) {
 
     // message time is the max timestamp of all points in the message
     bag.write(topic_prefix + "/" + file_basename, msg.header.stamp, msg);
-
-    if (stamps.find(msg.header.stamp) != std::end(stamps)) {
-      // TODO(jeff): this should probably be a fatal error
-      ROS_WARN_STREAM("Duplicate message timestamp: " << msg.header.stamp);
-    }
     stamps.insert(msg.header.stamp);
-
-    ROS_INFO_STREAM("Processed: " << f);
+    if (verbose) {
+      ROS_INFO_STREAM("Processed: " << f);
+    }
   }
 
   ///
@@ -421,6 +446,16 @@ int main(int argc, char* argv[]) {
   ///
 
   ROS_INFO_STREAM("Adding " << _CLOCK_TOPIC << " topic...");
+  if (stamps.size() != files.size()) {
+    ROS_FATAL_STREAM("Number of frame timestamps ("
+                     << stamps.size()
+                     << ") is different than number of frames (" << files.size()
+                     << "). Something is wrong; there should be exactly one "
+                        "unique timestamp per frame.");
+    bag.close();
+    return EXIT_FAILURE;
+  }
+
   for (const auto& stamp : stamps) {
     rosgraph_msgs::Clock clock_msg;
     clock_msg.clock = stamp;

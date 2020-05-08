@@ -21,6 +21,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
+//#define _USE_FLOAT64_
 #define _ENABLE_A2D2_ROS_LOGGING_
 #include "a2d2_to_ros/lib_a2d2_to_ros.hpp"
 
@@ -85,7 +86,8 @@ std::ostream& operator<<(std::ostream& os,
      << ", distance: " << *(iters.distance)
      << ", lidar_id: " << *(iters.lidar_id) << ", rectime: " << *(iters.rectime)
      << ", reflectance: " << *(iters.reflectance) << ", row: " << *(iters.row)
-     << ", timestamp: " << *(iters.timestamp) << ", valid: " << *(iters.valid);
+     << ", timestamp: " << *(iters.timestamp)
+     << ", valid: " << static_cast<bool>(*(iters.valid));
   os << "}";
   return os;
 }
@@ -105,9 +107,11 @@ sensor_msgs::PointCloud2 build_pc2_msg(std::string frame, ros::Time timestamp,
   // cnpy uses little endian format
   msg.is_bigendian = false;
 
-  // use double for int64_t; PointField does not define a 64-bit integer type
   // use uint8_t for bool; PointField does not define a bool type
-  msg.point_step = ((13 * sizeof(double)) + sizeof(uint8_t));
+  const auto float_width = (6 * sizeof(lidar::WriteTypes::FLOAT));
+  const auto int_width = (5 * sizeof(lidar::WriteTypes::INT64));
+  const auto bool_width = sizeof(lidar::WriteTypes::UINT8);
+  msg.point_step = (float_width + int_width + bool_width);
 
   msg.row_step = (3 * msg.point_step);
   msg.is_dense = is_dense;
@@ -115,29 +119,25 @@ sensor_msgs::PointCloud2 build_pc2_msg(std::string frame, ros::Time timestamp,
   const auto fields = get_npz_fields();
   sensor_msgs::PointCloud2Modifier modifier(msg);
   modifier.setPointCloud2Fields(
-      14, "x", 1, sensor_msgs::PointField::FLOAT64, "y", 1,
-      sensor_msgs::PointField::FLOAT64, "z", 1,
-      sensor_msgs::PointField::FLOAT64,
+      14, "x", 1, lidar::WriteTypes::MSG_FLOAT, "y", 1,
+      lidar::WriteTypes::MSG_FLOAT, "z", 1, lidar::WriteTypes::MSG_FLOAT,
       fields[a2d2_to_ros::lidar::AZIMUTH_IDX].c_str(), 1,
-      sensor_msgs::PointField::FLOAT64,
+      lidar::WriteTypes::MSG_FLOAT,
       fields[a2d2_to_ros::lidar::BOUNDARY_IDX].c_str(), 1,
-      sensor_msgs::PointField::FLOAT64,
-      fields[a2d2_to_ros::lidar::COL_IDX].c_str(), 1,
-      sensor_msgs::PointField::FLOAT64,
+      lidar::WriteTypes::MSG_INT64, fields[a2d2_to_ros::lidar::COL_IDX].c_str(),
+      1, lidar::WriteTypes::MSG_FLOAT,
       fields[a2d2_to_ros::lidar::DEPTH_IDX].c_str(), 1,
-      sensor_msgs::PointField::FLOAT64,
+      lidar::WriteTypes::MSG_FLOAT,
       fields[a2d2_to_ros::lidar::DISTANCE_IDX].c_str(), 1,
-      sensor_msgs::PointField::FLOAT64,
-      fields[a2d2_to_ros::lidar::ID_IDX].c_str(), 1,
-      sensor_msgs::PointField::FLOAT64,
+      lidar::WriteTypes::MSG_FLOAT, fields[a2d2_to_ros::lidar::ID_IDX].c_str(),
+      1, lidar::WriteTypes::MSG_INT64,
       fields[a2d2_to_ros::lidar::RECTIME_IDX].c_str(), 1,
-      sensor_msgs::PointField::FLOAT64,
-      fields[a2d2_to_ros::lidar::ROW_IDX].c_str(), 1,
-      sensor_msgs::PointField::FLOAT64,
+      lidar::WriteTypes::MSG_INT64, fields[a2d2_to_ros::lidar::ROW_IDX].c_str(),
+      1, lidar::WriteTypes::MSG_FLOAT,
       fields[a2d2_to_ros::lidar::REFLECTANCE_IDX].c_str(), 1,
-      sensor_msgs::PointField::FLOAT64,
+      lidar::WriteTypes::MSG_INT64,
       fields[a2d2_to_ros::lidar::TIMESTAMP_IDX].c_str(), 1,
-      sensor_msgs::PointField::FLOAT64,
+      lidar::WriteTypes::MSG_INT64,
       fields[a2d2_to_ros::lidar::VALID_DIX].c_str(), 1,
       sensor_msgs::PointField::UINT8);
 
@@ -299,7 +299,8 @@ bool verify_npz_structure(const std::map<std::string, cnpy::NpyArray>& npz) {
     const auto is_distance = (field_name == fields[lidar::DISTANCE_IDX]);
     // TODO(jeff): figure out whether row/col can be negative
     if (/* is_row || is_col ||*/ is_depth || is_distance) {
-      const auto non_negative = all_non_negative<double>(field_values);
+      const auto non_negative =
+          all_non_negative<lidar::ReadTypes::Point>(field_values);
       sign_error = (sign_error || !non_negative);
     }
 
@@ -316,7 +317,7 @@ bool verify_npz_structure(const std::map<std::string, cnpy::NpyArray>& npz) {
     ///
     if (is_timestamp) {
       const auto length = field_values.shape[lidar::ROW_SHAPE_IDX];
-      const auto& data = field_values.data<lidar::Types::Timestamp>();
+      const auto& data = field_values.data<lidar::ReadTypes::Timestamp>();
       for (auto i = 0; i < length; ++i) {
         // preceding checks guarantee data is non-negative
         const auto t = static_cast<uint64_t>(data[i]);
