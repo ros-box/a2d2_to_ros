@@ -412,6 +412,14 @@ int main(int argc, char* argv[]) {
 
 #if 0
     {
+      const auto& reflectance =
+          npz[fields[a2d2_to_ros::lidar::REFLECTANCE_IDX]];
+      const auto max_reflectance = a2d2_to_ros::get_max_value<
+          a2d2_to_ros::lidar::ReadTypes::Reflectance>(reflectance);
+      const auto min_reflectance = a2d2_to_ros::get_min_value<
+          a2d2_to_ros::lidar::ReadTypes::Reflectance>(reflectance);
+      std::cout << "reflectance range: [" << min_reflectance << ", "
+                << max_reflectance << "]" << std::endl;
       const auto& boundary = npz[fields[a2d2_to_ros::lidar::BOUNDARY_IDX]];
       const auto max_boundary =
           a2d2_to_ros::get_max_value<a2d2_to_ros::lidar::ReadTypes::Boundary>(
@@ -425,7 +433,9 @@ int main(int argc, char* argv[]) {
       for (auto row = 0; row < n_points; ++row, ++test) {
         std::cout << test << std::endl;
       }
-      break;
+      ROS_WARN_STREAM("Finished debut output. Exiting.");
+      bag.close();
+      return EXIT_FAILURE;
     }
 #endif
 
