@@ -216,6 +216,28 @@ std::array<std::string, 6> get_sensor_frame_names() {
 
 //------------------------------------------------------------------------------
 
+std::array<std::string, 6> get_camera_names() {
+  return {"front_center", "front_left", "front_right",
+          "side_left",    "side_right", "rear_center"};
+}
+
+//------------------------------------------------------------------------------
+
+std::string get_camera_name_from_frame_name(const std::string& name) {
+  const auto cameras = get_camera_names();
+  const auto frames = get_sensor_frame_names();
+  static_assert((cameras.size() == frames.size()),
+                "Camera names and lidar names must be same size.");
+  for (auto i = 0; i < frames.size(); ++i) {
+    if (name == frames[i]) {
+      return cameras[i];
+    }
+  }
+  return "";
+}
+
+//------------------------------------------------------------------------------
+
 std::array<std::string, 12> get_npz_fields() {
   return {"pcloud_points",           "pcloud_attr.azimuth",
           "pcloud_attr.boundary",    "pcloud_attr.col",

@@ -237,6 +237,20 @@ bool any_lidar_points_invalid(const cnpy::NpyArray& valid);
 std::array<std::string, 6> get_sensor_frame_names();
 
 /**
+ * @brief Get a list of camera names.
+ * @note This function has no test coverage.
+ */
+std::array<std::string, 6> get_camera_names();
+
+/**
+ * @brief Map camera name from npz lidar filename to camera name
+ * @note This function has no test coverage.
+ * @return The camera name corresponding to the lidar frame, or empty string if
+ * not found.
+ */
+std::string get_camera_name_from_frame_name(const std::string& name);
+
+/**
  * @brief Get a list of expected field names for npz lidar data.
  * @note This function has no test coverage.
  */
