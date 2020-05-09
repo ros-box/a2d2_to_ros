@@ -106,12 +106,12 @@ struct WriteTypes {
   typedef FLOAT Distance;
   typedef FLOAT Row;
 
-  typedef INT64 Boundary;
-  typedef INT64 LidarId;
   typedef INT64 Rectime;
-  typedef INT64 Reflectance;
   typedef INT64 Timestamp;
 
+  typedef UINT8 Reflectance;
+  typedef UINT8 LidarId;
+  typedef UINT8 Boundary;
   typedef UINT8 Valid;
 };  // struct ReadTypes
 

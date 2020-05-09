@@ -283,7 +283,7 @@ int main(int argc, char* argv[]) {
     const auto& timestamp = npz[fields[a2d2::lidar::TIMESTAMP_IDX]];
     const auto& valid = npz[fields[a2d2::lidar::VALID_DIX]];
 
-    const auto frame = a2d2::frame_from_filename(f);
+    const auto frame = ("lidar_" + a2d2::frame_from_filename(f));
     if (frame.empty()) {
       X_FATAL("Could not find frame name in filename: "
               << f << ". Cannot continue.");

@@ -79,12 +79,14 @@ std::ostream& operator<<(std::ostream& os,
                          const A2D2_PointCloudIterators& iters) {
   os << "{";
   os << "x: " << *(iters.x) << ", y: " << *(iters.y) << ", z: " << *(iters.z)
-     << ", azimuth: " << *(iters.azimuth) << ", boundary: " << *(iters.boundary)
+     << ", azimuth: " << *(iters.azimuth)
+     << ", boundary: " << static_cast<bool>(*(iters.boundary))
      << ", col: " << *(iters.col) << ", depth: " << *(iters.depth)
      << ", distance: " << *(iters.distance)
-     << ", lidar_id: " << *(iters.lidar_id) << ", rectime: " << *(iters.rectime)
-     << ", reflectance: " << *(iters.reflectance) << ", row: " << *(iters.row)
-     << ", timestamp: " << *(iters.timestamp)
+     << ", lidar_id: " << static_cast<int>(*(iters.lidar_id))
+     << ", rectime: " << *(iters.rectime)
+     << ", reflectance: " << static_cast<int>(*(iters.reflectance))
+     << ", row: " << *(iters.row) << ", timestamp: " << *(iters.timestamp)
      << ", valid: " << static_cast<bool>(*(iters.valid));
   os << "}";
   return os;
@@ -122,8 +124,8 @@ sensor_msgs::PointCloud2 build_pc2_msg(std::string frame, ros::Time timestamp,
 
   // use uint8_t for bool; PointField does not define a bool type
   const auto float_width = (6 * sizeof(lidar::WriteTypes::FLOAT));
-  const auto int_width = (5 * sizeof(lidar::WriteTypes::INT64));
-  const auto bool_width = sizeof(lidar::WriteTypes::UINT8);
+  const auto int_width = (2 * sizeof(lidar::WriteTypes::INT64));
+  const auto bool_width = (4 * sizeof(lidar::WriteTypes::UINT8));
   msg.point_step = (float_width + int_width + bool_width);
 
   msg.row_step = (3 * msg.point_step);
@@ -137,18 +139,18 @@ sensor_msgs::PointCloud2 build_pc2_msg(std::string frame, ros::Time timestamp,
       fields[a2d2_to_ros::lidar::AZIMUTH_IDX].c_str(), 1,
       lidar::WriteTypes::MSG_FLOAT,
       fields[a2d2_to_ros::lidar::BOUNDARY_IDX].c_str(), 1,
-      lidar::WriteTypes::MSG_INT64, fields[a2d2_to_ros::lidar::COL_IDX].c_str(),
+      lidar::WriteTypes::MSG_UINT8, fields[a2d2_to_ros::lidar::COL_IDX].c_str(),
       1, lidar::WriteTypes::MSG_FLOAT,
       fields[a2d2_to_ros::lidar::DEPTH_IDX].c_str(), 1,
       lidar::WriteTypes::MSG_FLOAT,
       fields[a2d2_to_ros::lidar::DISTANCE_IDX].c_str(), 1,
       lidar::WriteTypes::MSG_FLOAT, fields[a2d2_to_ros::lidar::ID_IDX].c_str(),
-      1, lidar::WriteTypes::MSG_INT64,
+      1, lidar::WriteTypes::MSG_UINT8,
       fields[a2d2_to_ros::lidar::RECTIME_IDX].c_str(), 1,
       lidar::WriteTypes::MSG_INT64, fields[a2d2_to_ros::lidar::ROW_IDX].c_str(),
       1, lidar::WriteTypes::MSG_FLOAT,
       fields[a2d2_to_ros::lidar::REFLECTANCE_IDX].c_str(), 1,
-      lidar::WriteTypes::MSG_INT64,
+      lidar::WriteTypes::MSG_UINT8,
       fields[a2d2_to_ros::lidar::TIMESTAMP_IDX].c_str(), 1,
       lidar::WriteTypes::MSG_INT64,
       fields[a2d2_to_ros::lidar::VALID_DIX].c_str(), 1,
