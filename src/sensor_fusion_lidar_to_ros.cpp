@@ -75,7 +75,6 @@ int main(int argc, char* argv[]) {
   /// Set up command line arguments
   ///
 
-  // TODO(jeff): use proper compile-time flags for the define switches
   // TODO(jeff): rename "reflectance" to "intensity" assuming that's what it is
   boost::optional<std::string> camera_frame_schema_path_opt;
   boost::optional<std::string> lidar_path_opt;
