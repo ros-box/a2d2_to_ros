@@ -48,8 +48,12 @@
 #define _ENABLE_A2D2_ROS_LOGGING_
 #include "a2d2_to_ros/lib_a2d2_to_ros.hpp"
 
-typedef std::set<a2d2_to_ros::DataPair, a2d2_to_ros::DataPairTimeComparator>
-    DataPairSet;
+namespace {
+namespace a2d2 = a2d2_to_ros;
+namespace po = boost::program_options;
+}  // namespace
+
+typedef std::set<a2d2::DataPair, a2d2::DataPairTimeComparator> DataPairSet;
 typedef std::unordered_map<std::string, std::tuple<std::string, DataPairSet>>
     DataPairMap;
 
@@ -68,10 +72,6 @@ static constexpr auto _ORIGINAL_VALUE_TOPIC = "original_value";
 static constexpr auto _ORIGINAL_UNITS_TOPIC = "original_units";
 static constexpr auto _VALUE_TOPIC = "value";
 static constexpr auto _HEADER_TOPC = "header";
-
-namespace {
-namespace po = boost::program_options;
-}  // namespace
 
 int main(int argc, char* argv[]) {
   ///
@@ -144,8 +144,7 @@ int main(int argc, char* argv[]) {
   rapidjson::Document d_schema;
   {
     // get schema file string
-    const auto schema_string =
-        a2d2_to_ros::get_json_file_as_string(schema_path);
+    const auto schema_string = a2d2::get_json_file_as_string(schema_path);
     if (schema_string.empty()) {
       ROS_FATAL_STREAM("'" << schema_path << "' failed to open or is empty.");
       return EXIT_FAILURE;
@@ -167,7 +166,7 @@ int main(int argc, char* argv[]) {
   rapidjson::Document d_json;
   {
     // get json file string
-    const auto json_string = a2d2_to_ros::get_json_file_as_string(json_path);
+    const auto json_string = a2d2::get_json_file_as_string(json_path);
     if (json_string.empty()) {
       ROS_FATAL_STREAM("'" << json_path << "' failed to open or is empty.");
       return EXIT_FAILURE;
@@ -262,7 +261,7 @@ int main(int argc, char* argv[]) {
     if (include_original) {
       const rapidjson::Value& t_v = values[static_cast<rapidjson::SizeType>(0)];
       const auto time = t_v[static_cast<rapidjson::SizeType>(0)].GetUint64();
-      const auto first_time = a2d2_to_ros::a2d2_timestamp_to_ros_time(time);
+      const auto first_time = a2d2::a2d2_timestamp_to_ros_time(time);
 
       std_msgs::String units_msg;
       units_msg.data = units;
@@ -275,7 +274,7 @@ int main(int argc, char* argv[]) {
     for (rapidjson::SizeType idx = 0; idx < values.Size(); ++idx) {
       const rapidjson::Value& t_v = values[idx];
       const auto time = t_v[static_cast<rapidjson::SizeType>(0)].GetUint64();
-      if (!a2d2_to_ros::valid_ros_timestamp(time)) {
+      if (!a2d2::valid_ros_timestamp(time)) {
         ROS_FATAL_STREAM("Timestamp "
                          << time
                          << " has unsupported magnitude: ROS does not support "
@@ -286,8 +285,7 @@ int main(int argc, char* argv[]) {
       }
 
       const auto value = t_v[static_cast<rapidjson::SizeType>(1)].GetDouble();
-      const auto data =
-          a2d2_to_ros::DataPair::build(value, time, bus_frame_name);
+      const auto data = a2d2::DataPair::build(value, time, bus_frame_name);
 
       const auto& stamp = data.header.stamp;
       stamps.insert(stamp);
@@ -298,8 +296,7 @@ int main(int argc, char* argv[]) {
                   stamp, data.value);
       }
       if (include_converted) {
-        const auto ros_value =
-            a2d2_to_ros::to_ros_units(units, data.value.data);
+        const auto ros_value = a2d2::to_ros_units(units, data.value.data);
         std_msgs::Float64 ros_value_msg;
         ros_value_msg.data = ros_value;
         bag.write(topic_prefix + "/" + name + "/" + _VALUE_TOPIC, stamp,
