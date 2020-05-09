@@ -39,12 +39,8 @@
 #include "rapidjson/schema.h"
 #include "rapidjson/stringbuffer.h"
 
-// uncomment to use 64-bit instead of 32-bit width for floats in point cloud;
-// really need full precision, best to leave it 32-bit
-//#define _USE_FLOAT64_
-// uncomment this define to log warnings and errors
-#define _ENABLE_A2D2_ROS_LOGGING_
 #include "a2d2_to_ros/lib_a2d2_to_ros.hpp"
+#include "a2d2_to_ros/logging.hpp"
 #include "ros_cnpy/cnpy.h"
 
 namespace {
@@ -64,6 +60,17 @@ static constexpr auto _INCLUDE_DEPTH_MAP = false;
 static constexpr auto _VERBOSE = false;
 
 int main(int argc, char* argv[]) {
+#ifdef ENABLE_A2D2_ROS_LOGGING
+  X_INFO("Build with ROS logging enabled.");
+#endif
+#ifdef USE_FLOAT64
+  X_INFO(
+      "Built to use 64-bit precision for float values; be aware this may break "
+      "compatibility with Rviz.");
+#else
+  X_INFO("Built to use 32-bit precision for float values.");
+#endif
+
   ///
   /// Set up command line arguments
   ///
@@ -158,8 +165,8 @@ int main(int argc, char* argv[]) {
     const auto schema_string =
         a2d2::get_json_file_as_string(camera_frame_schema_path);
     if (schema_string.empty()) {
-      ROS_FATAL_STREAM("'" << camera_frame_schema_path
-                           << "' failed to open or is empty.");
+      X_FATAL("'" << camera_frame_schema_path
+                  << "' failed to open or is empty.");
       return EXIT_FAILURE;
     }
 
@@ -178,8 +185,7 @@ int main(int argc, char* argv[]) {
 
   const auto fields = a2d2::get_npz_fields();
 
-  ROS_INFO_STREAM(
-      "Attempting to convert point cloud data. This may take a while...");
+  X_INFO("Attempting to convert point cloud data. This may take a while...");
 
   std::set<ros::Time> stamps;
   rosbag::Bag bag;
@@ -196,9 +202,8 @@ int main(int argc, char* argv[]) {
       const auto b = boost::filesystem::basename(p);
       const auto camera_basename = a2d2::camera_name_from_lidar_name(b);
       if (camera_basename.empty()) {
-        ROS_FATAL_STREAM(
-            "Failed to get camera file corresponding to lidar file: "
-            << f << ". Cannot continue.");
+        X_FATAL("Failed to get camera file corresponding to lidar file: "
+                << f << ". Cannot continue.");
         bag.close();
         return EXIT_FAILURE;
       }
@@ -209,17 +214,15 @@ int main(int argc, char* argv[]) {
       // get json file string
       const auto json_string = a2d2::get_json_file_as_string(camera_data_file);
       if (json_string.empty()) {
-        ROS_FATAL_STREAM("'" << camera_data_file
-                             << "' failed to open or is empty.");
+        X_FATAL("'" << camera_data_file << "' failed to open or is empty.");
         bag.close();
         return EXIT_FAILURE;
       }
 
       if (d_json.Parse(json_string.c_str()).HasParseError()) {
-        ROS_FATAL_STREAM(
-            "Error(offset "
-            << static_cast<unsigned>(d_json.GetErrorOffset())
-            << "): " << rapidjson::GetParseError_En(d_json.GetParseError()));
+        X_FATAL("Error(offset "
+                << static_cast<unsigned>(d_json.GetErrorOffset()) << "): "
+                << rapidjson::GetParseError_En(d_json.GetParseError()));
         bag.close();
         return EXIT_FAILURE;
       }
@@ -239,11 +242,11 @@ int main(int argc, char* argv[]) {
         sb.Clear();
         validator.GetInvalidDocumentPointer().StringifyUriFragment(sb);
         ss << "Invalid document: " << sb.GetString() << "\n";
-        ROS_FATAL_STREAM(ss.str());
+        X_FATAL(ss.str());
         bag.close();
         return EXIT_FAILURE;
       } else {
-        // ROS_INFO_STREAM("Validated: " << camera_data_file);
+        // X_INFO("Validated: " << camera_data_file);
       }
 
       const auto frame_timestamp = d_json["cam_tstamp"].GetUint64();
@@ -258,19 +261,18 @@ int main(int argc, char* argv[]) {
     try {
       npz = cnpy::npz_load(f);
     } catch (const std::exception& e) {
-      ROS_FATAL_STREAM(e.what());
+      X_FATAL(e.what());
       bag.close();
       return EXIT_FAILURE;
     }
 
     const auto npz_structure_valid = a2d2::verify_npz_structure(npz);
     if (!npz_structure_valid) {
-      ROS_FATAL_STREAM(
-          "Encountered unexpected structure in the data. Cannot continue.");
+      X_FATAL("Encountered unexpected structure in the data. Cannot continue.");
       bag.close();
       return EXIT_FAILURE;
     } else {
-      // ROS_INFO_STREAM("Successfully loaded npz data from:\n" << f);
+      // X_INFO("Successfully loaded npz data from:\n" << f);
     }
 
     ///
@@ -284,8 +286,8 @@ int main(int argc, char* argv[]) {
 
     const auto frame = a2d2::frame_from_filename(f);
     if (frame.empty()) {
-      ROS_FATAL_STREAM("Could not find frame name in filename: "
-                       << f << ". Cannot continue.");
+      X_FATAL("Could not find frame name in filename: "
+              << f << ". Cannot continue.");
       bag.close();
       return EXIT_FAILURE;
     }
@@ -417,7 +419,7 @@ int main(int argc, char* argv[]) {
       for (auto row = 0; row < n_points; ++row, ++test) {
         std::cout << test << std::endl;
       }
-      ROS_WARN_STREAM("Finished debut output. Exiting.");
+      X_WARN("Finished debut output. Exiting.");
       bag.close();
       return EXIT_FAILURE;
     }
@@ -431,7 +433,7 @@ int main(int argc, char* argv[]) {
     bag.write(topic_prefix + "/" + file_basename, msg.header.stamp, msg);
     stamps.insert(msg.header.stamp);
     if (verbose) {
-      ROS_INFO_STREAM("Processed: " << f);
+      X_INFO("Processed: " << f);
     }
   }
 
@@ -439,13 +441,13 @@ int main(int argc, char* argv[]) {
   /// Write a clock message for every unique timestamp in the data set
   ///
 
-  ROS_INFO_STREAM("Adding " << _CLOCK_TOPIC << " topic...");
+  X_INFO("Adding " << _CLOCK_TOPIC << " topic...");
   if (stamps.size() != files.size()) {
-    ROS_FATAL_STREAM("Number of frame timestamps ("
-                     << stamps.size()
-                     << ") is different than number of frames (" << files.size()
-                     << "). Something is wrong; there should be exactly one "
-                        "unique timestamp per frame.");
+    X_FATAL("Number of frame timestamps ("
+            << stamps.size() << ") is different than number of frames ("
+            << files.size()
+            << "). Something is wrong; there should be exactly one "
+               "unique timestamp per frame.");
     bag.close();
     return EXIT_FAILURE;
   }
@@ -458,6 +460,6 @@ int main(int argc, char* argv[]) {
 
   bag.close();
 
-  ROS_INFO_STREAM("Done.");
+  X_INFO("Done.");
   return EXIT_SUCCESS;
 }

@@ -24,17 +24,6 @@
 #ifndef A2D2_TO_ROS__LIB_A2D2_TO_ROS_HPP_
 #define A2D2_TO_ROS__LIB_A2D2_TO_ROS_HPP_
 
-#ifdef _ENABLE_A2D2_ROS_LOGGING_
-#include <ros/console.h>
-#define X_WARN(s) ROS_WARN_STREAM(s)
-#define X_ERROR(s) ROS_ERROR_STREAM(s)
-#define X_FATAL(s) ROS_FATAL_STREAM(s)
-#else
-#define X_WARN(s)
-#define X_ERROR(s)
-#define X_FATAL(s)
-#endif
-
 #define _USE_MATH_DEFINES
 #include <cmath>
 
@@ -53,6 +42,8 @@
 #include <std_msgs/Float64.h>
 #include <std_msgs/Header.h>
 #include "ros_cnpy/cnpy.h"
+
+#include "a2d2_to_ros/logging.hpp"
 
 namespace a2d2_to_ros {
 namespace lidar {
@@ -96,7 +87,7 @@ struct ReadTypes {
 
 /** @brief Explicit notion of data types. */
 struct WriteTypes {
-#ifdef _USE_FLOAT64_
+#ifdef USE_FLOAT64
   typedef double FLOAT;
   static const uint8_t MSG_FLOAT = sensor_msgs::PointField::FLOAT64;
 #else
@@ -360,8 +351,6 @@ T to_ros_units(const std::string& unit_name, const T& val) {
       return val;
       break;
     default:
-      X_ERROR("Unrecognized units name '"
-              << unit_name << "', cannot convert. Returning NaN.");
       return std::numeric_limits<T>::quiet_NaN();
       break;
   }
