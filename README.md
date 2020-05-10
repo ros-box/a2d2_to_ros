@@ -33,7 +33,7 @@ $ rosrun a2d2_to_ros sensor_fusion_lidar --lidar-data-path ~/data/a2d2/Ingolstad
 
 ### Type conversions
 
-In the A2D2 data set, floating point types are stored with 64-bit width. However, this much precision is typically not needed (and possibly not even necessary, see [FAQ.md](FAQ.md)).For that reason, this package converts 64-bit floating point information to 32-bit. If 64-bit width is desired, edit the [CMakelists.txt](CMakelists.txt) file to uncomment the `-DUSE_FLOAT64` compile definition:
+In the A2D2 data set, floating point types are stored with 64-bit width. However, this much precision is typically not needed (and possibly not even necessary, see [FAQ.md](FAQ.md)).For that reason, this package converts 64-bit floating point information to 32-bit. If 64-bit width is desired, edit the [CMakeLists.txt](CMakeLists.txt) file to uncomment the `-DUSE_FLOAT64` compile definition:
 
 ```
 # uncomment to use 64-bit instead of 32-bit width for floats in point cloud;
@@ -45,7 +45,7 @@ As noted in the cmake file, this can cause ROS tools, such as RViz, to be unable
 
 Additionally, in the interest of saving space where possible, integer and bool fields use smaller width data types. Unlike the float values, however, this does not result in potential loss of information because the full integer widths are never used.
 
-The full mapping of types is provided in the table below. "A2D2 type" is the type used by numpy to store the data, "PointCloud2 type" is the type used to write data to the point cloud message (for this the type itself is not so important as the width), and "Interpretation type" is the type the value should be case to when retrieving the value from the message. Programmatically the type conversion information is available in the `ReadTypes` and `WriteTypes` structs in [includes/lib\_a2d2\_to\_ros.hpp](includes/a2d2_to_ros/lib_a2d2_to_ros.hpp):
+The full mapping of types is provided in the table below. "A2D2 type" is the type used by numpy to store the data, "PointCloud2 type" is the type used to write data to the point cloud message (for this the type itself is not so important as the width), and "Interpretation type" is the type the value should be case to when retrieving the value from the message. Programmatically the type conversion information is available in the `ReadTypes` and `WriteTypes` structs in [include/lib\_a2d2\_to\_ros.hpp](include/a2d2_to_ros/lib_a2d2_to_ros.hpp):
 
 | A2D2 field               | A2D2 type | PointCloud2 type                        | Interpretation type |
 |--------------------------|:---------:|:---------------------------------------:|--------------------:|
