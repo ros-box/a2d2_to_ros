@@ -104,6 +104,7 @@ struct WriteTypes {
   static const uint8_t MSG_UINT8 = sensor_msgs::PointField::UINT8;
   typedef uint64_t UINT64;
   typedef uint8_t UINT8;
+  typedef bool BOOL;
 
   typedef FLOAT Point;
   typedef FLOAT Azimuth;
@@ -117,8 +118,9 @@ struct WriteTypes {
 
   typedef UINT8 Reflectance;
   typedef UINT8 LidarId;
-  typedef UINT8 Boundary;
-  typedef UINT8 Valid;
+
+  typedef BOOL Boundary;
+  typedef BOOL Valid;
 };  // struct ReadTypes
 
 }  // namespace lidar

@@ -79,15 +79,14 @@ std::ostream& operator<<(std::ostream& os,
                          const A2D2_PointCloudIterators& iters) {
   os << "{"
      << "x: " << *(iters.x) << ", y: " << *(iters.y) << ", z: " << *(iters.z)
-     << ", azimuth: " << *(iters.azimuth)
-     << ", boundary: " << static_cast<bool>(*(iters.boundary))
+     << ", azimuth: " << *(iters.azimuth) << ", boundary: " << *(iters.boundary)
      << ", col: " << *(iters.col) << ", depth: " << *(iters.depth)
      << ", distance: " << *(iters.distance)
      << ", lidar_id: " << static_cast<int>(*(iters.lidar_id))
      << ", rectime: " << *(iters.rectime)
      << ", reflectance: " << static_cast<int>(*(iters.reflectance))
      << ", row: " << *(iters.row) << ", timestamp: " << *(iters.timestamp)
-     << ", valid: " << static_cast<bool>(*(iters.valid)) << "}";
+     << ", valid: " << *(iters.valid) << "}";
   return os;
 }
 
