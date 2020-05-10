@@ -49,17 +49,17 @@ The full mapping of types is provided in the table below. "A2D2 type" is the typ
 
 | A2D2 field               | A2D2 type | PointCloud2 type                         | Interpretation type |
 |--------------------------|:---------:|:----------------------------------------:|--------------------:|
-| pcloud\_points           | `float64` | `sensor_msgs::PointField::FLOAT(32\|64)` | `(float\|double)`   |
-| pcloud\_attr.col         | `float64` | `sensor_msgs::PointField::FLOAT(32\|64)` | `(float\|double)`   |
-| pcloud\_attr.depth       | `float64` | `sensor_msgs::PointField::FLOAT(32\|64)` | `(float\|double)`   |
-| pcloud\_attr.distance    | `float64` | `sensor_msgs::PointField::FLOAT(32\|64)` | `(float\|double)`   |
-| pcloud\_attr.row         | `float64` | `sensor_msgs::PointField::FLOAT(32\|64)` | `(float\|double)`   |
-| pcloud\_attr.rectime     | `int64`   | `sensor_msgs::PointField::FLOAT64`       | `uint64_t`          |
-| pcloud\_attr.timestamp   | `int64`   | `sensor_msgs::PointField::FLOAT64`       | `uint64_t`          |
-| pcloud\_attr.lidar\_id   | `int64`   | `sensor_msgs::PointField::UINT8`         | `uint8_t`           |
-| pcloud\_attr.reflectance | `int64`   | `sensor_msgs::PointField::UINT8`         | `uint8_t`           |
-| pcloud\_attr.boundary    | `int64`   | `sensor_msgs::PointField::UINT8`         | `bool`              |
-| pcloud\_attr.valid       | `int64`   | `sensor_msgs::PointField::UINT8`         | `bool`              |
+| *pcloud\_points*           | `float64` | `sensor_msgs::PointField::FLOAT(32\|64)` | `(float\|double)`   |
+| *pcloud\_attr.col*         | `float64` | `sensor_msgs::PointField::FLOAT(32\|64)` | `(float\|double)`   |
+| *pcloud\_attr.depth*       | `float64` | `sensor_msgs::PointField::FLOAT(32\|64)` | `(float\|double)`   |
+| *pcloud\_attr.distance*    | `float64` | `sensor_msgs::PointField::FLOAT(32\|64)` | `(float\|double)`   |
+| *pcloud\_attr.row*         | `float64` | `sensor_msgs::PointField::FLOAT(32\|64)` | `(float\|double)`   |
+| *pcloud\_attr.rectime*     | `int64`   | `sensor_msgs::PointField::FLOAT64`       | `uint64_t`          |
+| *pcloud\_attr.timestamp*   | `int64`   | `sensor_msgs::PointField::FLOAT64`       | `uint64_t`          |
+| *pcloud\_attr.lidar\_id*   | `int64`   | `sensor_msgs::PointField::UINT8`         | `uint8_t`           |
+| *pcloud\_attr.reflectance* | `int64`   | `sensor_msgs::PointField::UINT8`         | `uint8_t`           |
+| *pcloud\_attr.boundary*    | `int64`   | `sensor_msgs::PointField::UINT8`         | `bool`              |
+| *pcloud\_attr.valid*       | `int64`   | `sensor_msgs::PointField::UINT8`         | `bool`              |
 
 
 
@@ -95,7 +95,7 @@ for (auto row = 0; row < n_points; ++row, ++iters) {
 An example RViz config is included along a convenience launch file:
 
 ```shell
-roslaunch a2d2_to_ros viz_lidar_frontcenter.launch
+$ roslaunch a2d2_to_ros viz_lidar_frontcenter.launch
 ```
 
 The config only includes the `front_center` lidar, but the settings should work for any of them.
