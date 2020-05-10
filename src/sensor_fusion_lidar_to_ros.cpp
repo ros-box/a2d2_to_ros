@@ -94,8 +94,9 @@ int main(int argc, char* argv[]) {
       "frame-info-schema-path,s",
       po::value(&camera_frame_schema_path_opt)->required(),
       "Path to the JSON schema for camera frame info files.")(
-      "sensor-config,s", po::value(&sensor_config_path_opt)->required(),
-      "Path to the JSON schema for vehicle/sensor config.")(
+      // TODO(jeff): build depth map, write to bag
+      //    "sensor-config,s", po::value(&sensor_config_path_opt)->required(),
+      //      "Path to the JSON schema for vehicle/sensor config.")(
       "output-path,o", po::value<std::string>()->default_value(_OUTPUT_PATH),
       "Optional: Path for the output bag file.")(
       "include-depth-map,m",
@@ -143,6 +144,7 @@ int main(int argc, char* argv[]) {
   const auto topic_prefix =
       (std::string(_DATASET_NAMESPACE) + "/" + file_basename);
 
+#if 0  // TODO(jeff): build depth map, write to bag
   ///
   /// Get the JSON for vehicle/sensor config
   ///
@@ -164,6 +166,7 @@ int main(int argc, char* argv[]) {
             << rapidjson::GetParseError_En(sensor_config_json.GetParseError()));
     return EXIT_FAILURE;
   }
+#endif
 
   ///
   /// Get list of .npz file names
@@ -319,6 +322,7 @@ int main(int argc, char* argv[]) {
       return EXIT_FAILURE;
     }
 
+#if 0  // TODO(jeff): build depth map, write to bag
     const auto camera_name = a2d2::get_camera_name_from_frame_name(lidar_name);
     const rapidjson::Value& dim =
         sensor_config_json["cameras"][camera_name.c_str()]["Resolution"]
@@ -326,7 +330,7 @@ int main(int argc, char* argv[]) {
     const auto width = dim[0].GetInt();
     const auto height = dim[1].GetInt();
     const auto cv_size = cv::Size(width, height);
-    // TODO(jeff): build depth map, write to bag
+#endif
 
     const auto is_dense = a2d2::any_lidar_points_invalid(valid);
     const auto n_points = points.shape[a2d2::lidar::ROW_SHAPE_IDX];
