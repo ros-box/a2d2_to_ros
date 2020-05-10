@@ -15,7 +15,7 @@ This package has the following dependencies in addition to standard ROS dependen
 
 The ROS CNPY package can be downloaded at the above link, and RapidJSON can be installed with:
 
-```shell
+```console
 $ rosdep install a2d2_to_ros --ignore-src -r -y
 ```
 
@@ -27,7 +27,7 @@ $ rosdep install a2d2_to_ros --ignore-src -r -y
 
 This converter parses lidar frame data saved in numpy format and converts each frame to a `sensor_msgs::PointCloud2` message.
 
-```shell
+```console
 $ rosrun a2d2_to_ros sensor_fusion_lidar --lidar-data-path ~/data/a2d2/Ingolstadt/camera_lidar/20190401_145936/lidar/cam_front_center --camera-data-path ~/data/a2d2/Ingolstadt/camera_lidar/20190401_145936/camera/cam_front_center --frame-info-schema-path ~/catkin_ws/src/a2d2_to_ros/schemas/sensor_fusion_camera_frame.schema --verbose true
 ```
 
@@ -94,7 +94,7 @@ for (auto row = 0; row < n_points; ++row, ++iters) {
 
 An example RViz config is included along a convenience launch file:
 
-```shell
+```console
 $ roslaunch a2d2_to_ros viz_lidar_frontcenter.launch
 ```
 
@@ -115,19 +115,19 @@ An example invocation is given below. For the example, assume the following loca
 * Package: `~/catkin_ws/src/a2d2_to_ros`
 * Data set: `~/data/a2d2/Munich`
 
-```shell
+```console
 $ rosrun a2d2_to_ros sensor_fusion_bus_signals --schema-path ~/catkin_ws/src/a2d2_to_ros/schemas/sensor_fusion_bus_signal.schema --json-path ~/data/a2d2/Munich/camera_lidar/20190401_121727/bus/20190401121727_bus_signals.json
 ```
 
 This command will create the following bag file:
 
-```shell
+```console
 ~/catkin_ws/src/a2d2_to_ros/20190401121727_bus_signals.bag
 ```
 
 To get a full list of usage options, run with the `--help` switch:
 
-```shell
+```console
 $ rosrun a2d2_to_ros sensor_fusion_bus_signals --help
 Convert sequential bus signal data to rosbag for the A2D2 Sensor Fusion data set. See README.md for details.
 Available options are listed below. Arguments without default values are required:
