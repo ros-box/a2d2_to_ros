@@ -27,8 +27,37 @@ $ rosdep install a2d2_to_ros --ignore-src -r -y
 
 This converter parses lidar frame data saved in numpy format and converts each frame to a `sensor_msgs::PointCloud2` message.
 
+### Usage
+
+An example invocation is given below. For the example, assume the following locations:
+
+* Package: `~/catkin_ws/src/a2d2_to_ros`
+* Data set: `~/data/a2d2/Ingolstadt`
+
 ```console
 $ rosrun a2d2_to_ros sensor_fusion_lidar --lidar-data-path ~/data/a2d2/Ingolstadt/camera_lidar/20190401_145936/lidar/cam_front_center --camera-data-path ~/data/a2d2/Ingolstadt/camera_lidar/20190401_145936/camera/cam_front_center --frame-info-schema-path ~/catkin_ws/src/a2d2_to_ros/schemas/sensor_fusion_camera_frame.schema --verbose true
+```
+
+This command will create the following bag file:
+
+```console
+./20190401_145936_cam_front_center.bag
+```
+
+To get a full list of usage options, run with the `--help` switch:
+
+```console
+$ rosrun a2d2_to_ros sensor_fusion_lidar --help
+Built to use 32-bit precision for float values.
+Convert sequential lidar data to rosbag for the A2D2 Sensor Fusion data set. See README.md for details.
+Available options are listed below. Arguments without default values are required:
+  -h [ --help ]                       Print help and exit.
+  -d [ --lidar-data-path ] arg        Path to the lidar data files.
+  -c [ --camera-data-path ] arg       Path to the camera data files (for timestamp information).
+  -s [ --frame-info-schema-path ] arg Path to the JSON schema for camera frame info files.
+  -o [ --output-path ] arg (=.)       Optional: Path for the output bag file.
+  -m [ --include-depth-map ] arg (=0) Optional: Publish a depth map version of the lidar data.
+  -v [ --verbose ] arg (=0)           Optional: Write name of each file to logger after it is successfully processed.
 ```
 
 ### Type conversions
@@ -102,6 +131,13 @@ $ roslaunch a2d2_to_ros viz_lidar_frontcenter.launch
 
 The config only includes the `front_center` lidar, but the settings should work for any of them.
 
+### Bag file conventions
+
+* The message time in the bag file is the same as the timestamp in the header message.
+* Each bag file contains a `/clock` topic that has a [rosgraph\_msgs::Clock](http://docs.ros.org/api/rosgraph_msgs/html/msg/Clock.html) message for each unique frame timestamp in the data set.
+* The output bag file is given the same basename as the directory containing the `.npz` files.
+* Each of the topics in the bag file (except for `/clock`) is prefixed with `/a2d2/[RECORD_TIME]`
+
 ## Converter: Sensor Fusion > Bus Signal
 
 This converter parses a bus signal data JSON file and outputs the data into a bag file.
@@ -124,7 +160,7 @@ $ rosrun a2d2_to_ros sensor_fusion_bus_signals --schema-path ~/catkin_ws/src/a2d
 This command will create the following bag file:
 
 ```console
-~/catkin_ws/src/a2d2_to_ros/20190401121727_bus_signals.bag
+./20190401121727_bus_signals.bag
 ```
 
 To get a full list of usage options, run with the `--help` switch:
