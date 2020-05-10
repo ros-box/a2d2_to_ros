@@ -63,7 +63,10 @@ constexpr auto VALID_DIX = 11;
 constexpr auto ROW_SHAPE_IDX = 0;
 constexpr auto COL_SHAPE_IDX = 1;
 
-/** @brief Explicit notion of data types. */
+/**
+ * @brief Explicit notion of data types: these types are used to read data from
+ * the numpy npz files.
+ */
 struct ReadTypes {
   typedef double FLOAT;
   typedef int64_t INT64;
@@ -85,7 +88,10 @@ struct ReadTypes {
   typedef BOOL Valid;
 };  // struct ReadTypes
 
-/** @brief Explicit notion of data types. */
+/**
+ * @brief Explicit notion of data types: these types are used to write data to
+ * point cloud messages.
+ */
 struct WriteTypes {
 #ifdef USE_FLOAT64
   typedef double FLOAT;
@@ -94,9 +100,9 @@ struct WriteTypes {
   typedef float FLOAT;
   static const uint8_t MSG_FLOAT = sensor_msgs::PointField::FLOAT32;
 #endif
-  static const uint8_t MSG_INT64 = sensor_msgs::PointField::FLOAT64;
+  static const uint8_t MSG_UINT64 = sensor_msgs::PointField::FLOAT64;
   static const uint8_t MSG_UINT8 = sensor_msgs::PointField::UINT8;
-  typedef int64_t INT64;
+  typedef uint64_t UINT64;
   typedef uint8_t UINT8;
 
   typedef FLOAT Point;
@@ -106,8 +112,8 @@ struct WriteTypes {
   typedef FLOAT Distance;
   typedef FLOAT Row;
 
-  typedef INT64 Rectime;
-  typedef INT64 Timestamp;
+  typedef UINT64 Rectime;
+  typedef UINT64 Timestamp;
 
   typedef UINT8 Reflectance;
   typedef UINT8 LidarId;
