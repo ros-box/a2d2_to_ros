@@ -24,29 +24,254 @@
 #ifndef A2D2_TO_ROS__LIB_A2D2_TO_ROS_HPP_
 #define A2D2_TO_ROS__LIB_A2D2_TO_ROS_HPP_
 
-#ifdef _ENABLE_A2D2_ROS_LOGGING_
-#include <ros/console.h>
-#define X_WARN(s) ROS_WARN_STREAM(s)
-#define X_ERROR(s) ROS_ERROR_STREAM(s)
-#define X_FATAL(s) ROS_FATAL_STREAM(s)
-#else
-#define X_WARN(s)
-#define X_ERROR(s)
-#define X_FATAL(s)
-#endif
-
 #define _USE_MATH_DEFINES
 #include <cmath>
+
+#include <array>
 #include <cstdint>
 #include <iostream>
 #include <limits>
+#include <map>
 #include <sstream>
 #include <string>
 
+#include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/Image.h>
+#include <sensor_msgs/PointCloud2.h>
+#include <sensor_msgs/point_cloud2_iterator.h>
 #include <std_msgs/Float64.h>
 #include <std_msgs/Header.h>
+#include "ros_cnpy/cnpy.h"
+
+#include "a2d2_to_ros/logging.hpp"
 
 namespace a2d2_to_ros {
+namespace lidar {
+constexpr auto POINTS_IDX = 0;
+constexpr auto AZIMUTH_IDX = 1;
+constexpr auto BOUNDARY_IDX = 2;
+constexpr auto COL_IDX = 3;
+constexpr auto DEPTH_IDX = 4;
+constexpr auto DISTANCE_IDX = 5;
+constexpr auto ID_IDX = 6;
+constexpr auto RECTIME_IDX = 7;
+constexpr auto REFLECTANCE_IDX = 8;
+constexpr auto ROW_IDX = 9;
+constexpr auto TIMESTAMP_IDX = 10;
+constexpr auto VALID_DIX = 11;
+
+constexpr auto ROW_SHAPE_IDX = 0;
+constexpr auto COL_SHAPE_IDX = 1;
+
+/**
+ * @brief Explicit notion of data types: these types are used to read data from
+ * the numpy npz files.
+ */
+struct ReadTypes {
+  typedef double FLOAT;
+  typedef int64_t INT64;
+  typedef bool BOOL;
+
+  typedef FLOAT Point;
+  typedef FLOAT Azimuth;
+  typedef FLOAT Col;
+  typedef FLOAT Depth;
+  typedef FLOAT Distance;
+  typedef FLOAT Row;
+
+  typedef INT64 Boundary;
+  typedef INT64 LidarId;
+  typedef INT64 Rectime;
+  typedef INT64 Reflectance;
+  typedef INT64 Timestamp;
+
+  typedef BOOL Valid;
+};  // struct ReadTypes
+
+/**
+ * @brief Explicit notion of data types: these types are used to write data to
+ * point cloud messages.
+ */
+struct WriteTypes {
+#ifdef USE_FLOAT64
+  typedef double FLOAT;
+  static const uint8_t MSG_FLOAT = sensor_msgs::PointField::FLOAT64;
+#else
+  typedef float FLOAT;
+  static const uint8_t MSG_FLOAT = sensor_msgs::PointField::FLOAT32;
+#endif
+  static const uint8_t MSG_UINT64 = sensor_msgs::PointField::FLOAT64;
+  static const uint8_t MSG_UINT8 = sensor_msgs::PointField::UINT8;
+  typedef uint64_t UINT64;
+  typedef uint8_t UINT8;
+  typedef bool BOOL;
+
+  typedef FLOAT Point;
+  typedef FLOAT Azimuth;
+  typedef FLOAT Col;
+  typedef FLOAT Depth;
+  typedef FLOAT Distance;
+  typedef FLOAT Row;
+
+  typedef UINT64 Rectime;
+  typedef UINT64 Timestamp;
+
+  typedef UINT8 Reflectance;
+  typedef UINT8 LidarId;
+
+  typedef BOOL Boundary;
+  typedef BOOL Valid;
+};  // struct ReadTypes
+
+}  // namespace lidar
+
+/** @brief convenience object for interacting with point cloud iterators. */
+struct A2D2_PointCloudIterators {
+  A2D2_PointCloudIterators(sensor_msgs::PointCloud2& msg,
+                           const std::array<std::string, 12>& fields);
+
+  /** @brief Convenience overload to in-place pre-increment all iterators. */
+  void operator++();
+
+  /**
+   * @brief Print all current values to stream.
+   * @pre All iterators point to valid values.
+   */
+  friend std::ostream& operator<<(std::ostream& os,
+                                  const A2D2_PointCloudIterators& iters);
+
+  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Point> x;
+  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Point> y;
+  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Point> z;
+  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Azimuth> azimuth;
+  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Boundary> boundary;
+  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Col> col;
+  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Depth> depth;
+  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Distance> distance;
+  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::LidarId> lidar_id;
+  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Rectime> rectime;
+  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Reflectance> reflectance;
+  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Row> row;
+  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Timestamp> timestamp;
+  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Valid> valid;
+};  // struct A2D2_PointCloudIterators
+
+sensor_msgs::ImagePtr depth_image_from_a2d2_pointcloud(
+    sensor_msgs::PointCloud2& pc);
+
+/**
+ * @brief Build a PointCloud2 message for storing points from a single npz file.
+ * @return A property configured and sized, but uninitialized, PointCloud2
+ * message object.
+ */
+sensor_msgs::PointCloud2 build_pc2_msg(std::string frame, ros::Time timestamp,
+                                       bool is_dense,
+                                       const uint32_t num_points);
+
+/**
+ * @brief Get camera file basename corresponding to the given lidar basename.
+ * @pre The input must be a basename (no directory and no extension)
+ * @return The basename with 'lidar' replaced by 'camera', or the empty string
+ * if 'lidar' is not present in the input.
+ */
+std::string camera_name_from_lidar_name(const std::string& basename);
+
+/**
+ * @brief Get the frame of the data from its filename.
+ * @return The empty string if a frame name is not present or if multiple
+ * different names are present.
+ */
+std::string frame_from_filename(const std::string& filename);
+
+/**
+ * @brief Test whether int64_t data is all non-negative.
+ * @note This function has no test coverage.
+ * @pre template parameter T must match the underlying data type.
+ */
+template <typename T>
+bool all_non_negative(const cnpy::NpyArray& field) {
+  auto good = true;
+  const auto vals = field.data<T>();
+  for (auto i = 0; i < field.shape[lidar::ROW_SHAPE_IDX]; ++i) {
+    const auto is_non_negative = (vals[i] >= static_cast<T>(0));
+    good = (good && is_non_negative);
+  }
+  return good;
+}
+
+/**
+ * @brief Get the minimum value of a given field
+ * @note This function has no test coverage.
+ * @pre template parameter T must match the underlying data type.
+ * @return The minimum value or std::numeric_limits<T>::max() if field is empty.
+ */
+template <typename T>
+T get_min_value(const cnpy::NpyArray& field) {
+  auto t = std::numeric_limits<T>::max();
+  const auto vals = field.data<T>();
+  for (auto i = 0; i < field.shape[lidar::ROW_SHAPE_IDX]; ++i) {
+    t = std::min(t, vals[i]);
+  }
+  return t;
+}
+
+/**
+ * @brief Get the maximum value of a given field
+ * @note This function has no test coverage.
+ * @pre template parameter T must match the underlying data type.
+ * @return The maximum value or std::numeric_limits<T>::min() if field is empty.
+ */
+template <typename T>
+T get_max_value(const cnpy::NpyArray& field) {
+  auto t = std::numeric_limits<T>::min();
+  const auto vals = field.data<T>();
+  for (auto i = 0; i < field.shape[lidar::ROW_SHAPE_IDX]; ++i) {
+    t = std::max(t, vals[i]);
+  }
+  return t;
+}
+
+/**
+ * @brief Check whether the valid array has any false values.
+ * @note This function has no test coverage.
+ * @pre The underlying type is bool.
+ */
+bool any_lidar_points_invalid(const cnpy::NpyArray& valid);
+
+/**
+ * @brief Get a list of sensor frame names.
+ * @note This function has no test coverage.
+ */
+std::array<std::string, 6> get_sensor_frame_names();
+
+/**
+ * @brief Get a list of camera names.
+ * @note This function has no test coverage.
+ */
+std::array<std::string, 6> get_camera_names();
+
+/**
+ * @brief Map camera name from npz lidar filename to camera name
+ * @note This function has no test coverage.
+ * @return The camera name corresponding to the lidar frame, or empty string if
+ * not found.
+ */
+std::string get_camera_name_from_frame_name(const std::string& name);
+
+/**
+ * @brief Get a list of expected field names for npz lidar data.
+ * @note This function has no test coverage.
+ */
+std::array<std::string, 12> get_npz_fields();
+
+/**
+ * @brief Check that lidar npz data has expected structure.
+ * @note This function has no test coverage.
+ * @return true iff the npz has exactly the fields from get_npz_fields, and if
+ * the point field is M x 3 in size and all other fields are M x 1 in size,
+ * where 'M' is defined as the row count of the points field.
+ */
+bool verify_npz_structure(const std::map<std::string, cnpy::NpyArray>& npz);
 
 /** @brief Convenience storage for timestamp/value pair. */
 struct DataPair {
@@ -70,6 +295,11 @@ struct DataPair {
 struct DataPairTimeComparator {
   bool operator()(const DataPair& lhs, const DataPair& rhs) const;
 };  // struct DataPairComparator
+
+/**
+ * @brief Convert a 2D index to a 1D index according to CNPY convention.
+ */
+size_t flatten_2d_index(size_t width, size_t row, size_t col);
 
 /**
  * @brief Test whether a given timestamp is covertible to ROS time.
@@ -143,8 +373,6 @@ T to_ros_units(const std::string& unit_name, const T& val) {
       return val;
       break;
     default:
-      X_ERROR("Unrecognized units name '"
-              << unit_name << "', cannot convert. Returning NaN.");
       return std::numeric_limits<T>::quiet_NaN();
       break;
   }

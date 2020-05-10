@@ -33,8 +33,40 @@ Answers, where available, are given directly below the questions. If a question 
 1. Is `vehicle_speed` allowed to be negative? If not, how is driving in reverse indicated, or is it guaranteed that the vehicle never drives in reverse?
 1. What is the convention for `accelerator_pedal` percent values (i.e., is 0 or 100 fully depressed)?
 
+## Sensor fusion lidar data
+
+1. What are the following lidar fields:
+    1. `pcloud_attr.rectime`?
+    1. `pcloud_attr.boundary`?
+    1. `pcloud_attr.valid`?
+1. Is `pcloud_attr.boundary` always 0 or 1? What does this indicate?
+1. What are the units for `pcloud_attr.reflectance`? Why are the values integral? The tutorial seems to treat this as an intensity value; is that the case?
+1. Are the `pcloud_attr.rectime` and `pcloud_attr.timestamp` intentionally `int64` and not `uint64`?
+1. Are the points in the point cloud ordered in any way? If so, what is the ordering?
+1. Are `pcloud_attr.depth` and `pcloud_attr.distance` strictly non-negative?
+1. Are `pcloud_attr.row` and `pcloud_attr.col` supposed to be non-negative? At least `pcloud_attr.col` has negative values in the Munich sensor fusion data set.
+1. Are the points motion compensated already?
+1. The following questions would help reduce the size of generated bag files:
+    1. Can `pcloud_attr.boundary` be stored as a `bool`?
+    1. Can `pcloud_attr.reflectance` be stored as a `uint8_t`?
+
 ## Semantic segmentation bus signal data
 
 1. What is the `driving_direction` field and what do the values represent?
 1. What do the values for the `gear` field represent?
 1. Are `steering_angle` and `steering_angle_sign` ground truth with respect to `steering_angle_calculated` and `steering_angle_calculated_sign`?
+
+## Discrepancies with online tutorial
+
+These items have to do with variations between the data and the [tutorial](https://www.a2d2.audi/a2d2/en/tutorial.html).
+
+### Questions
+
+1. The JSON info file associated with each camera image has the additional fields `image_zoom` and `pcld_view` that are not listed in the tutorial; what are they?
+
+### Notes
+
+1. The tutorial lists the lidar data fields as:  
+`['azimuth', 'row', 'lidar_id', 'depth', 'reflectance', 'col', 'points', 'timestamp', 'distance']`  
+In the data set they are:  
+`['pcloud_points', 'pcloud_attr.rectime', 'pcloud_attr.azimuth', 'pcloud_attr.reflectance', 'pcloud_attr.boundary', 'pcloud_attr.lidar_id', 'pcloud_attr.timestamp', 'pcloud_attr.valid', 'pcloud_attr.row', 'pcloud_attr.col', 'pcloud_attr.distance', 'pcloud_attr.depth']`

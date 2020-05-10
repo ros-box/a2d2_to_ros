@@ -13,6 +13,14 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# uncomment to use 64-bit instead of 32-bit width for floats in point cloud;
+# really need full precision, best to leave it 32-bit
+#add_definitions(-DUSE_FLOAT64)
+
+# uncomment one of these to output logging information and warnings/errors
+#add_definitions(-DENABLE_A2D2_ROS_LOGGING)
+add_definitions(-DENABLE_A2D2_STREAM_LOGGING)
+
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
@@ -23,6 +31,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   rosgraph_msgs
   ros_cnpy
+  cv_bridge
 )
 
 ## System dependencies are found with CMake's conventions
@@ -139,8 +148,6 @@ include_directories(
 add_library(${PROJECT_NAME} src/${PROJECT_NAME}/lib_a2d2_to_ros.cpp)
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-  ${RapidJSON_LIBRARIES}
 )
 
 ## Add cmake target dependencies of the library
@@ -153,6 +160,8 @@ target_link_libraries(${PROJECT_NAME}
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(${PROJECT_NAME}_sensor_fusion_bus_signals
   src/sensor_fusion_bus_signals_to_ros.cpp)
+add_executable(${PROJECT_NAME}_sensor_fusion_lidar
+  src/sensor_fusion_lidar_to_ros.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -160,6 +169,8 @@ add_executable(${PROJECT_NAME}_sensor_fusion_bus_signals
 ## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
 set_target_properties(${PROJECT_NAME}_sensor_fusion_bus_signals
   PROPERTIES OUTPUT_NAME sensor_fusion_bus_signals PREFIX "")
+set_target_properties(${PROJECT_NAME}_sensor_fusion_lidar
+  PROPERTIES OUTPUT_NAME sensor_fusion_lidar PREFIX "")
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -171,6 +182,11 @@ target_link_libraries(${PROJECT_NAME}_sensor_fusion_bus_signals
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
   ${RapidJSON_LIBRARIES}
+)
+target_link_libraries(${PROJECT_NAME}_sensor_fusion_lidar
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
 )
 
 #############
