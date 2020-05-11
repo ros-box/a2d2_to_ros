@@ -41,6 +41,7 @@
 #include "rapidjson/stringbuffer.h"
 
 #include "a2d2_to_ros/lib_a2d2_to_ros.hpp"
+#include "a2d2_to_ros/log_build_options.hpp"
 #include "a2d2_to_ros/logging.hpp"
 #include "ros_cnpy/cnpy.h"
 
@@ -61,16 +62,7 @@ static constexpr auto _INCLUDE_DEPTH_MAP = false;
 static constexpr auto _VERBOSE = false;
 
 int main(int argc, char* argv[]) {
-#ifdef ENABLE_A2D2_ROS_LOGGING
-  X_INFO("Build with ROS logging enabled.");
-#endif
-#ifdef USE_FLOAT64
-  X_INFO(
-      "Built to use 64-bit precision for float values; be aware this may break "
-      "compatibility with Rviz.");
-#else
-  X_INFO("Built to use 32-bit precision for float values.");
-#endif
+  BUILD_INFO;  // just write to log what build options were specified
 
   ///
   /// Set up command line arguments
