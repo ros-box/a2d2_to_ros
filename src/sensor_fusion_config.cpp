@@ -205,5 +205,8 @@ int main(int argc, char* argv[]) {
     return EXIT_FAILURE;
   }
 
+  const auto ego_shape_msg =
+      a2d2::build_ego_shape_msg(x_min, x_max, y_min, y_max, z_min, z_max);
+  X_INFO("Built ego shape: " << ego_shape_msg);
   return EXIT_SUCCESS;
 }
