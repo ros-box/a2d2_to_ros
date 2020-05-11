@@ -175,5 +175,35 @@ int main(int argc, char* argv[]) {
     }
   }
 
+  ///
+  /// Build ego vehicle shape message
+  ///
+
+  const rapidjson::Value& ego_dims =
+      sensor_config_d["vehicle"]["ego-dimensions"];
+  const rapidjson::Value& x_dims = ego_dims["x-range"];
+  const rapidjson::Value& y_dims = ego_dims["y-range"];
+  const rapidjson::Value& z_dims = ego_dims["z-range"];
+
+  constexpr auto MIN_IDX = static_cast<rapidjson::SizeType>(0);
+  constexpr auto MAX_IDX = static_cast<rapidjson::SizeType>(1);
+  const auto x_min = x_dims[MIN_IDX].GetDouble();
+  const auto x_max = x_dims[MAX_IDX].GetDouble();
+  const auto y_min = y_dims[MIN_IDX].GetDouble();
+  const auto y_max = y_dims[MAX_IDX].GetDouble();
+  const auto z_min = z_dims[MIN_IDX].GetDouble();
+  const auto z_max = z_dims[MAX_IDX].GetDouble();
+
+  const auto ego_bbox_valid =
+      a2d2::verify_ego_bbox_params(x_min, x_max, y_min, y_max, z_min, z_max);
+  if (!ego_bbox_valid) {
+    X_FATAL(
+        "Ego bounding box parameters are invalid. They must be finite, "
+        "real-valued, and ordered: x: ["
+        << x_min << ", " << x_max << "], y: [" << y_min << ", " << y_max
+        << "], z: [" << z_min << ", " << z_max << "]");
+    return EXIT_FAILURE;
+  }
+
   return EXIT_SUCCESS;
 }
