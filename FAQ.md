@@ -23,6 +23,10 @@ Answers, where available, are given directly below the questions. If a question 
     1. Is the z-axis is aligned to the gravity vector?
     1. Is the x-axis is aligned to vehicle heading?
 
+## Sensor configuration
+
+1. The tutorial states that `tstamp_delay` "specifies a known delay in microseconds between actual camera frame times"; what does that mean? Are these delays accounted for in the frame timestamps?
+
 ## Sensor fusion bus signal data
 
 1. There is no `yaw_angle` field; is there supposed to be?
