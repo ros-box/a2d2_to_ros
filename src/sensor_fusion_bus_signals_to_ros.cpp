@@ -73,6 +73,8 @@ static constexpr auto _VALUE_TOPIC = "value";
 static constexpr auto _HEADER_TOPC = "header";
 
 int main(int argc, char* argv[]) {
+  // TODO(jeff): add ouput noting build flags
+
   ///
   /// Set up command line arguments
   ///
