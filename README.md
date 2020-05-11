@@ -146,6 +146,8 @@ This converter parses a bus signal data JSON file and outputs the data into a ba
 
 A [JSON Schema](http://json-schema.org/) file is provided in [schemas/sensor\_fusion\_bus\_signal.schema](schemas/sensor_fusion_bus_signal.schema) to perform validation.
 
+As of this writing, RapidJSON validates against [JSON Schema draft 04](https://rapidjson.org/md_doc_schema.html#Conformance).
+
 ### Usage
 
 An example invocation is given below. For the example, assume the following locations:
