@@ -45,6 +45,7 @@
 #include "rapidjson/stringbuffer.h"
 
 #include "a2d2_to_ros/lib_a2d2_to_ros.hpp"
+#include "a2d2_to_ros/log_build_options.hpp"
 #include "a2d2_to_ros/logging.hpp"
 
 namespace {
@@ -73,6 +74,8 @@ static constexpr auto _VALUE_TOPIC = "value";
 static constexpr auto _HEADER_TOPC = "header";
 
 int main(int argc, char* argv[]) {
+  BUILD_INFO;  // just write to log what build options were specified
+
   ///
   /// Set up command line arguments
   ///
