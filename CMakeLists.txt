@@ -32,6 +32,7 @@ find_package(catkin REQUIRED COMPONENTS
   rosgraph_msgs
   ros_cnpy
   cv_bridge
+  shape_msgs
 )
 
 ## System dependencies are found with CMake's conventions
