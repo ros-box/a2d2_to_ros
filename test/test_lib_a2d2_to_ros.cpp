@@ -41,6 +41,42 @@ namespace a2d2_to_ros {
 
 //------------------------------------------------------------------------------
 
+TEST(A2D2_to_ROS, build_ego_shape_msg) {
+  {
+    const auto x_min = 0.0;
+    const auto x_max = 1.0;
+    const auto y_min = 0.0;
+    const auto y_max = 1.0;
+    const auto z_min = 0.0;
+    const auto z_max = 1.0;
+    const auto msg =
+        build_ego_shape_msg(x_min, x_max, y_min, y_max, z_min, z_max);
+    EXPECT_EQ(msg.type, shape_msgs::SolidPrimitive::BOX);
+    ASSERT_EQ(msg.dimensions.size(), 3);
+    EXPECT_EQ(msg.dimensions[shape_msgs::SolidPrimitive::BOX_X], 1.0);
+    EXPECT_EQ(msg.dimensions[shape_msgs::SolidPrimitive::BOX_Y], 1.0);
+    EXPECT_EQ(msg.dimensions[shape_msgs::SolidPrimitive::BOX_Z], 1.0);
+  }
+
+  {
+    const auto x_min = -1.0;
+    const auto x_max = 1.0;
+    const auto y_min = -1.0;
+    const auto y_max = 1.0;
+    const auto z_min = -1.0;
+    const auto z_max = 1.0;
+    const auto msg =
+        build_ego_shape_msg(x_min, x_max, y_min, y_max, z_min, z_max);
+    EXPECT_EQ(msg.type, shape_msgs::SolidPrimitive::BOX);
+    ASSERT_EQ(msg.dimensions.size(), 3);
+    EXPECT_EQ(msg.dimensions[shape_msgs::SolidPrimitive::BOX_X], 2.0);
+    EXPECT_EQ(msg.dimensions[shape_msgs::SolidPrimitive::BOX_Y], 2.0);
+    EXPECT_EQ(msg.dimensions[shape_msgs::SolidPrimitive::BOX_Z], 2.0);
+  }
+}
+
+//------------------------------------------------------------------------------
+
 TEST(A2D2_to_ROS, verify_ego_bbox_params) {
   {
     const auto x_min = 0.0;

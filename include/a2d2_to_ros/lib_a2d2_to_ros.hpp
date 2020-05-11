@@ -171,6 +171,8 @@ bool verify_ego_bbox_params(double x_min, double x_max, double y_min,
 /**
  * @brief Build a ROS message corresponding to the vehicle bbox extents.
  * @pre The values are correct according to 'verify_ego_bbox_params'
+ * @return The shape message representing the ego bounding box. By convention
+ * the side lengths given are end-to-end side lengths.
  */
 shape_msgs::SolidPrimitive build_ego_shape_msg(double x_min, double x_max,
                                                double y_min, double y_max,

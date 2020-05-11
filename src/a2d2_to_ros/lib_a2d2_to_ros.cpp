@@ -58,7 +58,15 @@ bool verify_ego_bbox_params(double x_min, double x_max, double y_min,
 shape_msgs::SolidPrimitive build_ego_shape_msg(double x_min, double x_max,
                                                double y_min, double y_max,
                                                double z_min, double z_max) {
-  return shape_msgs::SolidPrimitive();
+  const auto side_length = [](double min, double max) { return (max - min); };
+
+  auto msg = shape_msgs::SolidPrimitive();
+  msg.type = shape_msgs::SolidPrimitive::BOX;
+  msg.dimensions.resize(3);
+  msg.dimensions[shape_msgs::SolidPrimitive::BOX_X] = side_length(x_min, x_max);
+  msg.dimensions[shape_msgs::SolidPrimitive::BOX_Y] = side_length(y_min, y_max);
+  msg.dimensions[shape_msgs::SolidPrimitive::BOX_Z] = side_length(z_min, z_max);
+  return msg;
 }
 
 //------------------------------------------------------------------------------
