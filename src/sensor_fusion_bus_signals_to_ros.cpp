@@ -31,7 +31,6 @@
 #include <boost/optional.hpp>
 #include <boost/program_options.hpp>
 
-#include <ros/console.h>
 #include <ros/ros.h>
 #include <rosbag/bag.h>
 #include <rosgraph_msgs/Clock.h>
