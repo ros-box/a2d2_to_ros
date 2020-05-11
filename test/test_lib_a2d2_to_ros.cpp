@@ -28,8 +28,6 @@
 
 #include <gtest/gtest.h>
 
-// uncomment this define to log warnings and errors
-//#define _ENABLE_A2D2_ROS_LOGGING_
 #include "a2d2_to_ros/lib_a2d2_to_ros.hpp"
 
 static constexpr auto INF = std::numeric_limits<double>::infinity();
