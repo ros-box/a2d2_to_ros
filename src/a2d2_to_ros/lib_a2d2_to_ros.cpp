@@ -25,6 +25,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstdint>
 #include <fstream>
 #include <limits>
@@ -34,6 +35,31 @@ static constexpr auto ONE_THOUSAND = static_cast<uint64_t>(1000);
 static constexpr auto ONE_MILLION = static_cast<uint64_t>(1000000);
 
 namespace a2d2_to_ros {
+
+//------------------------------------------------------------------------------
+
+bool verify_ego_bbox_params(double x_min, double x_max, double y_min,
+                            double y_max, double z_min, double z_max) {
+  const std::array<double, 6> vals = {x_min, x_max, y_min, y_max, z_min, z_max};
+  const auto all_finite =
+      std::all_of(std::begin(vals), std::end(vals),
+                  [](double v) { return std::isfinite(v); });
+
+  const auto x_ordered = (x_min < x_max);
+  const auto y_ordered = (y_min < y_max);
+  const auto z_ordered = (z_min < z_max);
+  const auto all_ordered = (x_ordered && y_ordered && z_ordered);
+
+  return (all_finite && all_ordered);
+}
+
+//------------------------------------------------------------------------------
+
+shape_msgs::SolidPrimitive build_ego_shape_msg(double x_min, double x_max,
+                                               double y_min, double y_max,
+                                               double z_min, double z_max) {
+  return shape_msgs::SolidPrimitive();
+}
 
 //------------------------------------------------------------------------------
 

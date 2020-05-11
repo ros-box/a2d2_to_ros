@@ -39,6 +39,7 @@
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/point_cloud2_iterator.h>
+#include <shape_msgs/SolidPrimitive.h>
 #include <std_msgs/Float64.h>
 #include <std_msgs/Header.h>
 #include "ros_cnpy/cnpy.h"
@@ -158,6 +159,22 @@ struct A2D2_PointCloudIterators {
 
 sensor_msgs::ImagePtr depth_image_from_a2d2_pointcloud(
     sensor_msgs::PointCloud2& pc);
+
+/**
+ * @brief Check whether the ego bbox parameters makes sense.
+ * @return true iff the values are valid, i.e., real valued, finite, ordered,
+ * and the bbox has non-zero measure.
+ */
+bool verify_ego_bbox_params(double x_min, double x_max, double y_min,
+                            double y_max, double z_min, double z_max);
+
+/**
+ * @brief Build a ROS message corresponding to the vehicle bbox extents.
+ * @pre The values are correct according to 'verify_ego_bbox_params'
+ */
+shape_msgs::SolidPrimitive build_ego_shape_msg(double x_min, double x_max,
+                                               double y_min, double y_max,
+                                               double z_min, double z_max);
 
 /**
  * @brief Build a PointCloud2 message for storing points from a single npz file.

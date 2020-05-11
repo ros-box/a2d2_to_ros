@@ -41,6 +41,70 @@ namespace a2d2_to_ros {
 
 //------------------------------------------------------------------------------
 
+TEST(A2D2_to_ROS, verify_ego_bbox_params) {
+  {
+    const auto x_min = 0.0;
+    const auto x_max = 0.0;
+    const auto y_min = 0.0;
+    const auto y_max = 0.0;
+    const auto z_min = 0.0;
+    const auto z_max = 0.0;
+    const auto zero_measure_valid =
+        verify_ego_bbox_params(x_min, x_max, y_min, y_max, z_min, z_max);
+    EXPECT_FALSE(zero_measure_valid);
+  }
+
+  {
+    const auto x_min = 0.0;
+    const auto x_max = 1.0;
+    const auto y_min = 0.0;
+    const auto y_max = 1.0;
+    const auto z_min = 0.0;
+    const auto z_max = 1.0;
+    const auto unit_cube_valid =
+        verify_ego_bbox_params(x_min, x_max, y_min, y_max, z_min, z_max);
+    EXPECT_TRUE(unit_cube_valid);
+  }
+
+  {
+    const auto x_min = 0.0;
+    const auto x_max = 1.0;
+    const auto y_min = 1.0;
+    const auto y_max = 0.0;
+    const auto z_min = 0.0;
+    const auto z_max = 1.0;
+    const auto y_wrong_order =
+        verify_ego_bbox_params(x_min, x_max, y_min, y_max, z_min, z_max);
+    EXPECT_FALSE(y_wrong_order);
+  }
+
+  {
+    const auto x_min = 0.0;
+    const auto x_max = 1.0;
+    const auto y_min = 0.0;
+    const auto y_max = 1.0;
+    const auto z_min = NaN;
+    const auto z_max = 1.0;
+    const auto non_finite_value =
+        verify_ego_bbox_params(x_min, x_max, y_min, y_max, z_min, z_max);
+    EXPECT_FALSE(non_finite_value);
+  }
+
+  {
+    const auto x_min = INF;
+    const auto x_max = 1.0;
+    const auto y_min = 0.0;
+    const auto y_max = 1.0;
+    const auto z_min = 0.0;
+    const auto z_max = 1.0;
+    const auto infinite_value =
+        verify_ego_bbox_params(x_min, x_max, y_min, y_max, z_min, z_max);
+    EXPECT_FALSE(infinite_value);
+  }
+}
+
+//------------------------------------------------------------------------------
+
 TEST(A2D2_to_ROS, camera_name_from_lidar_name) {
   {
     const auto name = std::string("20190401145936_lidar_frontcenter_000000080");
