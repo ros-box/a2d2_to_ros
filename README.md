@@ -203,3 +203,7 @@ This code is built and tested under:
 * [Clang 6.0.0](https://releases.llvm.org/6.0.0/tools/clang/docs/ReleaseNotes.html) with `-std=c++14`
 
 There is nothing very platform specific, so other reasonably similar system configurations should work.
+
+## TODO
+
+* Update JSON schema version when possible. The `contains` keyword introduced in [draft-06](https://json-schema.org/draft-06/json-schema-validation.html#rfc.section.6.14) would enable the validation that axes are non-singular.

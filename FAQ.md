@@ -68,6 +68,7 @@ These items have to do with variations between the data and the [tutorial](https
 ### Questions
 
 1. The JSON info file associated with each camera image has the additional fields `image_zoom` and `pcld_view` that are not listed in the tutorial; what are they?
+1. The `get_axes_of_a_view` method checks for singularities; can a valid data set every provide such values?
 
 ### Notes
 
