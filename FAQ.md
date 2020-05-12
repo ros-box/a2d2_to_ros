@@ -15,6 +15,7 @@ Answers, where available, are given directly below the questions. If a question 
 1. Are all timestamps Unix Epoch time with microsecond units? (Mentar says they are, but the tutorial says they are TAI)
 1. What is the precision of real-valued data (e.g., 32-bit, 64-bit, etc.)?
 1. Are the labeled data a subset of the unlabeled data, or are they different sets?
+1. Are all coordinate systems right handed?
 
 ## Frame conventions
 
@@ -68,7 +69,7 @@ These items have to do with variations between the data and the [tutorial](https
 ### Questions
 
 1. The JSON info file associated with each camera image has the additional fields `image_zoom` and `pcld_view` that are not listed in the tutorial; what are they?
-1. The `get_axes_of_a_view` method checks for singularities; can a valid data set every provide such values?
+1. What is the purpose of the `get_axes_of_a_view` method? Why would the `x-axis` and `y-axis` members of the `view` objects not already be orthonormal?
 
 ### Notes
 
