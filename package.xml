@@ -39,6 +39,8 @@
   <depend>rapidjson-dev</depend>
   <depend>cv_bridge</depend>
   <depend>shape_msgs</depend>
+  <depend>eigen</depend>
+  <depend>eigen_conversions</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

@@ -33,11 +33,13 @@ find_package(catkin REQUIRED COMPONENTS
   ros_cnpy
   cv_bridge
   shape_msgs
+  eigen_conversions
 )
 
 ## System dependencies are found with CMake's conventions
 find_package(RapidJSON REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system)
+find_package(Eigen3 REQUIRED)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -143,6 +145,7 @@ include_directories(
  ${catkin_INCLUDE_DIRS}
  ${Boost_INCLUDE_DIRS}
  ${RapidJSON_INCLUDE_DIRS}
+ ${EIGEN3_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
