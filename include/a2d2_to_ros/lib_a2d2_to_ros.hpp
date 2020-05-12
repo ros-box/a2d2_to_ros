@@ -42,6 +42,7 @@
 #include <shape_msgs/SolidPrimitive.h>
 #include <std_msgs/Float64.h>
 #include <std_msgs/Header.h>
+#include <Eigen/Core>
 #include "ros_cnpy/cnpy.h"
 
 #include "a2d2_to_ros/logging.hpp"
@@ -159,6 +160,33 @@ struct A2D2_PointCloudIterators {
 
 sensor_msgs::ImagePtr depth_image_from_a2d2_pointcloud(
     sensor_msgs::PointCloud2& pc);
+
+/**
+ * @brief Verify that the axis is valid.
+ * @return true iff the axis is finite, real-valued, non-singular w.r.t. epsilon
+ */
+bool axis_is_valid(const Eigen::Vector3d& axis, double epsilon);
+
+/**
+ * @brief Verify that axes are valid and unique.
+ * @note This is a convenience method to run axis_is_valid on each input axis
+ * and then additionally check that they are unique.
+ * @return true iff the axes are both valid according to 'axis_is_valid' and
+ * differ by at least magnitude epsilon.
+ */
+bool axes_are_valid(const Eigen::Vector3d& axis1, const Eigen::Vector3d& axis2,
+                    double epsilon);
+
+/**
+ * @brief Given an X and a Y axis in 3-space, compute a right-handed orthonormal
+ * basis with Z orthogonal to the input X and Y, and a new Y orthogonal to X and
+ * the computed Z.
+ * @pre Vectors X and Y are unique and non-singular.
+ * @return A 3x3 matrix with columns [X, Y, Z] whose rows form a right-handed
+ * orthonormal basis. If X and Y are not valid, a zero matrix is returned.
+ */
+Eigen::Matrix3d get_orthonormal_basis(const Eigen::Vector3d& X,
+                                      const Eigen::Vector3d& Y, double epsilon);
 
 /**
  * @brief Check whether the ego bbox parameters makes sense.

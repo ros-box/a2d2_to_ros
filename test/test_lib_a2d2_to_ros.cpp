@@ -30,12 +30,102 @@
 
 #include "a2d2_to_ros/lib_a2d2_to_ros.hpp"
 
+static constexpr auto EPS = 1e-8;
 static constexpr auto INF = std::numeric_limits<double>::infinity();
 static constexpr auto NaN = std::numeric_limits<double>::quiet_NaN();
 static constexpr auto ONE_MILLION = static_cast<uint64_t>(1000000);
 static constexpr auto ONE_THOUSAND = static_cast<uint64_t>(1000);
 
 namespace a2d2_to_ros {
+
+//------------------------------------------------------------------------------
+
+TEST(A2D2_to_ROS, axis_is_valid) {
+  {
+    const Eigen::Vector3d axis(1.0, 0.0, INF);
+    EXPECT_FALSE(axis_is_valid(axis, EPS));
+  }
+
+  {
+    const Eigen::Vector3d axis(1.0, 0.0, NaN);
+    EXPECT_FALSE(axis_is_valid(axis, EPS));
+  }
+
+  {
+    const Eigen::Vector3d axis(1.0, 0.0, 0.0);
+    EXPECT_TRUE(axis_is_valid(axis, EPS));
+  }
+
+  {
+    const Eigen::Vector3d axis(0.0, 0.0, 0.0);
+    EXPECT_FALSE(axis_is_valid(axis, EPS));
+  }
+
+  {
+    const Eigen::Vector3d axis(0.0, 0.0, EPS);
+    EXPECT_FALSE(axis_is_valid(axis, EPS));
+  }
+
+  {
+    const Eigen::Vector3d axis(EPS, EPS, EPS);
+    EXPECT_TRUE(axis_is_valid(axis, EPS));
+  }
+}
+
+//------------------------------------------------------------------------------
+
+TEST(A2D2_to_ROS, axes_are_valid) {
+  {
+    const Eigen::Vector3d a1(1.0, 0.0, 0.0);
+    const Eigen::Vector3d a2(0.0, 1.0, 0.0);
+    EXPECT_TRUE(axes_are_valid(a1, a2, EPS));
+  }
+
+  {
+    const Eigen::Vector3d a1(1.0, 0.0, 0.0);
+    const Eigen::Vector3d a2(1.0, 0.0, 0.0);
+    EXPECT_FALSE(axes_are_valid(a1, a2, EPS));
+  }
+
+  {
+    const Eigen::Vector3d a1(1.0, 0.0, 0.0);
+    const Eigen::Vector3d a2(1.0 + EPS, 0.0, 0.0);
+    EXPECT_FALSE(axes_are_valid(a1, a2, EPS));
+  }
+}
+
+//------------------------------------------------------------------------------
+
+TEST(A2D2_to_ROS, get_orthonormal_basis) {
+  {
+    const Eigen::Vector3d X(1.0, 0.0, 0.0);
+    const Eigen::Vector3d Y(0.0, 1.0, 0.0);
+    const Eigen::Matrix3d B = get_orthonormal_basis(X, Y, EPS);
+    Eigen::Matrix3d B_expected;
+    // clang-format off
+    B_expected <<
+      1.0, 0.0, 0.0,
+      0.0, 1.0, 0.0,
+      0.0, 0.0, 1.0;
+    // clang-format on
+    EXPECT_TRUE(B.isApprox(B_expected, EPS));
+  }
+
+  {
+    const Eigen::Vector3d X(1.0, 1.0, 1.0);
+    const Eigen::Vector3d Y(0.0, 1.0, 0.0);
+    const Eigen::Matrix3d B = get_orthonormal_basis(X, Y, EPS);
+    Eigen::Matrix3d B_expected;
+    // clang-format off
+    B_expected <<
+       0.57735026918962584,  0.57735026918962584,  0.57735026918962584,
+      -0.40824829046386307,  0.81649658092772615, -0.40824829046386307,
+      -0.70710678118654746,                    0,  0.70710678118654746;
+    // clang-format on
+    EXPECT_TRUE(B.isApprox(B_expected, EPS))
+        << "B: " << B << "\nDid not match B_expected: " << B_expected;
+  }
+}
 
 //------------------------------------------------------------------------------
 

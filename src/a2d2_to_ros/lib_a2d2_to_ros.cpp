@@ -23,6 +23,8 @@
  */
 #include "a2d2_to_ros/lib_a2d2_to_ros.hpp"
 
+#include <Eigen/Geometry>
+
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -35,6 +37,43 @@ static constexpr auto ONE_THOUSAND = static_cast<uint64_t>(1000);
 static constexpr auto ONE_MILLION = static_cast<uint64_t>(1000000);
 
 namespace a2d2_to_ros {
+
+//------------------------------------------------------------------------------
+
+bool axis_is_valid(const Eigen::Vector3d& axis, double epsilon) {
+  const auto mag = axis.norm();
+  return (std::isfinite(mag) && (mag > epsilon));
+}
+
+//------------------------------------------------------------------------------
+
+bool axes_are_valid(const Eigen::Vector3d& axis1, const Eigen::Vector3d& axis2,
+                    double epsilon) {
+  const auto axis1_valid = axis_is_valid(axis1, epsilon);
+  const auto axis2_valid = axis_is_valid(axis2, epsilon);
+  const auto axes_not_equal = !axis1.isApprox(axis2, epsilon);
+  return (axis1_valid && axis2_valid && axes_not_equal);
+}
+
+//------------------------------------------------------------------------------
+
+Eigen::Matrix3d get_orthonormal_basis(const Eigen::Vector3d& X,
+                                      const Eigen::Vector3d& Y,
+                                      double epsilon) {
+  Eigen::Matrix3d basis;
+  basis.setZero();
+  if (!axes_are_valid(X, Y, epsilon)) {
+    return basis;
+  }
+
+  const Eigen::Vector3d Z = X.cross(Y);
+  const Eigen::Vector3d Y_ortho = Z.cross(X);
+
+  basis.row(0) = X.normalized();
+  basis.row(1) = Y_ortho.normalized();
+  basis.row(2) = Z.normalized();
+  return basis;
+}
 
 //------------------------------------------------------------------------------
 
