@@ -41,21 +41,67 @@
 #include "a2d2_to_ros/logging.hpp"
 #include "ros_cnpy/cnpy.h"
 
-namespace {
-namespace a2d2 = a2d2_to_ros;
-namespace po = boost::program_options;
-}  // namespace
-
 ///
 /// Program constants and defaults.
 ///
 
+static constexpr auto EPS = 1e-8;
 static constexpr auto _PROGRAM_OPTIONS_LINE_LENGTH = 120u;
 static constexpr auto _CLOCK_TOPIC = "/clock";
 static constexpr auto _OUTPUT_PATH = ".";
 static constexpr auto _DATASET_NAMESPACE = "/a2d2";
 static constexpr auto _INCLUDE_DEPTH_MAP = false;
 static constexpr auto _VERBOSE = false;
+
+///
+/// Executable specific stuff
+///
+
+#define VERIFY_BASIS(basis, sensors, frame)                                 \
+  {                                                                         \
+    if (basis.isZero(0.0)) {                                                \
+      X_FATAL(                                                              \
+          "Basis for "                                                      \
+          << sensors << "::" << frame                                       \
+          << " cannot be constructed. Check that the X/Y axes are valid."); \
+      return EXIT_FAILURE;                                                  \
+    }                                                                       \
+  }
+
+namespace {
+namespace a2d2 = a2d2_to_ros;
+namespace po = boost::program_options;
+
+/**
+ * @brief Utility to convert an axis from a JSON DOM to Eigen.
+ * @pre The rapidjson value is valid ['view']['(x|y)-axis'] according to the
+ * schema.
+ */
+Eigen::Vector3d json_axis_to_eigen_vector(const rapidjson::Value& json_axis) {
+  constexpr auto X_IDX = static_cast<rapidjson::SizeType>(0);
+  constexpr auto Y_IDX = static_cast<rapidjson::SizeType>(1);
+  constexpr auto Z_IDX = static_cast<rapidjson::SizeType>(2);
+  return Eigen::Vector3d(json_axis[X_IDX].GetDouble(),
+                         json_axis[Y_IDX].GetDouble(),
+                         json_axis[Z_IDX].GetDouble());
+}
+
+/**
+ * @brief Utility to retrieve an orthonormal basis from a JSON doc.
+ * @pre The doc must validate according to the schema
+ */
+Eigen::Matrix3d json_axes_to_eigen_basis(const rapidjson::Document& d,
+                                         const std::string& sensor,
+                                         const std::string& frame) {
+  const rapidjson::Value& view = d[sensor.c_str()][frame.c_str()]["view"];
+
+  const Eigen::Vector3d x_axis = json_axis_to_eigen_vector(view["x-axis"]);
+  const Eigen::Vector3d y_axis = json_axis_to_eigen_vector(view["y-axis"]);
+  return a2d2::get_orthonormal_basis(x_axis, y_axis, EPS);
+}
+}  // namespace
+
+//------------------------------------------------------------------------------
 
 int main(int argc, char* argv[]) {
   BUILD_INFO;  // just write to log what build options were specified
@@ -207,6 +253,59 @@ int main(int argc, char* argv[]) {
 
   const auto ego_shape_msg =
       a2d2::build_ego_shape_msg(x_min, x_max, y_min, y_max, z_min, z_max);
-  X_INFO("Built ego shape: " << ego_shape_msg);
+
+  ///
+  /// Get lidar poses
+  ///
+
+  {
+    Eigen::Matrix3d lidar_front_center_basis;
+    const auto sensors = "lidars";
+    const auto frame = "front_center";
+    lidar_front_center_basis =
+        json_axes_to_eigen_basis(sensor_config_d, sensors, frame);
+    VERIFY_BASIS(lidar_front_center_basis, sensors, frame);
+  }
+
+  {
+    Eigen::Matrix3d lidar_front_left_basis;
+    const auto sensors = "lidars";
+    const auto frame = "front_left";
+    lidar_front_left_basis =
+        json_axes_to_eigen_basis(sensor_config_d, sensors, frame);
+    VERIFY_BASIS(lidar_front_left_basis, sensors, frame);
+  }
+
+  {
+    Eigen::Matrix3d lidar_front_right_basis;
+    const auto sensors = "lidars";
+    const auto frame = "front_right";
+    lidar_front_right_basis =
+        json_axes_to_eigen_basis(sensor_config_d, sensors, frame);
+    VERIFY_BASIS(lidar_front_right_basis, sensors, frame);
+  }
+
+  {
+    Eigen::Matrix3d lidar_rear_left_basis;
+    const auto sensors = "lidars";
+    const auto frame = "rear_left";
+    lidar_rear_left_basis =
+        json_axes_to_eigen_basis(sensor_config_d, sensors, frame);
+    VERIFY_BASIS(lidar_rear_left_basis, sensors, frame);
+  }
+
+  {
+    Eigen::Matrix3d lidar_rear_right_basis;
+    const auto sensors = "lidars";
+    const auto frame = "rear_right";
+    lidar_rear_right_basis =
+        json_axes_to_eigen_basis(sensor_config_d, sensors, frame);
+    VERIFY_BASIS(lidar_rear_right_basis, sensors, frame);
+  }
+
+  ///
+  /// Get camera poses
+  ///
+
   return EXIT_SUCCESS;
 }
