@@ -329,15 +329,29 @@ TEST(A2D2_to_ROS, frame_from_filename) {
   }
 
   {
-    const auto frame_expected = "";
+    const auto frame_expected = "rearleft";
     const auto filename = "20190401145936_lidar_rearleft_000000080";
     const auto frame = frame_from_filename(filename);
     EXPECT_EQ(frame_expected, frame);
   }
 
   {
-    const auto frame_expected = "";
+    const auto frame_expected = "rearright";
     const auto filename = "20190401145936_lidar_rearright_000000080";
+    const auto frame = frame_from_filename(filename);
+    EXPECT_EQ(frame_expected, frame);
+  }
+
+  {
+    const auto frame_expected = "";
+    const auto filename = "20190401145936_lidar_rear_left_000000080";
+    const auto frame = frame_from_filename(filename);
+    EXPECT_EQ(frame_expected, frame);
+  }
+
+  {
+    const auto frame_expected = "";
+    const auto filename = "20190401145936_lidar_rear_right_000000080";
     const auto frame = frame_from_filename(filename);
     EXPECT_EQ(frame_expected, frame);
   }

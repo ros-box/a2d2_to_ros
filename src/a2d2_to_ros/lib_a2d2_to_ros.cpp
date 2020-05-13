@@ -40,6 +40,11 @@ namespace a2d2_to_ros {
 
 //------------------------------------------------------------------------------
 
+const std::string sensors::Names::LIDARS = "lidars";
+const std::string sensors::Names::CAMERAS = "cameras";
+
+//------------------------------------------------------------------------------
+
 bool axis_is_valid(const Eigen::Vector3d& axis, double epsilon) {
   const auto mag = axis.norm();
   return (std::isfinite(mag) && (mag > epsilon));
@@ -273,25 +278,25 @@ bool any_lidar_points_invalid(const cnpy::NpyArray& valid) {
 
 //------------------------------------------------------------------------------
 
-std::array<std::string, 6> sensors::Frames::get_files() {
-  return {"frontcenter", "frontleft", "frontright",
-          "sideleft",    "sideright", "rearcenter"};
+std::array<std::string, 8> sensors::Frames::get_files() {
+  return {"frontcenter", "frontleft",  "frontright", "sideleft",
+          "sideright",   "rearcenter", "rearleft",   "rearright"};
 }
 
 //------------------------------------------------------------------------------
 
-std::array<std::string, 6> sensors::Frames::get_cameras() {
-  return {"front_center", "front_left", "front_right",
-          "side_left",    "side_right", "rear_center"};
+std::array<std::string, 8> sensors::Frames::get_sensors() {
+  return {"front_center", "front_left",  "front_right", "side_left",
+          "side_right",   "rear_center", "rear_left",   "rear_right"};
 }
 
 //------------------------------------------------------------------------------
 
 std::string get_camera_name_from_frame_name(const std::string& name) {
-  const auto cameras = sensors::Frames::get_cameras();
+  const auto cameras = sensors::Frames::get_sensors();
   const auto frames = sensors::Frames::get_files();
   static_assert((cameras.size() == frames.size()),
-                "Camera names and lidar names must be same size.");
+                "Sensor names and file names must be same size.");
   for (auto i = 0; i < frames.size(); ++i) {
     if (name == frames[i]) {
       return cameras[i];

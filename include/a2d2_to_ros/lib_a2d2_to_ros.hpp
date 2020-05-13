@@ -49,6 +49,11 @@
 
 namespace a2d2_to_ros {
 namespace sensors {
+struct Names {
+  static const std::string LIDARS;
+  static const std::string CAMERAS;
+};  // struct Names
+
 struct Frames {
   static constexpr auto FRONT_CENTER_IDX = 0;
   static constexpr auto FRONT_LEFT_IDX = 1;
@@ -56,22 +61,27 @@ struct Frames {
   static constexpr auto SIDE_LEFT_IDX = 3;
   static constexpr auto SIDE_RIGHT_IDX = 4;
   static constexpr auto REAR_CENTER_IDX = 5;
+  static constexpr auto REAR_LEFT_IDX = 6;
+  static constexpr auto REAR_RIGHT_IDX = 7;
 
   /**
    * @brief Get a list of sensor frame names.
    * @note This function has no test coverage.
    * @note I don't know why the data set has two naming conventions (see
    * get_camera_names)
+   * @note The names 'rearleft' and 'rearright' are included for completeness
+   * but appear to be unused in the data set.
    */
-  static std::array<std::string, 6> get_files();
+  static std::array<std::string, 8> get_files();
 
   /**
-   * @brief Get a list of camera names.
+   * @brief Get a list of sensor names.
+   * @note Cameras and lidars use different subsets of these names
    * @note This function has no test coverage.
    * @note I don't know why the data set has two naming conventions (see
    * get_sensor_frame_names)
    */
-  static std::array<std::string, 6> get_cameras();
+  static std::array<std::string, 8> get_sensors();
 };  // struct Fields
 }  // namespace sensors
 
