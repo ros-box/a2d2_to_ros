@@ -48,22 +48,57 @@
 #include "a2d2_to_ros/logging.hpp"
 
 namespace a2d2_to_ros {
-namespace lidar {
-constexpr auto POINTS_IDX = 0;
-constexpr auto AZIMUTH_IDX = 1;
-constexpr auto BOUNDARY_IDX = 2;
-constexpr auto COL_IDX = 3;
-constexpr auto DEPTH_IDX = 4;
-constexpr auto DISTANCE_IDX = 5;
-constexpr auto ID_IDX = 6;
-constexpr auto RECTIME_IDX = 7;
-constexpr auto REFLECTANCE_IDX = 8;
-constexpr auto ROW_IDX = 9;
-constexpr auto TIMESTAMP_IDX = 10;
-constexpr auto VALID_IDX = 11;
+namespace sensors {
+struct Frames {
+  static constexpr auto FRONT_CENTER_IDX = 0;
+  static constexpr auto FRONT_LEFT_IDX = 1;
+  static constexpr auto FRONT_RIGHT_IDX = 2;
+  static constexpr auto SIDE_LEFT_IDX = 3;
+  static constexpr auto SIDE_RIGHT_IDX = 4;
+  static constexpr auto REAR_CENTER_IDX = 5;
 
-constexpr auto ROW_SHAPE_IDX = 0;
-constexpr auto COL_SHAPE_IDX = 1;
+  /**
+   * @brief Get a list of sensor frame names.
+   * @note This function has no test coverage.
+   * @note I don't know why the data set has two naming conventions (see
+   * get_camera_names)
+   */
+  static std::array<std::string, 6> get_files();
+
+  /**
+   * @brief Get a list of camera names.
+   * @note This function has no test coverage.
+   * @note I don't know why the data set has two naming conventions (see
+   * get_sensor_frame_names)
+   */
+  static std::array<std::string, 6> get_cameras();
+};  // struct Fields
+}  // namespace sensors
+
+namespace npz {
+struct Fields {
+  static constexpr auto POINTS_IDX = 0;
+  static constexpr auto AZIMUTH_IDX = 1;
+  static constexpr auto BOUNDARY_IDX = 2;
+  static constexpr auto COL_IDX = 3;
+  static constexpr auto DEPTH_IDX = 4;
+  static constexpr auto DISTANCE_IDX = 5;
+  static constexpr auto ID_IDX = 6;
+  static constexpr auto RECTIME_IDX = 7;
+  static constexpr auto REFLECTANCE_IDX = 8;
+  static constexpr auto ROW_IDX = 9;
+  static constexpr auto TIMESTAMP_IDX = 10;
+  static constexpr auto VALID_IDX = 11;
+
+  static constexpr auto ROW_SHAPE_IDX = 0;
+  static constexpr auto COL_SHAPE_IDX = 1;
+
+  /**
+   * @brief Get a list of expected field names for npz lidar data.
+   * @note This function has no test coverage.
+   */
+  static std::array<std::string, 12> get_fields();
+};  // struct Fields
 
 /**
  * @brief Explicit notion of data types: these types are used to read data from
@@ -125,7 +160,7 @@ struct WriteTypes {
   typedef BOOL Valid;
 };  // struct ReadTypes
 
-}  // namespace lidar
+}  // namespace npz
 
 /** @brief convenience object for interacting with point cloud iterators. */
 struct A2D2_PointCloudIterators {
@@ -142,20 +177,20 @@ struct A2D2_PointCloudIterators {
   friend std::ostream& operator<<(std::ostream& os,
                                   const A2D2_PointCloudIterators& iters);
 
-  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Point> x;
-  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Point> y;
-  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Point> z;
-  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Azimuth> azimuth;
-  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Boundary> boundary;
-  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Col> col;
-  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Depth> depth;
-  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Distance> distance;
-  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::LidarId> lidar_id;
-  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Rectime> rectime;
-  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Reflectance> reflectance;
-  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Row> row;
-  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Timestamp> timestamp;
-  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Valid> valid;
+  sensor_msgs::PointCloud2Iterator<npz::WriteTypes::Point> x;
+  sensor_msgs::PointCloud2Iterator<npz::WriteTypes::Point> y;
+  sensor_msgs::PointCloud2Iterator<npz::WriteTypes::Point> z;
+  sensor_msgs::PointCloud2Iterator<npz::WriteTypes::Azimuth> azimuth;
+  sensor_msgs::PointCloud2Iterator<npz::WriteTypes::Boundary> boundary;
+  sensor_msgs::PointCloud2Iterator<npz::WriteTypes::Col> col;
+  sensor_msgs::PointCloud2Iterator<npz::WriteTypes::Depth> depth;
+  sensor_msgs::PointCloud2Iterator<npz::WriteTypes::Distance> distance;
+  sensor_msgs::PointCloud2Iterator<npz::WriteTypes::LidarId> lidar_id;
+  sensor_msgs::PointCloud2Iterator<npz::WriteTypes::Rectime> rectime;
+  sensor_msgs::PointCloud2Iterator<npz::WriteTypes::Reflectance> reflectance;
+  sensor_msgs::PointCloud2Iterator<npz::WriteTypes::Row> row;
+  sensor_msgs::PointCloud2Iterator<npz::WriteTypes::Timestamp> timestamp;
+  sensor_msgs::PointCloud2Iterator<npz::WriteTypes::Valid> valid;
 };  // struct A2D2_PointCloudIterators
 
 sensor_msgs::ImagePtr depth_image_from_a2d2_pointcloud(
@@ -239,7 +274,7 @@ template <typename T>
 bool all_non_negative(const cnpy::NpyArray& field) {
   auto good = true;
   const auto vals = field.data<T>();
-  for (auto i = 0; i < field.shape[lidar::ROW_SHAPE_IDX]; ++i) {
+  for (auto i = 0; i < field.shape[npz::Fields::ROW_SHAPE_IDX]; ++i) {
     const auto is_non_negative = (vals[i] >= static_cast<T>(0));
     good = (good && is_non_negative);
   }
@@ -256,7 +291,7 @@ template <typename T>
 T get_min_value(const cnpy::NpyArray& field) {
   auto t = std::numeric_limits<T>::max();
   const auto vals = field.data<T>();
-  for (auto i = 0; i < field.shape[lidar::ROW_SHAPE_IDX]; ++i) {
+  for (auto i = 0; i < field.shape[npz::Fields::ROW_SHAPE_IDX]; ++i) {
     t = std::min(t, vals[i]);
   }
   return t;
@@ -272,7 +307,7 @@ template <typename T>
 T get_max_value(const cnpy::NpyArray& field) {
   auto t = std::numeric_limits<T>::min();
   const auto vals = field.data<T>();
-  for (auto i = 0; i < field.shape[lidar::ROW_SHAPE_IDX]; ++i) {
+  for (auto i = 0; i < field.shape[npz::Fields::ROW_SHAPE_IDX]; ++i) {
     t = std::max(t, vals[i]);
   }
   return t;
@@ -286,34 +321,12 @@ T get_max_value(const cnpy::NpyArray& field) {
 bool any_lidar_points_invalid(const cnpy::NpyArray& valid);
 
 /**
- * @brief Get a list of sensor frame names.
- * @note This function has no test coverage.
- * @note I don't know why the data set has two naming conventions (see
- * get_camera_names)
- */
-std::array<std::string, 6> get_sensor_frame_names();
-
-/**
- * @brief Get a list of camera names.
- * @note This function has no test coverage.
- * @note I don't know why the data set has two naming conventions (see
- * get_sensor_frame_names)
- */
-std::array<std::string, 6> get_camera_names();
-
-/**
  * @brief Map camera name from npz lidar filename to camera name
  * @note This function has no test coverage.
  * @return The camera name corresponding to the lidar frame, or empty string if
  * not found.
  */
 std::string get_camera_name_from_frame_name(const std::string& name);
-
-/**
- * @brief Get a list of expected field names for npz lidar data.
- * @note This function has no test coverage.
- */
-std::array<std::string, 12> get_npz_fields();
 
 /**
  * @brief Check that lidar npz data has expected structure.

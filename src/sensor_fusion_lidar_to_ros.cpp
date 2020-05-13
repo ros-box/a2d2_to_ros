@@ -203,7 +203,7 @@ int main(int argc, char* argv[]) {
   /// Load each npz file, convert to PointCloud2 message, write to bag
   ///
 
-  const auto fields = a2d2::get_npz_fields();
+  const auto fields = a2d2::npz::Fields::get_fields();
 
   X_INFO("Attempting to convert point cloud data. This may take a while...");
 
@@ -300,9 +300,9 @@ int main(int argc, char* argv[]) {
     ///
 
     // capture these up front; they provide meta information about the data
-    const auto& points = npz[fields[a2d2::lidar::POINTS_IDX]];
-    const auto& timestamp = npz[fields[a2d2::lidar::TIMESTAMP_IDX]];
-    const auto& valid = npz[fields[a2d2::lidar::VALID_IDX]];
+    const auto& points = npz[fields[a2d2::npz::Fields::POINTS_IDX]];
+    const auto& timestamp = npz[fields[a2d2::npz::Fields::TIMESTAMP_IDX]];
+    const auto& valid = npz[fields[a2d2::npz::Fields::VALID_IDX]];
 
     const auto lidar_name = a2d2::frame_from_filename(f);
     const auto frame = ("lidar_" + lidar_name);
@@ -324,7 +324,7 @@ int main(int argc, char* argv[]) {
 #endif
 
     const auto is_dense = a2d2::any_lidar_points_invalid(valid);
-    const auto n_points = points.shape[a2d2::lidar::ROW_SHAPE_IDX];
+    const auto n_points = points.shape[a2d2::npz::Fields::ROW_SHAPE_IDX];
     auto msg = a2d2::build_pc2_msg(frame, frame_timestamp_ros, is_dense,
                                    static_cast<uint32_t>(n_points));
 
@@ -342,16 +342,16 @@ int main(int argc, char* argv[]) {
         constexpr auto X_POS = 0;
         constexpr auto Y_POS = 1;
         constexpr auto Z_POS = 2;
-        const auto row_step = points.shape[a2d2::lidar::COL_SHAPE_IDX];
+        const auto row_step = points.shape[a2d2::npz::Fields::COL_SHAPE_IDX];
 
-        const auto data = points.data<a2d2::lidar::ReadTypes::Point>();
+        const auto data = points.data<a2d2::npz::ReadTypes::Point>();
         const auto x_idx = a2d2::flatten_2d_index(row_step, row, X_POS);
         const auto y_idx = a2d2::flatten_2d_index(row_step, row, Y_POS);
         const auto z_idx = a2d2::flatten_2d_index(row_step, row, Z_POS);
 
-        *(iters.x) = static_cast<a2d2::lidar::WriteTypes::Point>(data[x_idx]);
-        *(iters.y) = static_cast<a2d2::lidar::WriteTypes::Point>(data[y_idx]);
-        *(iters.z) = static_cast<a2d2::lidar::WriteTypes::Point>(data[z_idx]);
+        *(iters.x) = static_cast<a2d2::npz::WriteTypes::Point>(data[x_idx]);
+        *(iters.y) = static_cast<a2d2::npz::WriteTypes::Point>(data[y_idx]);
+        *(iters.z) = static_cast<a2d2::npz::WriteTypes::Point>(data[z_idx]);
       }
 
       ///
@@ -359,91 +359,91 @@ int main(int argc, char* argv[]) {
       ///
 
       {
-        const auto& azimuth = npz[fields[a2d2::lidar::AZIMUTH_IDX]];
-        const auto data = azimuth.data<a2d2::lidar::ReadTypes::Azimuth>();
+        const auto& azimuth = npz[fields[a2d2::npz::Fields::AZIMUTH_IDX]];
+        const auto data = azimuth.data<a2d2::npz::ReadTypes::Azimuth>();
         *(iters.azimuth) = data[row];
       }
 
       {
-        const auto& boundary = npz[fields[a2d2::lidar::BOUNDARY_IDX]];
-        const auto data = boundary.data<a2d2::lidar::ReadTypes::Boundary>();
+        const auto& boundary = npz[fields[a2d2::npz::Fields::BOUNDARY_IDX]];
+        const auto data = boundary.data<a2d2::npz::ReadTypes::Boundary>();
         *(iters.boundary) =
-            static_cast<a2d2::lidar::WriteTypes::Boundary>(data[row]);
+            static_cast<a2d2::npz::WriteTypes::Boundary>(data[row]);
       }
 
       {
-        const auto& image_col = npz[fields[a2d2::lidar::COL_IDX]];
-        const auto data = image_col.data<a2d2::lidar::ReadTypes::Col>();
-        *(iters.col) = static_cast<a2d2::lidar::WriteTypes::Col>(data[row]);
+        const auto& image_col = npz[fields[a2d2::npz::Fields::COL_IDX]];
+        const auto data = image_col.data<a2d2::npz::ReadTypes::Col>();
+        *(iters.col) = static_cast<a2d2::npz::WriteTypes::Col>(data[row]);
       }
 
       {
-        const auto& depth = npz[fields[a2d2::lidar::DEPTH_IDX]];
-        const auto data = depth.data<a2d2::lidar::ReadTypes::Depth>();
-        *(iters.depth) = static_cast<a2d2::lidar::WriteTypes::Depth>(data[row]);
+        const auto& depth = npz[fields[a2d2::npz::Fields::DEPTH_IDX]];
+        const auto data = depth.data<a2d2::npz::ReadTypes::Depth>();
+        *(iters.depth) = static_cast<a2d2::npz::WriteTypes::Depth>(data[row]);
       }
 
       {
-        const auto& distance = npz[fields[a2d2::lidar::DISTANCE_IDX]];
-        const auto data = distance.data<a2d2::lidar::ReadTypes::Distance>();
+        const auto& distance = npz[fields[a2d2::npz::Fields::DISTANCE_IDX]];
+        const auto data = distance.data<a2d2::npz::ReadTypes::Distance>();
         *(iters.distance) =
-            static_cast<a2d2::lidar::WriteTypes::Distance>(data[row]);
+            static_cast<a2d2::npz::WriteTypes::Distance>(data[row]);
       }
 
       {
-        const auto& lidar_id = npz[fields[a2d2::lidar::ID_IDX]];
-        const auto data = lidar_id.data<a2d2::lidar::ReadTypes::LidarId>();
+        const auto& lidar_id = npz[fields[a2d2::npz::Fields::ID_IDX]];
+        const auto data = lidar_id.data<a2d2::npz::ReadTypes::LidarId>();
         *(iters.lidar_id) =
-            static_cast<a2d2::lidar::WriteTypes::LidarId>(data[row]);
+            static_cast<a2d2::npz::WriteTypes::LidarId>(data[row]);
       }
 
       {
-        const auto& rectime = npz[fields[a2d2::lidar::RECTIME_IDX]];
-        const auto data = rectime.data<a2d2::lidar::ReadTypes::Rectime>();
+        const auto& rectime = npz[fields[a2d2::npz::Fields::RECTIME_IDX]];
+        const auto data = rectime.data<a2d2::npz::ReadTypes::Rectime>();
         *(iters.rectime) =
-            static_cast<a2d2::lidar::WriteTypes::Rectime>(data[row]);
+            static_cast<a2d2::npz::WriteTypes::Rectime>(data[row]);
       }
 
       {
-        const auto& reflectance = npz[fields[a2d2::lidar::REFLECTANCE_IDX]];
-        const auto data =
-            reflectance.data<a2d2::lidar::ReadTypes::Reflectance>();
+        const auto& reflectance =
+            npz[fields[a2d2::npz::Fields::REFLECTANCE_IDX]];
+        const auto data = reflectance.data<a2d2::npz::ReadTypes::Reflectance>();
         *(iters.reflectance) =
-            static_cast<a2d2::lidar::WriteTypes::Reflectance>(data[row]);
+            static_cast<a2d2::npz::WriteTypes::Reflectance>(data[row]);
       }
 
       {
-        const auto& image_row = npz[fields[a2d2::lidar::ROW_IDX]];
-        const auto data = image_row.data<a2d2::lidar::ReadTypes::Row>();
-        *(iters.row) = static_cast<a2d2::lidar::WriteTypes::Row>(data[row]);
+        const auto& image_row = npz[fields[a2d2::npz::Fields::ROW_IDX]];
+        const auto data = image_row.data<a2d2::npz::ReadTypes::Row>();
+        *(iters.row) = static_cast<a2d2::npz::WriteTypes::Row>(data[row]);
       }
 
       {
-        const auto data = timestamp.data<a2d2::lidar::ReadTypes::Timestamp>();
+        const auto data = timestamp.data<a2d2::npz::ReadTypes::Timestamp>();
         *(iters.timestamp) =
-            static_cast<a2d2::lidar::WriteTypes::Timestamp>(data[row]);
+            static_cast<a2d2::npz::WriteTypes::Timestamp>(data[row]);
       }
 
       {
-        const auto data = valid.data<a2d2::lidar::ReadTypes::Valid>();
-        *(iters.valid) = static_cast<a2d2::lidar::WriteTypes::Valid>(data[row]);
+        const auto data = valid.data<a2d2::npz::ReadTypes::Valid>();
+        *(iters.valid) = static_cast<a2d2::npz::WriteTypes::Valid>(data[row]);
       }
     }
 
 #if 0
     {
-      const auto& reflectance = npz[fields[a2d2::lidar::REFLECTANCE_IDX]];
+      const auto& reflectance = npz[fields[a2d2::npz::Fields::REFLECTANCE_IDX]];
       const auto max_reflectance =
-          a2d2::get_max_value<a2d2::lidar::ReadTypes::Reflectance>(reflectance);
+          a2d2::get_max_value<a2d2::npz::ReadTypes::Reflectance>(reflectance);
       const auto min_reflectance =
-          a2d2::get_min_value<a2d2::lidar::ReadTypes::Reflectance>(reflectance);
+          a2d2::get_min_value<a2d2::npz::ReadTypes::Reflectance>(reflectance);
       std::cout << "reflectance range: [" << min_reflectance << ", "
                 << max_reflectance << "]" << std::endl;
-      const auto& boundary = npz[fields[a2d2::lidar::BOUNDARY_IDX]];
+      const auto& boundary = npz[fields[a2d2::npz::Fields::BOUNDARY_IDX]];
       const auto max_boundary =
-          a2d2::get_max_value<a2d2::lidar::ReadTypes::Boundary>(boundary);
+          a2d2::get_max_value<a2d2::npz::ReadTypes::Boundary>(boundary);
       const auto min_boundary =
-          a2d2::get_min_value<a2d2::lidar::ReadTypes::Boundary>(boundary);
+          a2d2::get_min_value<a2d2::npz::ReadTypes::Boundary>(boundary);
       std::cout << "boundary range: [" << min_boundary << ", " << max_boundary
                 << "]" << std::endl;
       auto test = a2d2::A2D2_PointCloudIterators(msg, fields);
