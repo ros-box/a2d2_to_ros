@@ -33,6 +33,7 @@ find_package(catkin REQUIRED COMPONENTS
   ros_cnpy
   cv_bridge
   shape_msgs
+  geometry_msgs
   eigen_conversions
 )
 
