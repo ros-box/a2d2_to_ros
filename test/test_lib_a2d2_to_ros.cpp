@@ -108,7 +108,7 @@ TEST(A2D2_to_ROS, get_orthonormal_basis) {
       0.0, 1.0, 0.0,
       0.0, 0.0, 1.0;
     // clang-format on
-    EXPECT_TRUE(B.isApprox(B_expected, EPS));
+    EXPECT_TRUE(B.transpose().isApprox(B_expected, EPS));
   }
 
   {
@@ -122,7 +122,7 @@ TEST(A2D2_to_ROS, get_orthonormal_basis) {
       -0.40824829046386307,  0.81649658092772615, -0.40824829046386307,
       -0.70710678118654746,                    0,  0.70710678118654746;
     // clang-format on
-    EXPECT_TRUE(B.isApprox(B_expected, EPS))
+    EXPECT_TRUE(B.transpose().isApprox(B_expected, EPS))
         << "B: " << B << "\nDid not match B_expected: " << B_expected;
   }
 }

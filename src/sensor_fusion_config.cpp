@@ -23,13 +23,16 @@
  */
 #include <algorithm>
 #include <set>
+#include <vector>
 
 #include <boost/filesystem/convenience.hpp>  // TODO(jeff): use std::filesystem in C++17
 #include <boost/optional.hpp>
 #include <boost/program_options.hpp>
 
+#include <eigen_conversions/eigen_msg.h>
 #include <ros/ros.h>
 #include <rosbag/bag.h>
+#include <tf2_msgs/TFMessage.h>
 
 #include "rapidjson/document.h"
 #include "rapidjson/error/en.h"
@@ -57,8 +60,14 @@ static constexpr auto _VERBOSE = false;
 /// Executable specific stuff
 ///
 
-#define VERIFY_BASIS(basis, sensors, frame)                                 \
+#define VERIFY_BASIS_ORIGIN(basis, origin, sensors, frame)                  \
   {                                                                         \
+    if (!a2d2::vector_is_valid(origin)) {                                   \
+      X_FATAL("Origin for " << sensors << "::" << frame                     \
+                            << " is not valid. Origin must be finite and "  \
+                               "real valued. Cannot continue.");            \
+      return EXIT_FAILURE;                                                  \
+    }                                                                       \
     if (basis.isZero(0.0)) {                                                \
       X_FATAL(                                                              \
           "Basis for "                                                      \
@@ -98,6 +107,17 @@ Eigen::Matrix3d json_axes_to_eigen_basis(const rapidjson::Document& d,
   const Eigen::Vector3d x_axis = json_axis_to_eigen_vector(view["x-axis"]);
   const Eigen::Vector3d y_axis = json_axis_to_eigen_vector(view["y-axis"]);
   return a2d2::get_orthonormal_basis(x_axis, y_axis, EPS);
+}
+
+/**
+ * @brief Utility to retrieve a basis origin from a JSON doc.
+ * @pre The doc must validate according to the schema
+ */
+Eigen::Vector3d json_origin_to_eigen_vector(const rapidjson::Document& d,
+                                            const std::string& sensor,
+                                            const std::string& frame) {
+  return json_axis_to_eigen_vector(
+      d[sensor.c_str()][frame.c_str()]["view"]["origin"]);
 }
 }  // namespace
 
@@ -255,107 +275,75 @@ int main(int argc, char* argv[]) {
       a2d2::build_ego_shape_msg(x_min, x_max, y_min, y_max, z_min, z_max);
 
   ///
-  /// Prepare to get sensor poses
+  /// Get sensor poses
   ///
+
   const auto sensors = a2d2::sensors::Frames::get_sensors();
-  const auto& lidar_name = a2d2::sensors::Names::LIDARS;
-  const auto& camera_name = a2d2::sensors::Names::CAMERAS;
+
+  // each block will add its transform message to this container
+  tf2_msgs::TFMessage msgtf;
+
+  // For each sensor type...
+  for (const auto& name :
+       {a2d2::sensors::Names::CAMERAS, a2d2::sensors::Names::LIDARS}) {
+    const auto is_camera = (name == a2d2::sensors::Names::CAMERAS);
+    const auto is_lidar = (name == a2d2::sensors::Names::LIDARS);
+
+    // For each sensor position...
+    for (auto i = 0; i < sensors.size(); ++i) {
+      const auto& frame = sensors[i];
+
+      // No lidars at these positions
+      const auto is_side_left = (a2d2::sensors::Frames::SIDE_LEFT_IDX == i);
+      const auto is_side_right = (a2d2::sensors::Frames::SIDE_RIGHT_IDX == i);
+      const auto is_rear_center = (a2d2::sensors::Frames::REAR_CENTER_IDX == i);
+      if (is_lidar) {
+        if (is_side_left || is_side_right || is_rear_center) {
+          continue;
+        }
+      }
+
+      // No cameras at these positions
+      const auto is_rear_left = (a2d2::sensors::Frames::REAR_LEFT_IDX == i);
+      const auto is_rear_right = (a2d2::sensors::Frames::REAR_RIGHT_IDX == i);
+      if (is_camera) {
+        if (is_rear_left || is_rear_right) {
+          continue;
+        }
+      }
+
+      // compute transform between sensor and vehicle
+      const Eigen::Matrix3d basis =
+          json_axes_to_eigen_basis(sensor_config_d, name, frame);
+      const Eigen::Vector3d origin =
+          json_origin_to_eigen_vector(sensor_config_d, name, frame);
+      VERIFY_BASIS_ORIGIN(basis, origin, name, frame);
+
+      const Eigen::Affine3d Tx = a2d2::Tx_global_sensor(basis, origin);
+
+      // add transform to tf set
+      geometry_msgs::Transform Tx_msg;
+      tf::transformEigenToMsg(Tx, Tx_msg);
+
+      geometry_msgs::TransformStamped Tx_stamped_msg;
+      Tx_stamped_msg.transform = Tx_msg;
+      Tx_stamped_msg.header.stamp = ros::Time(0);
+      Tx_stamped_msg.header.frame_id = a2d2::tf_frame_name(name, frame);
+      Tx_stamped_msg.child_frame_id = "vehicle";
+
+      msgtf.transforms.push_back(Tx_stamped_msg);
+    }
+  }
 
   ///
-  /// Get lidar poses
+  /// Write all tf messages to the bag
   ///
 
-  Eigen::Matrix3d lidar_front_center_basis;
-  {
-    const auto& frame = sensors[a2d2::sensors::Frames::FRONT_CENTER_IDX];
-    lidar_front_center_basis =
-        json_axes_to_eigen_basis(sensor_config_d, lidar_name, frame);
-    VERIFY_BASIS(lidar_front_center_basis, lidar_name, frame);
-  }
-
-  Eigen::Matrix3d lidar_front_left_basis;
-  {
-    const auto& frame = sensors[a2d2::sensors::Frames::FRONT_LEFT_IDX];
-    lidar_front_left_basis =
-        json_axes_to_eigen_basis(sensor_config_d, lidar_name, frame);
-    VERIFY_BASIS(lidar_front_left_basis, lidar_name, frame);
-  }
-
-  Eigen::Matrix3d lidar_front_right_basis;
-  {
-    const auto& frame = sensors[a2d2::sensors::Frames::FRONT_RIGHT_IDX];
-    lidar_front_right_basis =
-        json_axes_to_eigen_basis(sensor_config_d, lidar_name, frame);
-    VERIFY_BASIS(lidar_front_right_basis, lidar_name, frame);
-  }
-
-  Eigen::Matrix3d lidar_rear_left_basis;
-  {
-    const auto& frame = sensors[a2d2::sensors::Frames::REAR_LEFT_IDX];
-    lidar_rear_left_basis =
-        json_axes_to_eigen_basis(sensor_config_d, lidar_name, frame);
-    VERIFY_BASIS(lidar_rear_left_basis, lidar_name, frame);
-  }
-
-  Eigen::Matrix3d lidar_rear_right_basis;
-  {
-    const auto& frame = sensors[a2d2::sensors::Frames::REAR_RIGHT_IDX];
-    lidar_rear_right_basis =
-        json_axes_to_eigen_basis(sensor_config_d, lidar_name, frame);
-    VERIFY_BASIS(lidar_rear_right_basis, lidar_name, frame);
-  }
-
-  ///
-  /// Get camera poses
-  ///
-
-  Eigen::Matrix3d camera_front_left_basis;
-  {
-    const auto& frame = sensors[a2d2::sensors::Frames::FRONT_LEFT_IDX];
-    camera_front_left_basis =
-        json_axes_to_eigen_basis(sensor_config_d, camera_name, frame);
-    VERIFY_BASIS(camera_front_left_basis, camera_name, frame);
-  }
-
-  Eigen::Matrix3d camera_front_right_basis;
-  {
-    const auto& frame = sensors[a2d2::sensors::Frames::FRONT_RIGHT_IDX];
-    camera_front_right_basis =
-        json_axes_to_eigen_basis(sensor_config_d, camera_name, frame);
-    VERIFY_BASIS(camera_front_right_basis, camera_name, frame);
-  }
-
-  Eigen::Matrix3d camera_front_center_basis;
-  {
-    const auto& frame = sensors[a2d2::sensors::Frames::FRONT_CENTER_IDX];
-    camera_front_center_basis =
-        json_axes_to_eigen_basis(sensor_config_d, camera_name, frame);
-    VERIFY_BASIS(camera_front_center_basis, camera_name, frame);
-  }
-
-  Eigen::Matrix3d camera_side_left_basis;
-  {
-    const auto& frame = sensors[a2d2::sensors::Frames::SIDE_LEFT_IDX];
-    camera_side_left_basis =
-        json_axes_to_eigen_basis(sensor_config_d, camera_name, frame);
-    VERIFY_BASIS(camera_side_left_basis, camera_name, frame);
-  }
-
-  Eigen::Matrix3d camera_side_right_basis;
-  {
-    const auto& frame = sensors[a2d2::sensors::Frames::SIDE_RIGHT_IDX];
-    camera_side_right_basis =
-        json_axes_to_eigen_basis(sensor_config_d, camera_name, frame);
-    VERIFY_BASIS(camera_side_right_basis, camera_name, frame);
-  }
-
-  Eigen::Matrix3d camera_rear_center_basis;
-  {
-    const auto& frame = sensors[a2d2::sensors::Frames::REAR_CENTER_IDX];
-    camera_rear_center_basis =
-        json_axes_to_eigen_basis(sensor_config_d, camera_name, frame);
-    VERIFY_BASIS(camera_rear_center_basis, camera_name, frame);
-  }
+  rosbag::Bag bag;
+  bag.open("test.bag", rosbag::bagmode::Write);
+  bag.write("/tf_static", ros::TIME_MIN, msgtf);
+  bag.write("/a2d2/ego_shape", ros::TIME_MIN, ego_shape_msg);
+  bag.close();
 
   return EXIT_SUCCESS;
 }

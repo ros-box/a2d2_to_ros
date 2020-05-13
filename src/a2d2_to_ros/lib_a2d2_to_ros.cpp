@@ -45,9 +45,21 @@ const std::string sensors::Names::CAMERAS = "cameras";
 
 //------------------------------------------------------------------------------
 
+std::string tf_frame_name(const std::string& sensor_type,
+                          const std::string& sensor_frame) {
+  return (sensor_type + "_" + sensor_frame);
+}
+
+//------------------------------------------------------------------------------
+
+bool vector_is_valid(const Eigen::Vector3d& v) {
+  return std::isfinite(v.norm());
+}
+
+//------------------------------------------------------------------------------
+
 bool axis_is_valid(const Eigen::Vector3d& axis, double epsilon) {
-  const auto mag = axis.norm();
-  return (std::isfinite(mag) && (mag > epsilon));
+  return (vector_is_valid(axis) && (axis.norm() > epsilon));
 }
 
 //------------------------------------------------------------------------------
@@ -74,10 +86,20 @@ Eigen::Matrix3d get_orthonormal_basis(const Eigen::Vector3d& X,
   const Eigen::Vector3d Z = X.cross(Y);
   const Eigen::Vector3d Y_ortho = Z.cross(X);
 
-  basis.row(0) = X.normalized();
-  basis.row(1) = Y_ortho.normalized();
-  basis.row(2) = Z.normalized();
+  basis.col(0) = X.normalized();
+  basis.col(1) = Y_ortho.normalized();
+  basis.col(2) = Z.normalized();
   return basis;
+}
+
+//------------------------------------------------------------------------------
+
+Eigen::Affine3d Tx_global_sensor(const Eigen::Matrix3d& basis,
+                                 const Eigen::Vector3d& origin) {
+  const Eigen::Matrix3d R = basis;
+  const Eigen::Translation3d T(origin);
+  Eigen::Affine3d Tx = (T * R);
+  return Tx;
 }
 
 //------------------------------------------------------------------------------

@@ -36,13 +36,14 @@
 #include <string>
 
 #include <cv_bridge/cv_bridge.h>
+#include <geometry_msgs/TransformStamped.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/point_cloud2_iterator.h>
 #include <shape_msgs/SolidPrimitive.h>
 #include <std_msgs/Float64.h>
 #include <std_msgs/Header.h>
-#include <Eigen/Core>
+#include <Eigen/Geometry>
 #include "ros_cnpy/cnpy.h"
 
 #include "a2d2_to_ros/logging.hpp"
@@ -207,8 +208,22 @@ sensor_msgs::ImagePtr depth_image_from_a2d2_pointcloud(
     sensor_msgs::PointCloud2& pc);
 
 /**
+ * @brief Convenience method to generate a standard TF frame name.
+ * @note This function has no test coverage.
+ */
+std::string tf_frame_name(const std::string& sensor_type,
+                          const std::string& sensor_frame);
+
+/**
+ * @brief Verify that the vector is valid.
+ * @return true iff the vector is finite and real-valued
+ */
+bool vector_is_valid(const Eigen::Vector3d& v);
+
+/**
  * @brief Verify that the axis is valid.
- * @return true iff the axis is finite, real-valued, non-singular w.r.t. epsilon
+ * @return true iff the axis is a valid vector and is non-singular w.r.t.
+ * epsilon
  */
 bool axis_is_valid(const Eigen::Vector3d& axis, double epsilon);
 
@@ -227,11 +242,14 @@ bool axes_are_valid(const Eigen::Vector3d& axis1, const Eigen::Vector3d& axis2,
  * basis with Z orthogonal to the input X and Y, and a new Y orthogonal to X and
  * the computed Z.
  * @pre Vectors X and Y are unique and non-singular.
- * @return A 3x3 matrix with columns [X, Y, Z] whose rows form a right-handed
- * orthonormal basis. If X and Y are not valid, a zero matrix is returned.
+ * @return A 3x3 matrix whose columns [X, Y, Z] form a right-handed orthonormal
+ * basis. If input X and Y are not valid, a zero matrix is returned.
  */
 Eigen::Matrix3d get_orthonormal_basis(const Eigen::Vector3d& X,
                                       const Eigen::Vector3d& Y, double epsilon);
+
+Eigen::Affine3d Tx_global_sensor(const Eigen::Matrix3d& basis,
+                                 const Eigen::Vector3d& origin);
 
 /**
  * @brief Check whether the ego bbox parameters makes sense.
