@@ -305,7 +305,7 @@ int main(int argc, char* argv[]) {
     const auto& valid = npz[fields[a2d2::npz::Fields::VALID_IDX]];
 
     const auto lidar_name = a2d2::frame_from_filename(f);
-    const auto frame = ("lidar_" + lidar_name);
+    const auto frame = ("camera_" + lidar_name);
     if (frame.empty()) {
       X_FATAL("Could not find frame name in filename: "
               << f << ". Cannot continue.");
