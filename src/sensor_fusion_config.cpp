@@ -265,40 +265,40 @@ int main(int argc, char* argv[]) {
   /// Get lidar poses
   ///
 
+  Eigen::Matrix3d lidar_front_center_basis;
   {
-    Eigen::Matrix3d lidar_front_center_basis;
     const auto& frame = sensors[a2d2::sensors::Frames::FRONT_CENTER_IDX];
     lidar_front_center_basis =
         json_axes_to_eigen_basis(sensor_config_d, lidar_name, frame);
     VERIFY_BASIS(lidar_front_center_basis, lidar_name, frame);
   }
 
+  Eigen::Matrix3d lidar_front_left_basis;
   {
-    Eigen::Matrix3d lidar_front_left_basis;
     const auto& frame = sensors[a2d2::sensors::Frames::FRONT_LEFT_IDX];
     lidar_front_left_basis =
         json_axes_to_eigen_basis(sensor_config_d, lidar_name, frame);
     VERIFY_BASIS(lidar_front_left_basis, lidar_name, frame);
   }
 
+  Eigen::Matrix3d lidar_front_right_basis;
   {
-    Eigen::Matrix3d lidar_front_right_basis;
     const auto& frame = sensors[a2d2::sensors::Frames::FRONT_RIGHT_IDX];
     lidar_front_right_basis =
         json_axes_to_eigen_basis(sensor_config_d, lidar_name, frame);
     VERIFY_BASIS(lidar_front_right_basis, lidar_name, frame);
   }
 
+  Eigen::Matrix3d lidar_rear_left_basis;
   {
-    Eigen::Matrix3d lidar_rear_left_basis;
     const auto& frame = sensors[a2d2::sensors::Frames::REAR_LEFT_IDX];
     lidar_rear_left_basis =
         json_axes_to_eigen_basis(sensor_config_d, lidar_name, frame);
     VERIFY_BASIS(lidar_rear_left_basis, lidar_name, frame);
   }
 
+  Eigen::Matrix3d lidar_rear_right_basis;
   {
-    Eigen::Matrix3d lidar_rear_right_basis;
     const auto& frame = sensors[a2d2::sensors::Frames::REAR_RIGHT_IDX];
     lidar_rear_right_basis =
         json_axes_to_eigen_basis(sensor_config_d, lidar_name, frame);
@@ -309,48 +309,48 @@ int main(int argc, char* argv[]) {
   /// Get camera poses
   ///
 
+  Eigen::Matrix3d camera_front_left_basis;
   {
-    Eigen::Matrix3d camera_front_left_basis;
     const auto& frame = sensors[a2d2::sensors::Frames::FRONT_LEFT_IDX];
     camera_front_left_basis =
         json_axes_to_eigen_basis(sensor_config_d, camera_name, frame);
     VERIFY_BASIS(camera_front_left_basis, camera_name, frame);
   }
 
+  Eigen::Matrix3d camera_front_right_basis;
   {
-    Eigen::Matrix3d camera_front_right_basis;
     const auto& frame = sensors[a2d2::sensors::Frames::FRONT_RIGHT_IDX];
     camera_front_right_basis =
         json_axes_to_eigen_basis(sensor_config_d, camera_name, frame);
     VERIFY_BASIS(camera_front_right_basis, camera_name, frame);
   }
 
+  Eigen::Matrix3d camera_front_center_basis;
   {
-    Eigen::Matrix3d camera_front_center_basis;
     const auto& frame = sensors[a2d2::sensors::Frames::FRONT_CENTER_IDX];
     camera_front_center_basis =
         json_axes_to_eigen_basis(sensor_config_d, camera_name, frame);
     VERIFY_BASIS(camera_front_center_basis, camera_name, frame);
   }
 
+  Eigen::Matrix3d camera_side_left_basis;
   {
-    Eigen::Matrix3d camera_side_left_basis;
     const auto& frame = sensors[a2d2::sensors::Frames::SIDE_LEFT_IDX];
     camera_side_left_basis =
         json_axes_to_eigen_basis(sensor_config_d, camera_name, frame);
     VERIFY_BASIS(camera_side_left_basis, camera_name, frame);
   }
 
+  Eigen::Matrix3d camera_side_right_basis;
   {
-    Eigen::Matrix3d camera_side_right_basis;
     const auto& frame = sensors[a2d2::sensors::Frames::SIDE_RIGHT_IDX];
     camera_side_right_basis =
         json_axes_to_eigen_basis(sensor_config_d, camera_name, frame);
     VERIFY_BASIS(camera_side_right_basis, camera_name, frame);
   }
 
+  Eigen::Matrix3d camera_rear_center_basis;
   {
-    Eigen::Matrix3d camera_rear_center_basis;
     const auto& frame = sensors[a2d2::sensors::Frames::REAR_CENTER_IDX];
     camera_rear_center_basis =
         json_axes_to_eigen_basis(sensor_config_d, camera_name, frame);
