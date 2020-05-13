@@ -60,7 +60,7 @@ constexpr auto RECTIME_IDX = 7;
 constexpr auto REFLECTANCE_IDX = 8;
 constexpr auto ROW_IDX = 9;
 constexpr auto TIMESTAMP_IDX = 10;
-constexpr auto VALID_DIX = 11;
+constexpr auto VALID_IDX = 11;
 
 constexpr auto ROW_SHAPE_IDX = 0;
 constexpr auto COL_SHAPE_IDX = 1;
@@ -288,12 +288,16 @@ bool any_lidar_points_invalid(const cnpy::NpyArray& valid);
 /**
  * @brief Get a list of sensor frame names.
  * @note This function has no test coverage.
+ * @note I don't know why the data set has two naming conventions (see
+ * get_camera_names)
  */
 std::array<std::string, 6> get_sensor_frame_names();
 
 /**
  * @brief Get a list of camera names.
  * @note This function has no test coverage.
+ * @note I don't know why the data set has two naming conventions (see
+ * get_sensor_frame_names)
  */
 std::array<std::string, 6> get_camera_names();
 

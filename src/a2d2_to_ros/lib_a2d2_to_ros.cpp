@@ -125,7 +125,7 @@ A2D2_PointCloudIterators::A2D2_PointCloudIterators(
       reflectance(msg, fields[lidar::REFLECTANCE_IDX]),
       row(msg, fields[lidar::ROW_IDX]),
       timestamp(msg, fields[lidar::TIMESTAMP_IDX]),
-      valid(msg, fields[lidar::VALID_DIX]) {}
+      valid(msg, fields[lidar::VALID_IDX]) {}
 
 //------------------------------------------------------------------------------
 
@@ -225,7 +225,7 @@ sensor_msgs::PointCloud2 build_pc2_msg(std::string frame, ros::Time timestamp,
       lidar::WriteTypes::MSG_UINT8,
       fields[a2d2_to_ros::lidar::TIMESTAMP_IDX].c_str(), 1,
       lidar::WriteTypes::MSG_UINT64,
-      fields[a2d2_to_ros::lidar::VALID_DIX].c_str(), 1,
+      fields[a2d2_to_ros::lidar::VALID_IDX].c_str(), 1,
       lidar::WriteTypes::MSG_UINT8);
 
   modifier.resize(msg.width);

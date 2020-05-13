@@ -302,7 +302,7 @@ int main(int argc, char* argv[]) {
     // capture these up front; they provide meta information about the data
     const auto& points = npz[fields[a2d2::lidar::POINTS_IDX]];
     const auto& timestamp = npz[fields[a2d2::lidar::TIMESTAMP_IDX]];
-    const auto& valid = npz[fields[a2d2::lidar::VALID_DIX]];
+    const auto& valid = npz[fields[a2d2::lidar::VALID_IDX]];
 
     const auto lidar_name = a2d2::frame_from_filename(f);
     const auto frame = ("lidar_" + lidar_name);
