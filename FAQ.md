@@ -15,10 +15,11 @@ Answers, where available, are given directly below the questions. If a question 
 1. Are all timestamps Unix Epoch time with microsecond units? (Mentar says they are, but the tutorial says they are TAI)
 1. What is the precision of real-valued data (e.g., 32-bit, 64-bit, etc.)?
 1. Are the labeled data a subset of the unlabeled data, or are they different sets?
-1. Are coordinate systems left or right handed?
 
-## Frame conventions
+## Conventions
 
+1. Are all units in the `cams_lidars.json` file SI?
+1. Are coordinate systems right handed?
 1. For the reference frame ***g*** (described in [Section 3.1](https://arxiv.org/pdf/2004.06320.pdf)):
     1. Is the position of the origin fixed with respect to the vehicle?
     1. Is the z-axis is aligned to the gravity vector?
