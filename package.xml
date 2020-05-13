@@ -41,6 +41,7 @@
   <depend>shape_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>eigen</depend>
+  <depend>tf2_msgs</depend>
   <depend>eigen_conversions</depend>
 
   <!-- The export tag contains other, unspecified, tags -->

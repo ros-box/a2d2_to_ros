@@ -34,6 +34,7 @@ find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   shape_msgs
   geometry_msgs
+  tf2_msgs
   eigen_conversions
 )
 
