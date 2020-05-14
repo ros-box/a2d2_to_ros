@@ -32,6 +32,7 @@
 #include <eigen_conversions/eigen_msg.h>
 #include <ros/ros.h>
 #include <rosbag/bag.h>
+#include <rosbag/view.h>
 #include <tf2_msgs/TFMessage.h>
 
 #include "rapidjson/document.h"
@@ -49,6 +50,7 @@
 ///
 
 static constexpr auto EPS = 1e-8;
+static constexpr auto _TF_FREQUENCEY = 10.0;
 static constexpr auto _PROGRAM_OPTIONS_LINE_LENGTH = 120u;
 static constexpr auto _CLOCK_TOPIC = "/clock";
 static constexpr auto _OUTPUT_PATH = ".";
@@ -131,11 +133,15 @@ int main(int argc, char* argv[]) {
   ///
 
   // TODO(jeff): rename "reflectance" to "intensity" assuming that's what it is
+  boost::optional<std::string> reference_bag_path_opt;
   boost::optional<std::string> sensor_config_path_opt;
   boost::optional<std::string> sensor_config_schema_path_opt;
   po::options_description desc(
-      "Publish the vehicle box model and tf tree for the vehicle sensor "
-      "configuration.",
+      "Write a transform bag file containing the vehicle box model and tf tree "
+      "for the vehicle sensor configuration. The bag is written with respect "
+      "to the begin and end times of a reference bag file. This means lidar "
+      "and camera bag files can be generated first, then this utility can be "
+      "used to generate a tf bag file for each of them.",
       _PROGRAM_OPTIONS_LINE_LENGTH);
   desc.add_options()("help,h", "Print help and exit.")(
       "sensor-config-path,c", po::value(&sensor_config_path_opt)->required(),
@@ -143,6 +149,10 @@ int main(int argc, char* argv[]) {
       "sensor-config-schema-path,s",
       po::value(&sensor_config_schema_path_opt)->required(),
       "Path to the JSON schema for the vehicle/sensor config.")(
+      "reference-bag-path,r", po::value(&reference_bag_path_opt)->required(),
+      "Path to the reference bag file containing the desired time span.")(
+      "tf-frequency,f", po::value<double>()->default_value(_TF_FREQUENCEY),
+      "Optional: Publish frequency for tf transforms and ego shape message.")(
       "output-path,o", po::value<std::string>()->default_value(_OUTPUT_PATH),
       "Optional: Path for the output bag file.");
 
@@ -168,9 +178,18 @@ int main(int argc, char* argv[]) {
   /// Get commandline parameters
   ///
 
+  const auto reference_bag_path = *reference_bag_path_opt;
   const auto sensor_config_path = *sensor_config_path_opt;
   const auto sensor_config_schema_path = *sensor_config_schema_path_opt;
   const auto output_path = vm["output-path"].as<std::string>();
+  const auto tf_frequency = vm["tf-frequency"].as<double>();
+
+  // make sure frequency is reasonable
+  if (tf_frequency <= 0.0) {
+    X_FATAL("TF publish frequency must be > 0. Value given: "
+            << tf_frequency << ". Cannot continue.");
+    return EXIT_FAILURE;
+  }
 
   ///
   /// Get the JSON for vehicle/sensor config
@@ -327,10 +346,8 @@ int main(int argc, char* argv[]) {
 
       geometry_msgs::TransformStamped Tx_stamped_msg;
       Tx_stamped_msg.transform = Tx_msg;
-      Tx_stamped_msg.header.stamp = ros::Time(0);
-      Tx_stamped_msg.header.frame_id = a2d2::tf_frame_name(name, frame);
-      Tx_stamped_msg.child_frame_id = "vehicle";
-
+      Tx_stamped_msg.header.frame_id = "vehicle";
+      Tx_stamped_msg.child_frame_id = a2d2::tf_frame_name(name, frame);
       msgtf.transforms.push_back(Tx_stamped_msg);
     }
   }
@@ -339,10 +356,30 @@ int main(int argc, char* argv[]) {
   /// Write all tf messages to the bag
   ///
 
+  ros::Time begin_time;
+  ros::Time end_time;
+  {
+    rosbag::Bag bag;
+    bag.open(reference_bag_path, rosbag::bagmode::Read);
+    rosbag::View view(bag);
+    begin_time = view.getBeginTime();
+    end_time = view.getEndTime();
+  }
+
+  const auto bag_name = (output_path + "/a2d2_tf_static.bag");
+
+  const auto t_step = (1.0 / tf_frequency);
+  ros::Duration step(t_step);
+
   rosbag::Bag bag;
-  bag.open("test.bag", rosbag::bagmode::Write);
-  bag.write("/tf_static", ros::TIME_MIN, msgtf);
-  bag.write("/a2d2/ego_shape", ros::TIME_MIN, ego_shape_msg);
+  bag.open(bag_name, rosbag::bagmode::Write);
+  for (auto t = begin_time; t < end_time; t += step) {
+    for (auto& msg : msgtf.transforms) {
+      msg.header.stamp = t;
+    }
+    bag.write("/tf", t, msgtf);
+    bag.write("/a2d2/ego_shape", t, ego_shape_msg);
+  }
   bag.close();
 
   return EXIT_SUCCESS;
