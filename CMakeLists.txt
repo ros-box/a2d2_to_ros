@@ -32,11 +32,16 @@ find_package(catkin REQUIRED COMPONENTS
   rosgraph_msgs
   ros_cnpy
   cv_bridge
+  shape_msgs
+  geometry_msgs
+  tf2_msgs
+  eigen_conversions
 )
 
 ## System dependencies are found with CMake's conventions
 find_package(RapidJSON REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system)
+find_package(Eigen3 REQUIRED)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -142,6 +147,7 @@ include_directories(
  ${catkin_INCLUDE_DIRS}
  ${Boost_INCLUDE_DIRS}
  ${RapidJSON_INCLUDE_DIRS}
+ ${EIGEN3_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -162,6 +168,8 @@ add_executable(${PROJECT_NAME}_sensor_fusion_bus_signals
   src/sensor_fusion_bus_signals_to_ros.cpp)
 add_executable(${PROJECT_NAME}_sensor_fusion_lidar
   src/sensor_fusion_lidar_to_ros.cpp)
+add_executable(${PROJECT_NAME}_sensor_fusion_config
+  src/sensor_fusion_config.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -171,6 +179,8 @@ set_target_properties(${PROJECT_NAME}_sensor_fusion_bus_signals
   PROPERTIES OUTPUT_NAME sensor_fusion_bus_signals PREFIX "")
 set_target_properties(${PROJECT_NAME}_sensor_fusion_lidar
   PROPERTIES OUTPUT_NAME sensor_fusion_lidar PREFIX "")
+set_target_properties(${PROJECT_NAME}_sensor_fusion_config
+  PROPERTIES OUTPUT_NAME sensor_fusion_config PREFIX "")
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -187,6 +197,13 @@ target_link_libraries(${PROJECT_NAME}_sensor_fusion_lidar
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+  ${RapidJSON_LIBRARIES}
+)
+target_link_libraries(${PROJECT_NAME}_sensor_fusion_config
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  ${RapidJSON_LIBRARIES}
 )
 
 #############

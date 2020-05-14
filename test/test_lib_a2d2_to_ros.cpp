@@ -28,16 +28,204 @@
 
 #include <gtest/gtest.h>
 
-// uncomment this define to log warnings and errors
-//#define _ENABLE_A2D2_ROS_LOGGING_
 #include "a2d2_to_ros/lib_a2d2_to_ros.hpp"
 
+static constexpr auto EPS = 1e-8;
 static constexpr auto INF = std::numeric_limits<double>::infinity();
 static constexpr auto NaN = std::numeric_limits<double>::quiet_NaN();
 static constexpr auto ONE_MILLION = static_cast<uint64_t>(1000000);
 static constexpr auto ONE_THOUSAND = static_cast<uint64_t>(1000);
 
 namespace a2d2_to_ros {
+
+//------------------------------------------------------------------------------
+
+TEST(A2D2_to_ROS, axis_is_valid) {
+  {
+    const Eigen::Vector3d axis(1.0, 0.0, INF);
+    EXPECT_FALSE(axis_is_valid(axis, EPS));
+  }
+
+  {
+    const Eigen::Vector3d axis(1.0, 0.0, NaN);
+    EXPECT_FALSE(axis_is_valid(axis, EPS));
+  }
+
+  {
+    const Eigen::Vector3d axis(1.0, 0.0, 0.0);
+    EXPECT_TRUE(axis_is_valid(axis, EPS));
+  }
+
+  {
+    const Eigen::Vector3d axis(0.0, 0.0, 0.0);
+    EXPECT_FALSE(axis_is_valid(axis, EPS));
+  }
+
+  {
+    const Eigen::Vector3d axis(0.0, 0.0, EPS);
+    EXPECT_FALSE(axis_is_valid(axis, EPS));
+  }
+
+  {
+    const Eigen::Vector3d axis(EPS, EPS, EPS);
+    EXPECT_TRUE(axis_is_valid(axis, EPS));
+  }
+}
+
+//------------------------------------------------------------------------------
+
+TEST(A2D2_to_ROS, axes_are_valid) {
+  {
+    const Eigen::Vector3d a1(1.0, 0.0, 0.0);
+    const Eigen::Vector3d a2(0.0, 1.0, 0.0);
+    EXPECT_TRUE(axes_are_valid(a1, a2, EPS));
+  }
+
+  {
+    const Eigen::Vector3d a1(1.0, 0.0, 0.0);
+    const Eigen::Vector3d a2(1.0, 0.0, 0.0);
+    EXPECT_FALSE(axes_are_valid(a1, a2, EPS));
+  }
+
+  {
+    const Eigen::Vector3d a1(1.0, 0.0, 0.0);
+    const Eigen::Vector3d a2(1.0 + EPS, 0.0, 0.0);
+    EXPECT_FALSE(axes_are_valid(a1, a2, EPS));
+  }
+}
+
+//------------------------------------------------------------------------------
+
+TEST(A2D2_to_ROS, get_orthonormal_basis) {
+  {
+    const Eigen::Vector3d X(1.0, 0.0, 0.0);
+    const Eigen::Vector3d Y(0.0, 1.0, 0.0);
+    const Eigen::Matrix3d B = get_orthonormal_basis(X, Y, EPS);
+    Eigen::Matrix3d B_expected;
+    // clang-format off
+    B_expected <<
+      1.0, 0.0, 0.0,
+      0.0, 1.0, 0.0,
+      0.0, 0.0, 1.0;
+    // clang-format on
+    EXPECT_TRUE(B.transpose().isApprox(B_expected, EPS));
+  }
+
+  {
+    const Eigen::Vector3d X(1.0, 1.0, 1.0);
+    const Eigen::Vector3d Y(0.0, 1.0, 0.0);
+    const Eigen::Matrix3d B = get_orthonormal_basis(X, Y, EPS);
+    Eigen::Matrix3d B_expected;
+    // clang-format off
+    B_expected <<
+       0.57735026918962584,  0.57735026918962584,  0.57735026918962584,
+      -0.40824829046386307,  0.81649658092772615, -0.40824829046386307,
+      -0.70710678118654746,                    0,  0.70710678118654746;
+    // clang-format on
+    EXPECT_TRUE(B.transpose().isApprox(B_expected, EPS))
+        << "B: " << B << "\nDid not match B_expected: " << B_expected;
+  }
+}
+
+//------------------------------------------------------------------------------
+
+TEST(A2D2_to_ROS, build_ego_shape_msg) {
+  {
+    const auto x_min = 0.0;
+    const auto x_max = 1.0;
+    const auto y_min = 0.0;
+    const auto y_max = 1.0;
+    const auto z_min = 0.0;
+    const auto z_max = 1.0;
+    const auto msg =
+        build_ego_shape_msg(x_min, x_max, y_min, y_max, z_min, z_max);
+    EXPECT_EQ(msg.type, shape_msgs::SolidPrimitive::BOX);
+    ASSERT_EQ(msg.dimensions.size(), 3);
+    EXPECT_EQ(msg.dimensions[shape_msgs::SolidPrimitive::BOX_X], 1.0);
+    EXPECT_EQ(msg.dimensions[shape_msgs::SolidPrimitive::BOX_Y], 1.0);
+    EXPECT_EQ(msg.dimensions[shape_msgs::SolidPrimitive::BOX_Z], 1.0);
+  }
+
+  {
+    const auto x_min = -1.0;
+    const auto x_max = 1.0;
+    const auto y_min = -1.0;
+    const auto y_max = 1.0;
+    const auto z_min = -1.0;
+    const auto z_max = 1.0;
+    const auto msg =
+        build_ego_shape_msg(x_min, x_max, y_min, y_max, z_min, z_max);
+    EXPECT_EQ(msg.type, shape_msgs::SolidPrimitive::BOX);
+    ASSERT_EQ(msg.dimensions.size(), 3);
+    EXPECT_EQ(msg.dimensions[shape_msgs::SolidPrimitive::BOX_X], 2.0);
+    EXPECT_EQ(msg.dimensions[shape_msgs::SolidPrimitive::BOX_Y], 2.0);
+    EXPECT_EQ(msg.dimensions[shape_msgs::SolidPrimitive::BOX_Z], 2.0);
+  }
+}
+
+//------------------------------------------------------------------------------
+
+TEST(A2D2_to_ROS, verify_ego_bbox_params) {
+  {
+    const auto x_min = 0.0;
+    const auto x_max = 0.0;
+    const auto y_min = 0.0;
+    const auto y_max = 0.0;
+    const auto z_min = 0.0;
+    const auto z_max = 0.0;
+    const auto zero_measure_valid =
+        verify_ego_bbox_params(x_min, x_max, y_min, y_max, z_min, z_max);
+    EXPECT_FALSE(zero_measure_valid);
+  }
+
+  {
+    const auto x_min = 0.0;
+    const auto x_max = 1.0;
+    const auto y_min = 0.0;
+    const auto y_max = 1.0;
+    const auto z_min = 0.0;
+    const auto z_max = 1.0;
+    const auto unit_cube_valid =
+        verify_ego_bbox_params(x_min, x_max, y_min, y_max, z_min, z_max);
+    EXPECT_TRUE(unit_cube_valid);
+  }
+
+  {
+    const auto x_min = 0.0;
+    const auto x_max = 1.0;
+    const auto y_min = 1.0;
+    const auto y_max = 0.0;
+    const auto z_min = 0.0;
+    const auto z_max = 1.0;
+    const auto y_wrong_order =
+        verify_ego_bbox_params(x_min, x_max, y_min, y_max, z_min, z_max);
+    EXPECT_FALSE(y_wrong_order);
+  }
+
+  {
+    const auto x_min = 0.0;
+    const auto x_max = 1.0;
+    const auto y_min = 0.0;
+    const auto y_max = 1.0;
+    const auto z_min = NaN;
+    const auto z_max = 1.0;
+    const auto non_finite_value =
+        verify_ego_bbox_params(x_min, x_max, y_min, y_max, z_min, z_max);
+    EXPECT_FALSE(non_finite_value);
+  }
+
+  {
+    const auto x_min = INF;
+    const auto x_max = 1.0;
+    const auto y_min = 0.0;
+    const auto y_max = 1.0;
+    const auto z_min = 0.0;
+    const auto z_max = 1.0;
+    const auto infinite_value =
+        verify_ego_bbox_params(x_min, x_max, y_min, y_max, z_min, z_max);
+    EXPECT_FALSE(infinite_value);
+  }
+}
 
 //------------------------------------------------------------------------------
 
@@ -141,15 +329,29 @@ TEST(A2D2_to_ROS, frame_from_filename) {
   }
 
   {
-    const auto frame_expected = "";
+    const auto frame_expected = "rearleft";
     const auto filename = "20190401145936_lidar_rearleft_000000080";
     const auto frame = frame_from_filename(filename);
     EXPECT_EQ(frame_expected, frame);
   }
 
   {
-    const auto frame_expected = "";
+    const auto frame_expected = "rearright";
     const auto filename = "20190401145936_lidar_rearright_000000080";
+    const auto frame = frame_from_filename(filename);
+    EXPECT_EQ(frame_expected, frame);
+  }
+
+  {
+    const auto frame_expected = "";
+    const auto filename = "20190401145936_lidar_rear_left_000000080";
+    const auto frame = frame_from_filename(filename);
+    EXPECT_EQ(frame_expected, frame);
+  }
+
+  {
+    const auto frame_expected = "";
+    const auto filename = "20190401145936_lidar_rear_right_000000080";
     const auto frame = frame_from_filename(filename);
     EXPECT_EQ(frame_expected, frame);
   }

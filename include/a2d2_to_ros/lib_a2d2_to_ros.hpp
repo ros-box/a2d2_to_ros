@@ -36,32 +36,80 @@
 #include <string>
 
 #include <cv_bridge/cv_bridge.h>
+#include <geometry_msgs/TransformStamped.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/point_cloud2_iterator.h>
+#include <shape_msgs/SolidPrimitive.h>
 #include <std_msgs/Float64.h>
 #include <std_msgs/Header.h>
+#include <Eigen/Geometry>
 #include "ros_cnpy/cnpy.h"
 
 #include "a2d2_to_ros/logging.hpp"
 
 namespace a2d2_to_ros {
-namespace lidar {
-constexpr auto POINTS_IDX = 0;
-constexpr auto AZIMUTH_IDX = 1;
-constexpr auto BOUNDARY_IDX = 2;
-constexpr auto COL_IDX = 3;
-constexpr auto DEPTH_IDX = 4;
-constexpr auto DISTANCE_IDX = 5;
-constexpr auto ID_IDX = 6;
-constexpr auto RECTIME_IDX = 7;
-constexpr auto REFLECTANCE_IDX = 8;
-constexpr auto ROW_IDX = 9;
-constexpr auto TIMESTAMP_IDX = 10;
-constexpr auto VALID_DIX = 11;
+namespace sensors {
+struct Names {
+  static const std::string LIDARS;
+  static const std::string CAMERAS;
+};  // struct Names
 
-constexpr auto ROW_SHAPE_IDX = 0;
-constexpr auto COL_SHAPE_IDX = 1;
+struct Frames {
+  static constexpr auto FRONT_CENTER_IDX = 0;
+  static constexpr auto FRONT_LEFT_IDX = 1;
+  static constexpr auto FRONT_RIGHT_IDX = 2;
+  static constexpr auto SIDE_LEFT_IDX = 3;
+  static constexpr auto SIDE_RIGHT_IDX = 4;
+  static constexpr auto REAR_CENTER_IDX = 5;
+  static constexpr auto REAR_LEFT_IDX = 6;
+  static constexpr auto REAR_RIGHT_IDX = 7;
+
+  /**
+   * @brief Get a list of sensor frame names.
+   * @note This function has no test coverage.
+   * @note I don't know why the data set has two naming conventions (see
+   * get_camera_names)
+   * @note The names 'rearleft' and 'rearright' are included for completeness
+   * but appear to be unused in the data set.
+   */
+  static std::array<std::string, 8> get_files();
+
+  /**
+   * @brief Get a list of sensor names.
+   * @note Cameras and lidars use different subsets of these names
+   * @note This function has no test coverage.
+   * @note I don't know why the data set has two naming conventions (see
+   * get_sensor_frame_names)
+   */
+  static std::array<std::string, 8> get_sensors();
+};  // struct Fields
+}  // namespace sensors
+
+namespace npz {
+struct Fields {
+  static constexpr auto POINTS_IDX = 0;
+  static constexpr auto AZIMUTH_IDX = 1;
+  static constexpr auto BOUNDARY_IDX = 2;
+  static constexpr auto COL_IDX = 3;
+  static constexpr auto DEPTH_IDX = 4;
+  static constexpr auto DISTANCE_IDX = 5;
+  static constexpr auto ID_IDX = 6;
+  static constexpr auto RECTIME_IDX = 7;
+  static constexpr auto REFLECTANCE_IDX = 8;
+  static constexpr auto ROW_IDX = 9;
+  static constexpr auto TIMESTAMP_IDX = 10;
+  static constexpr auto VALID_IDX = 11;
+
+  static constexpr auto ROW_SHAPE_IDX = 0;
+  static constexpr auto COL_SHAPE_IDX = 1;
+
+  /**
+   * @brief Get a list of expected field names for npz lidar data.
+   * @note This function has no test coverage.
+   */
+  static std::array<std::string, 12> get_fields();
+};  // struct Fields
 
 /**
  * @brief Explicit notion of data types: these types are used to read data from
@@ -123,7 +171,7 @@ struct WriteTypes {
   typedef BOOL Valid;
 };  // struct ReadTypes
 
-}  // namespace lidar
+}  // namespace npz
 
 /** @brief convenience object for interacting with point cloud iterators. */
 struct A2D2_PointCloudIterators {
@@ -140,24 +188,86 @@ struct A2D2_PointCloudIterators {
   friend std::ostream& operator<<(std::ostream& os,
                                   const A2D2_PointCloudIterators& iters);
 
-  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Point> x;
-  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Point> y;
-  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Point> z;
-  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Azimuth> azimuth;
-  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Boundary> boundary;
-  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Col> col;
-  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Depth> depth;
-  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Distance> distance;
-  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::LidarId> lidar_id;
-  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Rectime> rectime;
-  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Reflectance> reflectance;
-  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Row> row;
-  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Timestamp> timestamp;
-  sensor_msgs::PointCloud2Iterator<lidar::WriteTypes::Valid> valid;
+  sensor_msgs::PointCloud2Iterator<npz::WriteTypes::Point> x;
+  sensor_msgs::PointCloud2Iterator<npz::WriteTypes::Point> y;
+  sensor_msgs::PointCloud2Iterator<npz::WriteTypes::Point> z;
+  sensor_msgs::PointCloud2Iterator<npz::WriteTypes::Azimuth> azimuth;
+  sensor_msgs::PointCloud2Iterator<npz::WriteTypes::Boundary> boundary;
+  sensor_msgs::PointCloud2Iterator<npz::WriteTypes::Col> col;
+  sensor_msgs::PointCloud2Iterator<npz::WriteTypes::Depth> depth;
+  sensor_msgs::PointCloud2Iterator<npz::WriteTypes::Distance> distance;
+  sensor_msgs::PointCloud2Iterator<npz::WriteTypes::LidarId> lidar_id;
+  sensor_msgs::PointCloud2Iterator<npz::WriteTypes::Rectime> rectime;
+  sensor_msgs::PointCloud2Iterator<npz::WriteTypes::Reflectance> reflectance;
+  sensor_msgs::PointCloud2Iterator<npz::WriteTypes::Row> row;
+  sensor_msgs::PointCloud2Iterator<npz::WriteTypes::Timestamp> timestamp;
+  sensor_msgs::PointCloud2Iterator<npz::WriteTypes::Valid> valid;
 };  // struct A2D2_PointCloudIterators
 
 sensor_msgs::ImagePtr depth_image_from_a2d2_pointcloud(
     sensor_msgs::PointCloud2& pc);
+
+/**
+ * @brief Convenience method to generate a standard TF frame name.
+ * @note This function has no test coverage.
+ */
+std::string tf_frame_name(const std::string& sensor_type,
+                          const std::string& sensor_frame);
+
+/**
+ * @brief Verify that the vector is valid.
+ * @return true iff the vector is finite and real-valued
+ */
+bool vector_is_valid(const Eigen::Vector3d& v);
+
+/**
+ * @brief Verify that the axis is valid.
+ * @return true iff the axis is a valid vector and is non-singular w.r.t.
+ * epsilon
+ */
+bool axis_is_valid(const Eigen::Vector3d& axis, double epsilon);
+
+/**
+ * @brief Verify that axes are valid and unique.
+ * @note This is a convenience method to run axis_is_valid on each input axis
+ * and then additionally check that they are unique.
+ * @return true iff the axes are both valid according to 'axis_is_valid' and
+ * differ by at least magnitude epsilon.
+ */
+bool axes_are_valid(const Eigen::Vector3d& axis1, const Eigen::Vector3d& axis2,
+                    double epsilon);
+
+/**
+ * @brief Given an X and a Y axis in 3-space, compute a right-handed orthonormal
+ * basis with Z orthogonal to the input X and Y, and a new Y orthogonal to X and
+ * the computed Z.
+ * @pre Vectors X and Y are unique and non-singular.
+ * @return A 3x3 matrix whose columns [X, Y, Z] form a right-handed orthonormal
+ * basis. If input X and Y are not valid, a zero matrix is returned.
+ */
+Eigen::Matrix3d get_orthonormal_basis(const Eigen::Vector3d& X,
+                                      const Eigen::Vector3d& Y, double epsilon);
+
+Eigen::Affine3d Tx_global_sensor(const Eigen::Matrix3d& basis,
+                                 const Eigen::Vector3d& origin);
+
+/**
+ * @brief Check whether the ego bbox parameters makes sense.
+ * @return true iff the values are valid, i.e., real valued, finite, ordered,
+ * and the bbox has non-zero measure.
+ */
+bool verify_ego_bbox_params(double x_min, double x_max, double y_min,
+                            double y_max, double z_min, double z_max);
+
+/**
+ * @brief Build a ROS message corresponding to the vehicle bbox extents.
+ * @pre The values are correct according to 'verify_ego_bbox_params'
+ * @return The shape message representing the ego bounding box. By convention
+ * the side lengths given are end-to-end side lengths.
+ */
+shape_msgs::SolidPrimitive build_ego_shape_msg(double x_min, double x_max,
+                                               double y_min, double y_max,
+                                               double z_min, double z_max);
 
 /**
  * @brief Build a PointCloud2 message for storing points from a single npz file.
@@ -192,7 +302,7 @@ template <typename T>
 bool all_non_negative(const cnpy::NpyArray& field) {
   auto good = true;
   const auto vals = field.data<T>();
-  for (auto i = 0; i < field.shape[lidar::ROW_SHAPE_IDX]; ++i) {
+  for (auto i = 0; i < field.shape[npz::Fields::ROW_SHAPE_IDX]; ++i) {
     const auto is_non_negative = (vals[i] >= static_cast<T>(0));
     good = (good && is_non_negative);
   }
@@ -209,7 +319,7 @@ template <typename T>
 T get_min_value(const cnpy::NpyArray& field) {
   auto t = std::numeric_limits<T>::max();
   const auto vals = field.data<T>();
-  for (auto i = 0; i < field.shape[lidar::ROW_SHAPE_IDX]; ++i) {
+  for (auto i = 0; i < field.shape[npz::Fields::ROW_SHAPE_IDX]; ++i) {
     t = std::min(t, vals[i]);
   }
   return t;
@@ -225,7 +335,7 @@ template <typename T>
 T get_max_value(const cnpy::NpyArray& field) {
   auto t = std::numeric_limits<T>::min();
   const auto vals = field.data<T>();
-  for (auto i = 0; i < field.shape[lidar::ROW_SHAPE_IDX]; ++i) {
+  for (auto i = 0; i < field.shape[npz::Fields::ROW_SHAPE_IDX]; ++i) {
     t = std::max(t, vals[i]);
   }
   return t;
@@ -239,30 +349,12 @@ T get_max_value(const cnpy::NpyArray& field) {
 bool any_lidar_points_invalid(const cnpy::NpyArray& valid);
 
 /**
- * @brief Get a list of sensor frame names.
- * @note This function has no test coverage.
- */
-std::array<std::string, 6> get_sensor_frame_names();
-
-/**
- * @brief Get a list of camera names.
- * @note This function has no test coverage.
- */
-std::array<std::string, 6> get_camera_names();
-
-/**
  * @brief Map camera name from npz lidar filename to camera name
  * @note This function has no test coverage.
  * @return The camera name corresponding to the lidar frame, or empty string if
  * not found.
  */
 std::string get_camera_name_from_frame_name(const std::string& name);
-
-/**
- * @brief Get a list of expected field names for npz lidar data.
- * @note This function has no test coverage.
- */
-std::array<std::string, 12> get_npz_fields();
 
 /**
  * @brief Check that lidar npz data has expected structure.

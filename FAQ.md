@@ -16,12 +16,20 @@ Answers, where available, are given directly below the questions. If a question 
 1. What is the precision of real-valued data (e.g., 32-bit, 64-bit, etc.)?
 1. Are the labeled data a subset of the unlabeled data, or are they different sets?
 
-## Frame conventions
+## Conventions
 
+1. Are all units in the `cams_lidars.json` file SI?
+1. Are coordinate systems right handed?
 1. For the reference frame ***g*** (described in [Section 3.1](https://arxiv.org/pdf/2004.06320.pdf)):
     1. Is the position of the origin fixed with respect to the vehicle?
     1. Is the z-axis is aligned to the gravity vector?
     1. Is the x-axis is aligned to vehicle heading?
+
+## Sensor configuration
+
+1. The tutorial states that `tstamp_delay` "specifies a known delay in microseconds between actual camera frame times"; what does that mean? Are these delays accounted for in the frame timestamps?
+1. What are the `CorrectedImagePort` fields in `cams_lidars.json` for the `side_left` and `rear_center` cameras? Why are they `null`?
+1. What are the `view_` fields in the camera sections of `cams_lidars.json`?
 
 ## Sensor fusion bus signal data
 
@@ -63,6 +71,7 @@ These items have to do with variations between the data and the [tutorial](https
 ### Questions
 
 1. The JSON info file associated with each camera image has the additional fields `image_zoom` and `pcld_view` that are not listed in the tutorial; what are they?
+1. What is the purpose of the `get_axes_of_a_view` method? Why would the `x-axis` and `y-axis` members of the `view` objects not already be orthonormal?
 
 ### Notes
 

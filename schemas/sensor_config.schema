@@ -1,0 +1,212 @@
+{
+  "$id": "",
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Sensor Configuration",
+  "description": "A2D2 Data Set Sensor Configuration",
+  "type": "object",
+  "definitions": {
+    "float_range": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": [
+        { "type": "number" },
+        { "type": "number" }
+      ]
+    },
+    "int_range_pos_non_zero": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": [
+        {
+          "type": "integer",
+          "minimum": 1
+        },
+        {
+          "type": "integer",
+          "minimum": 1
+        }
+      ]
+    },
+    "float_matrix": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "array",
+        "minItems": 3,
+        "maxItems": 3,
+        "items": [
+          { "type": "number" },
+          { "type": "number" },
+          { "type": "number" }
+        ]
+      }
+    },
+    "axis": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": [
+        { "type": "number" },
+        { "type": "number" },
+        { "type": "number" }
+      ]
+    },
+    "axes": {
+      "type": "object",
+      "properties": {
+        "origin": { "$ref": "#/definitions/axis" },
+        "x-axis": { "$ref": "#/definitions/axis" },
+        "y-axis": { "$ref": "#/definitions/axis" }
+      },
+      "required": [ "origin", "x-axis", "y-axis" ]
+    },
+    "frame_view": {
+      "type": "object",
+      "properties": {
+        "view": { "$ref": "#/definitions/axes" }
+      },
+      "required": [ "view" ]
+    },
+    "fisheye_distortion": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "items": {
+        "type": "array",
+        "minItems": 4,
+        "maxItems": 4,
+        "items": [
+          { "type": "number" },
+          { "type": "number" },
+          { "type": "number" },
+          { "type": "number" }
+        ]
+      }
+    },
+    "telecam_distortion": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "items": {
+        "type": "array",
+        "minItems": 5,
+        "maxItems": 5,
+        "items": [
+          { "type": "number" },
+          { "type": "number" },
+          { "type": "number" },
+          { "type": "number" },
+          { "type": "number" }
+        ]
+      }
+    },
+    "fisheye_camera": {
+      "type": "object",
+      "properties": {
+        "tstamp_delay": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "view": { "$ref": "#/definitions/axes" },
+        "Lens": {
+          "type": "string",
+          "pattern": "Fisheye$"
+        },
+        "CamMatrix": { "$ref": "#/definitions/float_matrix" },
+        "CamMatrixOriginal": { "$ref": "#/definitions/float_matrix" },
+        "Distortion": { "$ref": "#/definitions/fisheye_distortion" },
+        "Resolution": { "$ref": "#/definitions/int_range_pos_non_zero"  }
+      },
+      "required": [
+        "tstamp_delay",
+        "view",
+        "Lens",
+        "CamMatrix",
+        "CamMatrixOriginal",
+        "Distortion",
+        "Resolution"
+      ]
+    },
+    "telecam_camera": {
+      "type": "object",
+      "properties": {
+        "tstamp_delay": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "view": { "$ref": "#/definitions/axes" },
+        "Lens": {
+          "type": "string",
+          "pattern": "^Telecam$"
+        },
+        "CamMatrix": { "$ref": "#/definitions/float_matrix" },
+        "CamMatrixOriginal": { "$ref": "#/definitions/float_matrix" },
+        "Distortion": { "$ref": "#/definitions/telecam_distortion" },
+        "Resolution": { "$ref": "#/definitions/int_range_pos_non_zero"  }
+      },
+      "required": [
+        "tstamp_delay",
+        "view",
+        "Lens",
+        "CamMatrix",
+        "CamMatrixOriginal",
+        "Distortion",
+        "Resolution"
+      ]
+    }
+  },
+  "properties": {
+    "vehicle": {
+      "type": "object",
+      "properties": {
+        "view": { "$ref": "#/definitions/axes" },
+        "ego-dimensions": {
+          "type": "object",
+          "properties": {
+            "x-range": { "$ref": "#/definitions/float_range" },
+            "y-range": { "$ref": "#/definitions/float_range" },
+            "z-range": { "$ref": "#/definitions/float_range" }
+          },
+          "required": [ "x-range", "y-range", "z-range" ]
+        }
+      },
+      "required": [ "view", "ego-dimensions" ]
+    },
+    "lidars": {
+      "type": "object",
+      "properties": {
+        "front_center": { "$ref": "#/definitions/frame_view" },
+        "front_left": { "$ref": "#/definitions/frame_view" },
+        "front_right": { "$ref": "#/definitions/frame_view" },
+        "rear_left": { "$ref": "#/definitions/frame_view" },
+        "rear_right": { "$ref": "#/definitions/frame_view" }
+      },
+      "required": [
+        "front_center", "front_left", "front_right", "rear_left", "rear_right"
+      ]
+    },
+    "cameras": {
+      "type": "object",
+      "properties": {
+        "front_left": { "$ref": "#/definitions/fisheye_camera" },
+        "front_right": { "$ref": "#/definitions/fisheye_camera" },
+        "front_center": { "$ref": "#/definitions/telecam_camera" },
+        "side_left": { "$ref": "#/definitions/fisheye_camera" },
+        "side_right": { "$ref": "#/definitions/fisheye_camera" },
+        "rear_center": { "$ref": "#/definitions/fisheye_camera" }
+      },
+      "required": [
+        "front_left",
+        "front_right",
+        "front_center",
+        "side_left",
+        "side_right",
+        "rear_center"
+      ]
+    }
+  },
+  "required": [ "vehicle", "lidars", "cameras" ]
+}
