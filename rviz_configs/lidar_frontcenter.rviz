@@ -4,7 +4,7 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded: ~
-      Splitter Ratio: 0.5
+      Splitter Ratio: 0.7411764860153198
     Tree Height: 549
   - Class: rviz/Selection
     Name: Selection
@@ -48,7 +48,7 @@ Visualization Manager:
         Z: 0
       Plane: XY
       Plane Cell Count: 10
-      Reference Frame: <Fixed Frame>
+      Reference Frame: vehicle
       Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: false
@@ -80,11 +80,71 @@ Visualization Manager:
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
+    - Class: rviz/TF
+      Enabled: true
+      Frame Timeout: 15
+      Frames:
+        All Enabled: true
+        cameras_front_center:
+          Value: true
+        cameras_front_left:
+          Value: true
+        cameras_front_right:
+          Value: true
+        cameras_rear_center:
+          Value: true
+        cameras_side_left:
+          Value: true
+        cameras_side_right:
+          Value: true
+        lidars_front_center:
+          Value: true
+        lidars_front_left:
+          Value: true
+        lidars_front_right:
+          Value: true
+        lidars_rear_left:
+          Value: true
+        lidars_rear_right:
+          Value: true
+        vehicle:
+          Value: true
+      Marker Scale: 1
+      Name: TF Tree
+      Show Arrows: true
+      Show Axes: true
+      Show Names: true
+      Tree:
+        vehicle:
+          cameras_front_center:
+            {}
+          cameras_front_left:
+            {}
+          cameras_front_right:
+            {}
+          cameras_rear_center:
+            {}
+          cameras_side_left:
+            {}
+          cameras_side_right:
+            {}
+          lidars_front_center:
+            {}
+          lidars_front_left:
+            {}
+          lidars_front_right:
+            {}
+          lidars_rear_left:
+            {}
+          lidars_rear_right:
+            {}
+      Update Interval: 0
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: lidar_frontcenter
+    Fixed Frame: vehicle
     Frame Rate: 30
   Name: root
   Tools:
@@ -108,25 +168,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 15.844386100769043
+      Distance: 10.133999824523926
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 8.892570495605469
-        Y: 0.4323006868362427
-        Z: 3.0364420413970947
+        X: 0.9411070942878723
+        Y: 0.3112087845802307
+        Z: 3.5186867713928223
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: -0.07960183918476105
-      Target Frame: <Fixed Frame>
+      Pitch: 0.00020299851894378662
+      Target Frame: vehicle
       Value: Orbit (rviz)
-      Yaw: 3.135408878326416
+      Yaw: 3.160405397415161
     Saved: ~
 Window Geometry:
   Displays:
@@ -145,4 +205,4 @@ Window Geometry:
     collapsed: true
   Width: 1200
   X: 483
-  Y: 138
+  Y: 48
