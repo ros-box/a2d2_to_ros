@@ -29,6 +29,7 @@ Answers, where available, are given directly below the questions. If a question 
 
 1. The tutorial states that `tstamp_delay` "specifies a known delay in microseconds between actual camera frame times"; what does that mean? Are these delays accounted for in the frame timestamps?
 1. What are the `CorrectedImagePort` fields in `cams_lidars.json` for the `side_left` and `rear_center` cameras? Why are they `null`?
+1. What are the `view_` fields in the camera sections of `cams_lidars.json`?
 
 ## Sensor fusion bus signal data
 
