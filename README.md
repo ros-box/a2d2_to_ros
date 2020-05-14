@@ -1,5 +1,7 @@
 # A2D2 to ROS
 
+![Front center lidar with TF tree](media/screenshot.png "Front center lidar with TF tree")
+
 Utilities for converting [A2D2 data sets](https://www.a2d2.audi/) to ROS bags.
 
 The idea is that there is an executuable for each sensor modality: camera, lidar, and bus. Bag files are generated for these modalities independently.
