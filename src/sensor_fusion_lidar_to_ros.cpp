@@ -127,6 +127,8 @@ int main(int argc, char* argv[]) {
   const auto include_depth_map = vm["include-depth-map"].as<bool>();
   const auto verbose = vm["verbose"].as<bool>();
 
+  // TODO(jeff): remove trailing slashes from paths
+
   boost::filesystem::path d(lidar_path);
   const auto timestamp = d.parent_path().parent_path().filename().string();
 
@@ -304,8 +306,11 @@ int main(int argc, char* argv[]) {
     const auto& timestamp = npz[fields[a2d2::npz::Fields::TIMESTAMP_IDX]];
     const auto& valid = npz[fields[a2d2::npz::Fields::VALID_IDX]];
 
-    const auto lidar_name = a2d2::frame_from_filename(f);
-    const auto frame = ("camera_" + lidar_name);
+    const auto lidar_file_name = a2d2::frame_from_filename(f);
+    const auto lidar_name =
+        a2d2::get_camera_name_from_frame_name(lidar_file_name);
+    const auto frame =
+        a2d2::tf_frame_name(a2d2::sensors::Names::CAMERAS, lidar_name);
     if (frame.empty()) {
       X_FATAL("Could not find frame name in filename: "
               << f << ". Cannot continue.");
