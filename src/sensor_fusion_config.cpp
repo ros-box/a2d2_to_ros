@@ -366,7 +366,7 @@ int main(int argc, char* argv[]) {
     end_time = view.getEndTime();
   }
 
-  const auto bag_name = (output_path + "/a2d2_tf_static.bag");
+  const auto bag_name = (output_path + "/a2d2_config.bag");
 
   const auto t_step = (1.0 / tf_frequency);
   ros::Duration step(t_step);
