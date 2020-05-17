@@ -40,10 +40,10 @@ An example invocation is given below. For the example, assume the following loca
 $ rosrun a2d2_to_ros sensor_fusion_config --sensor-config-path ~/data/a2d2/cams_lidars.json --sensor-config-schema-path ~/catkin_ws/src/a2d2_to_ros/schemas/sensor_config.schema --reference-bag-path ~/catkin_ws/20190401_145936_cam_front_center.bag
 ```
 
-This command will create the following bag file:
+This command will create the following bag file, whose name is the same as the reference bag with "\_tf" appended to the basename:
 
 ```console
-./a2d2_config.bag
+./20190401_145936_cam_front_center_tf.bag
 ```
 
 The time span that TF messages are published for is taken from the bag file givne by `--reference-bag-path` argument. So, for instance, if the lidar bags are generated, this utility can then be used to generate a corresponding TF bag file.
