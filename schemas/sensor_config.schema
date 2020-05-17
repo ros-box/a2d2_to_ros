@@ -103,17 +103,18 @@
         ]
       }
     },
+    "camera_tstamp_delay": {
+      "type": "integer",
+      "minimum": 0
+    },
     "fisheye_camera": {
       "type": "object",
       "properties": {
-        "tstamp_delay": {
-          "type": "integer",
-          "minimum": 0
-        },
+        "tstamp_delay": { "$ref": "#/definitions/camera_tstamp_delay" },
         "view": { "$ref": "#/definitions/axes" },
         "Lens": {
           "type": "string",
-          "pattern": "Fisheye$"
+          "pattern": "^Fisheye$"
         },
         "CamMatrix": { "$ref": "#/definitions/float_matrix" },
         "CamMatrixOriginal": { "$ref": "#/definitions/float_matrix" },
@@ -133,10 +134,7 @@
     "telecam_camera": {
       "type": "object",
       "properties": {
-        "tstamp_delay": {
-          "type": "integer",
-          "minimum": 0
-        },
+        "tstamp_delay": { "$ref": "#/definitions/camera_tstamp_delay" },
         "view": { "$ref": "#/definitions/axes" },
         "Lens": {
           "type": "string",
