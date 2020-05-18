@@ -194,7 +194,9 @@ int main(int argc, char* argv[]) {
 
   std::set<ros::Time> stamps;
   rosbag::Bag bag;
-  const auto bag_name = output_path + "/" + file_basename + ".bag";
+  const auto bag_name = output_path + "/" + file_basename + "_" +
+                        std::string(_DATASET_SUFFIX) + ".bag";
+  X_INFO("Creating bag file at: " << bag_name);
   bag.open(bag_name, rosbag::bagmode::Write);
   boost::optional<ros::Time> first_time;
   for (const auto& f : files) {
