@@ -62,6 +62,8 @@ static constexpr auto _DATASET_NAMESPACE = "/a2d2";
 static constexpr auto _DATASET_SUFFIX = "camera";
 static constexpr auto _VERBOSE = false;
 static constexpr auto _INCLUDE_CLOCK_TOPIC = true;
+static constexpr auto _MIN_TIME_OFFSET = 0.0;
+static constexpr auto _DURATION = std::numeric_limits<double>::max();
 
 int main(int argc, char* argv[]) {
   BUILD_INFO;  // just write to log what build options were specified
@@ -87,6 +89,10 @@ int main(int argc, char* argv[]) {
       "include-clock-topic,t",
       po::value<bool>()->default_value(_INCLUDE_CLOCK_TOPIC),
       "Optional: Use timestamps from the data to write a /clock topic.")(
+      "min-time-offset,m", po::value<double>()->default_value(_MIN_TIME_OFFSET),
+      "Optional: Seconds to skip ahead in the data before starting the bag.")(
+      "duration,d", po::value<double>()->default_value(_DURATION),
+      "Optional: Seconds after min-time-offset to include in bag file.")(
       "output-path,o", po::value<std::string>()->default_value(_OUTPUT_PATH),
       "Optional: Path for the output bag file.")(
       "verbose,v", po::value<bool>()->default_value(_VERBOSE),
@@ -120,8 +126,21 @@ int main(int argc, char* argv[]) {
   const auto output_path = vm["output-path"].as<std::string>();
   const auto verbose = vm["verbose"].as<bool>();
   const auto include_clock_topic = vm["include-clock-topic"].as<bool>();
+  const auto min_time_offset = vm["min-time-offset"].as<double>();
+  const auto duration = vm["duration"].as<double>();
 
   // TODO(jeff): remove trailing slashes from paths
+
+  const auto valid_min_offset =
+      (std::isfinite(min_time_offset) && (min_time_offset >= 0.0));
+  const auto valid_duration = (std::isfinite(duration) && (duration >= 0.0));
+  if (!valid_min_offset || !valid_duration) {
+    X_FATAL(
+        "Time constraints {min-time-offset: "
+        << min_time_offset << ", duration: " << duration
+        << "} are not valid. They must be finite, real valued, and >= 0.0.");
+    return EXIT_FAILURE;
+  }
 
   boost::filesystem::path d(camera_path);
   const auto timestamp = d.parent_path().parent_path().filename().string();
@@ -178,6 +197,7 @@ int main(int argc, char* argv[]) {
   rosbag::Bag bag;
   const auto bag_name = output_path + "/" + file_basename + ".bag";
   bag.open(bag_name, rosbag::bagmode::Write);
+  boost::optional<ros::Time> first_time;
   for (const auto& f : files) {
     ///
     /// Get camera data file for timestamp information
@@ -228,6 +248,20 @@ int main(int argc, char* argv[]) {
 
       const auto frame_timestamp = d_json["cam_tstamp"].GetUint64();
       frame_timestamp_ros = a2d2::a2d2_timestamp_to_ros_time(frame_timestamp);
+    }
+
+    if (!first_time) {
+      first_time = frame_timestamp_ros;
+    }
+
+    const auto time_since_begin = (frame_timestamp_ros - *first_time).toSec();
+    if (time_since_begin < min_time_offset) {
+      continue;
+    }
+
+    const auto recorded_duration = (time_since_begin - min_time_offset);
+    if (recorded_duration > duration) {
+      break;
     }
 
     ///
