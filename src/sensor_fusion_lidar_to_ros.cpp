@@ -59,6 +59,7 @@ static constexpr auto _PROGRAM_OPTIONS_LINE_LENGTH = 120u;
 static constexpr auto _CLOCK_TOPIC = "/clock";
 static constexpr auto _OUTPUT_PATH = ".";
 static constexpr auto _DATASET_NAMESPACE = "/a2d2";
+static constexpr auto _DATASET_SUFFIX = "lidar";
 static constexpr auto _INCLUDE_CLOCK_TOPIC = true;
 static constexpr auto _INCLUDE_DEPTH_MAP = false;
 static constexpr auto _VERBOSE = false;
@@ -73,7 +74,7 @@ int main(int argc, char* argv[]) {
   ///
 
   // TODO(jeff): rename "reflectance" to "intensity" assuming that's what it is
-  boost::optional<std::string> sensor_config_path_opt;
+  //  boost::optional<std::string> sensor_config_path_opt;
   boost::optional<std::string> camera_frame_schema_path_opt;
   boost::optional<std::string> lidar_path_opt;
   boost::optional<std::string> camera_path_opt;
@@ -130,7 +131,7 @@ int main(int argc, char* argv[]) {
   /// Get commandline parameters
   ///
 
-  const auto sensor_config_path = *sensor_config_path_opt;
+  //  const auto sensor_config_path = *sensor_config_path_opt;
   const auto camera_frame_schema_path = *camera_frame_schema_path_opt;
   const auto camera_path = *camera_path_opt;
   const auto lidar_path = *lidar_path_opt;
@@ -159,8 +160,6 @@ int main(int argc, char* argv[]) {
 
   const auto file_basename =
       (timestamp + "_" + boost::filesystem::basename(lidar_path));
-  const auto topic_prefix =
-      (std::string(_DATASET_NAMESPACE) + "/" + file_basename);
 
 #if 0  // TODO(jeff): build depth map, write to bag
   ///
@@ -236,7 +235,8 @@ int main(int argc, char* argv[]) {
 
   std::set<ros::Time> stamps;
   rosbag::Bag bag;
-  const auto bag_name = output_path + "/" + file_basename + "_lidar.bag";
+  const auto bag_name = output_path + "/" + file_basename + "_" +
+                        std::string(_DATASET_SUFFIX) + ".bag";
   bag.open(bag_name, rosbag::bagmode::Write);
   boost::optional<ros::Time> first_time;
   for (const auto& f : files) {
@@ -506,7 +506,9 @@ int main(int argc, char* argv[]) {
     ///
 
     // message time is the max timestamp of all points in the message
-    bag.write(topic_prefix + "/" + file_basename, msg.header.stamp, msg);
+    const auto topic = (std::string(_DATASET_NAMESPACE) + "/" + file_basename +
+                        "/" + std::string(_DATASET_SUFFIX));
+    bag.write(topic, msg.header.stamp, msg);
     if (include_clock_topic) {
       stamps.insert(msg.header.stamp);
     }
