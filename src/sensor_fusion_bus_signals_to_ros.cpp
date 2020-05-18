@@ -147,6 +147,8 @@ int main(int argc, char* argv[]) {
   const auto min_time_offset = vm["min-time-offset"].as<double>();
   const auto duration = vm["duration"].as<double>();
 
+  // TODO(jeff): remove trailing slashes from paths
+
   const auto valid_min_offset =
       (std::isfinite(min_time_offset) && (min_time_offset >= 0.0));
   const auto valid_duration = (std::isfinite(duration) && (duration >= 0.0));
