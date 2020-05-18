@@ -45,7 +45,6 @@
 #include "a2d2_to_ros/lib_a2d2_to_ros.hpp"
 #include "a2d2_to_ros/log_build_options.hpp"
 #include "a2d2_to_ros/logging.hpp"
-#include "ros_cnpy/cnpy.h"
 
 namespace {
 namespace a2d2 = a2d2_to_ros;
@@ -60,6 +59,7 @@ static constexpr auto _PROGRAM_OPTIONS_LINE_LENGTH = 120u;
 static constexpr auto _CLOCK_TOPIC = "/clock";
 static constexpr auto _OUTPUT_PATH = ".";
 static constexpr auto _DATASET_NAMESPACE = "/a2d2";
+static constexpr auto _DATASET_SUFFIX = "camera";
 static constexpr auto _VERBOSE = false;
 static constexpr auto _INCLUDE_CLOCK_TOPIC = true;
 
@@ -128,8 +128,6 @@ int main(int argc, char* argv[]) {
 
   const auto file_basename =
       (timestamp + "_" + boost::filesystem::basename(camera_path));
-  const auto topic_prefix =
-      (std::string(_DATASET_NAMESPACE) + "/" + file_basename);
 
   ///
   /// Get list of .png file names
@@ -260,8 +258,9 @@ int main(int argc, char* argv[]) {
     ///
 
     // message time is the max timestamp of all points in the message
-    bag.write(topic_prefix + "/" + file_basename, msg_ptr->header.stamp,
-              *msg_ptr);
+    const auto topic = (std::string(_DATASET_NAMESPACE) + "/" + file_basename +
+                        "/" + std::string(_DATASET_SUFFIX));
+    bag.write(topic, msg_ptr->header.stamp, *msg_ptr);
 
     if (include_clock_topic) {
       stamps.insert(msg_ptr->header.stamp);
