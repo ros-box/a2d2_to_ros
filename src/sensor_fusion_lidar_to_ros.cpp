@@ -22,6 +22,7 @@
  * IN THE SOFTWARE.
  */
 #include <algorithm>
+#include <limits>
 #include <set>
 
 #include <boost/filesystem/convenience.hpp>  // TODO(jeff): use std::filesystem in C++17
@@ -30,6 +31,7 @@
 
 #include <ros/ros.h>
 #include <rosbag/bag.h>
+#include <rosbag/view.h>
 #include <rosgraph_msgs/Clock.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <opencv2/opencv.hpp>
@@ -57,8 +59,11 @@ static constexpr auto _PROGRAM_OPTIONS_LINE_LENGTH = 120u;
 static constexpr auto _CLOCK_TOPIC = "/clock";
 static constexpr auto _OUTPUT_PATH = ".";
 static constexpr auto _DATASET_NAMESPACE = "/a2d2";
+static constexpr auto _INCLUDE_CLOCK_TOPIC = true;
 static constexpr auto _INCLUDE_DEPTH_MAP = false;
 static constexpr auto _VERBOSE = false;
+static constexpr auto _MIN_TIME_OFFSET = 0.0;
+static constexpr auto _DURATION = std::numeric_limits<double>::max();
 
 int main(int argc, char* argv[]) {
   BUILD_INFO;  // just write to log what build options were specified
@@ -88,14 +93,20 @@ int main(int argc, char* argv[]) {
       // TODO(jeff): build depth map, write to bag
       //    "sensor-config,s", po::value(&sensor_config_path_opt)->required(),
       //      "Path to the JSON schema for vehicle/sensor config.")(
+      "include-clock-topic,t",
+      po::value<bool>()->default_value(_INCLUDE_CLOCK_TOPIC),
+      "Optional: Use timestamps from the data to write a /clock topic.")(
+      "min-time-offset,m", po::value<double>()->default_value(_MIN_TIME_OFFSET),
+      "Optional: Seconds to skip ahead in the data before starting the bag.")(
+      "duration,d", po::value<double>()->default_value(_DURATION),
+      "Optional: Seconds after min-time-offset to include in bag file.")(
       "output-path,o", po::value<std::string>()->default_value(_OUTPUT_PATH),
       "Optional: Path for the output bag file.")(
-      "include-depth-map,m",
+      "include-depth-map,i",
       po::value<bool>()->default_value(_INCLUDE_DEPTH_MAP),
       "Optional: Publish a depth map version of the lidar data.")(
       "verbose,v", po::value<bool>()->default_value(_VERBOSE),
-      "Optional: Write name of each file to logger after it is successfully "
-      "processed.");
+      "Optional: Show name of each file after it is processed.");
 
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -125,9 +136,23 @@ int main(int argc, char* argv[]) {
   const auto lidar_path = *lidar_path_opt;
   const auto output_path = vm["output-path"].as<std::string>();
   const auto include_depth_map = vm["include-depth-map"].as<bool>();
+  const auto include_clock_topic = vm["include-clock-topic"].as<bool>();
   const auto verbose = vm["verbose"].as<bool>();
+  const auto min_time_offset = vm["min-time-offset"].as<double>();
+  const auto duration = vm["duration"].as<double>();
 
   // TODO(jeff): remove trailing slashes from paths
+
+  const auto valid_min_offset =
+      (std::isfinite(min_time_offset) && (min_time_offset >= 0.0));
+  const auto valid_duration = (std::isfinite(duration) && (duration >= 0.0));
+  if (!valid_min_offset || !valid_duration) {
+    X_FATAL(
+        "Time constraints {min-time-offset: "
+        << min_time_offset << ", duration: " << duration
+        << "} are not valid. They must be finite, real valued, and >= 0.0.");
+    return EXIT_FAILURE;
+  }
 
   boost::filesystem::path d(lidar_path);
   const auto timestamp = d.parent_path().parent_path().filename().string();
@@ -211,8 +236,9 @@ int main(int argc, char* argv[]) {
 
   std::set<ros::Time> stamps;
   rosbag::Bag bag;
-  const auto bag_name = output_path + "/" + file_basename + ".bag";
+  const auto bag_name = output_path + "/" + file_basename + "_lidar.bag";
   bag.open(bag_name, rosbag::bagmode::Write);
+  boost::optional<ros::Time> first_time;
   for (const auto& f : files) {
     ///
     /// Get camera data file for timestamp information
@@ -273,6 +299,20 @@ int main(int argc, char* argv[]) {
 
       const auto frame_timestamp = d_json["cam_tstamp"].GetUint64();
       frame_timestamp_ros = a2d2::a2d2_timestamp_to_ros_time(frame_timestamp);
+    }
+
+    if (!first_time) {
+      first_time = frame_timestamp_ros;
+    }
+
+    const auto time_since_begin = (frame_timestamp_ros - *first_time).toSec();
+    if (time_since_begin < min_time_offset) {
+      continue;
+    }
+
+    const auto recorded_duration = (time_since_begin - min_time_offset);
+    if (recorded_duration > duration) {
+      break;
     }
 
     ///
@@ -467,7 +507,10 @@ int main(int argc, char* argv[]) {
 
     // message time is the max timestamp of all points in the message
     bag.write(topic_prefix + "/" + file_basename, msg.header.stamp, msg);
-    stamps.insert(msg.header.stamp);
+    if (include_clock_topic) {
+      stamps.insert(msg.header.stamp);
+    }
+
     if (verbose) {
       X_INFO("Processed: " << f);
     }
@@ -477,15 +520,16 @@ int main(int argc, char* argv[]) {
   /// Write a clock message for every unique timestamp in the data set
   ///
 
-  X_INFO("Adding " << _CLOCK_TOPIC << " topic...");
-  if (stamps.size() != files.size()) {
-    X_FATAL("Number of frame timestamps ("
-            << stamps.size() << ") is different than number of frames ("
-            << files.size()
-            << "). Something is wrong; there should be exactly one "
-               "unique timestamp per frame.");
-    bag.close();
-    return EXIT_FAILURE;
+  if (include_clock_topic) {
+    X_INFO("Adding " << _CLOCK_TOPIC << " topic...");
+    if (stamps.size() != files.size()) {
+      X_WARN("Number of frame timestamps ("
+             << stamps.size()
+             << ") is different than the total number of frames ("
+             << files.size()
+             << "). This should only happen if the min time offset and/or "
+                "duration excludes some parts of the data set.");
+    }
   }
 
   for (const auto& stamp : stamps) {
