@@ -22,6 +22,7 @@
  * IN THE SOFTWARE.
  */
 #include <algorithm>
+#include <limits>
 #include <set>
 
 #include <boost/filesystem/convenience.hpp>  // TODO(jeff): use std::filesystem in C++17
@@ -60,6 +61,7 @@ static constexpr auto _CLOCK_TOPIC = "/clock";
 static constexpr auto _OUTPUT_PATH = ".";
 static constexpr auto _DATASET_NAMESPACE = "/a2d2";
 static constexpr auto _VERBOSE = false;
+static constexpr auto _INCLUDE_CLOCK_TOPIC = true;
 
 int main(int argc, char* argv[]) {
   BUILD_INFO;  // just write to log what build options were specified
@@ -82,6 +84,9 @@ int main(int argc, char* argv[]) {
       "frame-info-schema-path,s",
       po::value(&camera_frame_schema_path_opt)->required(),
       "Path to the JSON schema for camera frame info files.")(
+      "include-clock-topic,t",
+      po::value<bool>()->default_value(_INCLUDE_CLOCK_TOPIC),
+      "Optional: Use timestamps from the data to write a /clock topic.")(
       "output-path,o", po::value<std::string>()->default_value(_OUTPUT_PATH),
       "Optional: Path for the output bag file.")(
       "verbose,v", po::value<bool>()->default_value(_VERBOSE),
@@ -114,6 +119,7 @@ int main(int argc, char* argv[]) {
   const auto camera_frame_schema_path = *camera_frame_schema_path_opt;
   const auto output_path = vm["output-path"].as<std::string>();
   const auto verbose = vm["verbose"].as<bool>();
+  const auto include_clock_topic = vm["include-clock-topic"].as<bool>();
 
   // TODO(jeff): remove trailing slashes from paths
 
@@ -256,7 +262,11 @@ int main(int argc, char* argv[]) {
     // message time is the max timestamp of all points in the message
     bag.write(topic_prefix + "/" + file_basename, msg_ptr->header.stamp,
               *msg_ptr);
-    stamps.insert(msg_ptr->header.stamp);
+
+    if (include_clock_topic) {
+      stamps.insert(msg_ptr->header.stamp);
+    }
+
     if (verbose) {
       X_INFO("Processed: " << f);
     }
@@ -266,15 +276,16 @@ int main(int argc, char* argv[]) {
   /// Write a clock message for every unique timestamp in the data set
   ///
 
-  X_INFO("Adding " << _CLOCK_TOPIC << " topic...");
-  if (stamps.size() != files.size()) {
-    X_FATAL("Number of frame timestamps ("
-            << stamps.size() << ") is different than number of frames ("
-            << files.size()
-            << "). Something is wrong; there should be exactly one "
-               "unique timestamp per frame.");
-    bag.close();
-    return EXIT_FAILURE;
+  if (include_clock_topic) {
+    X_INFO("Adding " << _CLOCK_TOPIC << " topic...");
+    if (stamps.size() != files.size()) {
+      X_WARN("Number of frame timestamps ("
+             << stamps.size()
+             << ") is different than the total number of frames ("
+             << files.size()
+             << "). This should only happen if the min time offset and/or "
+                "duration excludes some parts of the data set.");
+    }
   }
 
   for (const auto& stamp : stamps) {
