@@ -33,7 +33,8 @@
 #include <ros/ros.h>
 #include <rosbag/bag.h>
 #include <rosgraph_msgs/Clock.h>
-#include <sensor_msgs/PointCloud2.h>
+#include <sensor_msgs/CameraInfo.h>
+#include <sensor_msgs/Image.h>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/opencv.hpp>
 
@@ -75,6 +76,8 @@ int main(int argc, char* argv[]) {
   // TODO(jeff): rename "reflectance" to "intensity" assuming that's what it is
   boost::optional<std::string> camera_path_opt;
   boost::optional<std::string> camera_frame_schema_path_opt;
+  boost::optional<std::string> sensor_config_path_opt;
+  boost::optional<std::string> sensor_config_schema_path_opt;
   po::options_description desc(
       "Convert sequential camera data to rosbag for the A2D2 Sensor Fusion "
       "data set. See README.md for details.\nAvailable options are listed "
@@ -86,6 +89,11 @@ int main(int argc, char* argv[]) {
       "frame-info-schema-path,s",
       po::value(&camera_frame_schema_path_opt)->required(),
       "Path to the JSON schema for camera frame info files.")(
+      "sensor-config-path,c", po::value(&sensor_config_path_opt)->required(),
+      "Path to the JSON for vehicle/sensor config.")(
+      "sensor-config-schema-path,s",
+      po::value(&sensor_config_schema_path_opt)->required(),
+      "Path to the JSON schema for the vehicle/sensor config.")(
       "include-clock-topic,t",
       po::value<bool>()->default_value(_INCLUDE_CLOCK_TOPIC),
       "Optional: Use timestamps from the data to write a /clock topic.")(
@@ -122,6 +130,8 @@ int main(int argc, char* argv[]) {
 
   const auto camera_path = *camera_path_opt;
   const auto camera_frame_schema_path = *camera_frame_schema_path_opt;
+  const auto sensor_config_path = *sensor_config_path_opt;
+  const auto sensor_config_schema_path = *sensor_config_schema_path_opt;
   const auto output_path = vm["output-path"].as<std::string>();
   const auto verbose = vm["verbose"].as<bool>();
   const auto include_clock_topic = vm["include-clock-topic"].as<bool>();
@@ -139,6 +149,146 @@ int main(int argc, char* argv[]) {
         << min_time_offset << ", duration: " << duration
         << "} are not valid. They must be finite, real valued, and >= 0.0.");
     return EXIT_FAILURE;
+  }
+
+  ///
+  /// Get the JSON for vehicle/sensor config
+  ///
+
+  rapidjson::Document sensor_config_d;
+  {
+    const auto sensor_config_json_string =
+        a2d2::get_json_file_as_string(sensor_config_path);
+    if (sensor_config_json_string.empty()) {
+      X_FATAL("'" << sensor_config_path << "' failed to open or is empty.");
+      return EXIT_FAILURE;
+    }
+
+    if (sensor_config_d.Parse(sensor_config_json_string.c_str())
+            .HasParseError()) {
+      X_FATAL("Error(offset "
+              << static_cast<unsigned>(sensor_config_d.GetErrorOffset())
+              << "): "
+              << rapidjson::GetParseError_En(sensor_config_d.GetParseError()));
+      return EXIT_FAILURE;
+    }
+  }
+
+  ///
+  /// Get the JSON schema for the config JSON
+  ///
+
+  rapidjson::Document schema_d;
+  {
+    // get schema file string
+    const auto schema_string =
+        a2d2::get_json_file_as_string(sensor_config_schema_path);
+    if (schema_string.empty()) {
+      X_FATAL("'" << sensor_config_schema_path
+                  << "' failed to open or is empty.");
+      return EXIT_FAILURE;
+    }
+
+    if (schema_d.Parse(schema_string.c_str()).HasParseError()) {
+      fprintf(stderr, "\nError(offset %u): %s\n",
+              static_cast<unsigned>(schema_d.GetErrorOffset()),
+              rapidjson::GetParseError_En(schema_d.GetParseError()));
+      return EXIT_FAILURE;
+    }
+  }
+  rapidjson::SchemaDocument config_schema(schema_d);
+
+  ///
+  /// Validate the data set against the schema
+  ///
+
+  {
+    rapidjson::SchemaValidator validator(config_schema);
+    if (!sensor_config_d.Accept(validator)) {
+      rapidjson::StringBuffer sb;
+      validator.GetInvalidSchemaPointer().StringifyUriFragment(sb);
+      std::stringstream ss;
+      ss << "\nInvalid schema: " << sb.GetString() << "\n";
+      ss << "Invalid keyword: " << validator.GetInvalidSchemaKeyword() << "\n";
+      sb.Clear();
+      validator.GetInvalidDocumentPointer().StringifyUriFragment(sb);
+      ss << "Invalid document: " << sb.GetString() << "\n";
+      X_FATAL(ss.str());
+      return EXIT_FAILURE;
+    } else {
+      X_INFO("Validated: " << sensor_config_schema_path);
+    }
+  }
+
+  ///
+  /// Generate camera info messages
+  ///
+  std::unordered_map<std::string, sensor_msgs::CameraInfo> camera_info_msgs;
+  {
+    const auto sensor_names = a2d2::sensors::Frames::get_sensors();
+    for (const auto& name : sensor_names) {
+      // No cameras at these positions
+      const auto is_rear_left = (name == "rear_left");
+      const auto is_rear_right = (name == "rear_right");
+      if (is_rear_left || is_rear_right) {
+        continue;
+      }
+
+      camera_info_msgs[name] = sensor_msgs::CameraInfo();
+      auto& msg = camera_info_msgs[name];
+
+      const rapidjson::Value& camera = sensor_config_d[name.c_str()];
+
+      const std::string camera_type = camera["Lens"].GetString();
+      const auto is_fisheye = (camera_type == "Fisheye");
+
+      // TODO(jeff): verify that this is right
+      msg.D.resize(5, 0.0);
+      const auto D_size = static_cast<rapidjson::SizeType>(is_fisheye ? 4 : 5);
+      for (auto i = 0; i < D_size; ++i) {
+        const auto IDX = static_cast<rapidjson::SizeType>(i);
+        msg.D[i] = camera["Distortion"][IDX].GetDouble();
+      }
+
+      {
+        const rapidjson::Value& camera_matrix_raw = camera["CamMatrixOriginal"];
+        for (auto i = 0; i < camera_matrix_raw.Size(); ++i) {
+          const auto row_idx = static_cast<rapidjson::SizeType>(i);
+          for (auto j = 0; j < camera_matrix_raw[row_idx].Size(); ++j) {
+            const auto col_idx = static_cast<rapidjson::SizeType>(j);
+            const auto msg_idx = ((row_idx * 3) + col_idx);
+            msg.K[msg_idx] = camera_matrix_raw[row_idx][col_idx].GetDouble();
+          }
+        }
+      }
+
+      {
+        msg.P.fill(0.0);
+        const rapidjson::Value& camera_matrix = camera["CamMatrix"];
+        for (auto i = 0; i < camera_matrix.Size(); ++i) {
+          const auto row_idx = static_cast<rapidjson::SizeType>(i);
+          for (auto j = 0; j < camera_matrix[row_idx].Size(); ++j) {
+            const auto col_idx = static_cast<rapidjson::SizeType>(j);
+            const auto msg_idx = ((row_idx * 4) + col_idx);
+            msg.P[msg_idx] = camera_matrix[row_idx][col_idx].GetDouble();
+          }
+        }
+      }
+
+      constexpr auto WIDTH_IDX = static_cast<rapidjson::SizeType>(0);
+      constexpr auto HEIGHT_IDX = static_cast<rapidjson::SizeType>(1);
+      msg.width = camera["Resolution"][WIDTH_IDX].GetInt64();
+      msg.height = camera["Resolution"][HEIGHT_IDX].GetInt64();
+
+      msg.binning_x = 0;
+      msg.binning_y = 0;
+
+      msg.roi.x_offset = 0;
+      msg.roi.y_offset = 0;
+      msg.roi.height = 0;
+      msg.roi.width = 0;
+      msg.roi.do_rectify = false;
+    }
   }
 
   boost::filesystem::path d(camera_path);
@@ -279,6 +429,13 @@ int main(int argc, char* argv[]) {
               << f << ". Cannot continue.");
       bag.close();
       return EXIT_FAILURE;
+    }
+
+    const auto it_end = std::end(camera_info_msgs);
+    if (camera_info_msgs.find(camera_name) == it_end) {
+      X_INFO("Found camera info for: " << camera_name);
+    } else {
+      X_ERROR("Did not find camera info for: " << camera_name);
     }
 
     std_msgs::Header header;
