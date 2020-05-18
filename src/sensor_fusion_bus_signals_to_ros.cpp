@@ -33,6 +33,7 @@
 
 #include <ros/ros.h>
 #include <rosbag/bag.h>
+#include <rosbag/view.h>
 #include <rosgraph_msgs/Clock.h>
 #include <std_msgs/Float64.h>
 #include <std_msgs/Header.h>
@@ -63,6 +64,7 @@ typedef std::unordered_map<std::string, std::tuple<std::string, DataPairSet>>
 static constexpr auto _PROGRAM_OPTIONS_LINE_LENGTH = 120u;
 static constexpr auto _INCLUDE_ORIGINAL = true;
 static constexpr auto _INCLUDE_CONVERTED = true;
+static constexpr auto _INCLUDE_CLOCK_TOPIC = true;
 static constexpr auto _CLOCK_TOPIC = "/clock";
 static constexpr auto _BUS_FRAME_NAME = "bus";
 static constexpr auto _OUTPUT_PATH = ".";
@@ -71,6 +73,8 @@ static constexpr auto _ORIGINAL_VALUE_TOPIC = "original_value";
 static constexpr auto _ORIGINAL_UNITS_TOPIC = "original_units";
 static constexpr auto _VALUE_TOPIC = "value";
 static constexpr auto _HEADER_TOPC = "header";
+static constexpr auto _MIN_TIME_OFFSET = 0.0;
+static constexpr auto _DURATION = std::numeric_limits<double>::max();
 
 int main(int argc, char* argv[]) {
   BUILD_INFO;  // just write to log what build options were specified
@@ -92,15 +96,21 @@ int main(int argc, char* argv[]) {
       "Path to the JSON schema.")("json-path,j",
                                   po::value(&json_path_opt)->required(),
                                   "Path to the JSON data set file.")(
+      "min-time-offset,m", po::value<double>()->default_value(_MIN_TIME_OFFSET),
+      "Optional: Seconds to skip ahead in the data before starting the bag.")(
+      "duration,d", po::value<double>()->default_value(_DURATION),
+      "Optional: Seconds after min-time-offset to include in bag file.")(
       "output-path,o", po::value<std::string>()->default_value(_OUTPUT_PATH),
       "Optional: Path for the output bag file.")(
       "bus-frame-name,b",
       po::value<std::string>()->default_value(_BUS_FRAME_NAME),
       "Optional: Frame name to use for bus signals.")(
+      "include-clock-topic,c",
+      po::value<bool>()->default_value(_INCLUDE_CLOCK_TOPIC),
+      "Optional: Use timestamps from the data to write a /clock topic.")(
       "include-original-values,v",
       po::value<bool>()->default_value(_INCLUDE_ORIGINAL),
-      "Optional: Include the original data set values in their original "
-      "units.")(
+      "Optional: Include data set values in their original units.")(
       "include-converted-values,r",
       po::value<bool>()->default_value(_INCLUDE_CONVERTED),
       "Optional: Include data set values converted to ROS standard units.");
@@ -132,7 +142,23 @@ int main(int argc, char* argv[]) {
   const auto output_path = vm["output-path"].as<std::string>();
   const auto include_original = vm["include-original-values"].as<bool>();
   const auto include_converted = vm["include-converted-values"].as<bool>();
+  const auto include_clock_topic = vm["include-clock-topic"].as<bool>();
   const auto bus_frame_name = vm["bus-frame-name"].as<std::string>();
+  const auto min_time_offset = vm["min-time-offset"].as<double>();
+  const auto duration = vm["duration"].as<double>();
+
+  // TODO(jeff): remove trailing slashes from paths
+
+  const auto valid_min_offset =
+      (std::isfinite(min_time_offset) && (min_time_offset >= 0.0));
+  const auto valid_duration = (std::isfinite(duration) && (duration >= 0.0));
+  if (!valid_min_offset || !valid_duration) {
+    X_FATAL(
+        "Time constraints {min-time-offset: "
+        << min_time_offset << ", duration: " << duration
+        << "} are not valid. They must be finite, real valued, and >= 0.0.");
+    return EXIT_FAILURE;
+  }
 
   const auto file_basename = boost::filesystem::basename(json_path);
   const auto topic_prefix =
@@ -255,20 +281,9 @@ int main(int argc, char* argv[]) {
     const rapidjson::Value& values = obj["values"];
     const auto units = obj["unit"].IsNull() ? "null" : obj["unit"].GetString();
 
-    // if original data is included, publish the units
-    if (include_original) {
-      const rapidjson::Value& t_v = values[static_cast<rapidjson::SizeType>(0)];
-      const auto time = t_v[static_cast<rapidjson::SizeType>(0)].GetUint64();
-      const auto first_time = a2d2::a2d2_timestamp_to_ros_time(time);
-
-      std_msgs::String units_msg;
-      units_msg.data = units;
-
-      bag.write(topic_prefix + "/" + name + "/" + _ORIGINAL_UNITS_TOPIC,
-                first_time, units_msg);
-    }
-
     // publish data for each of the values in this field
+    auto no_units_yet = true;
+    boost::optional<ros::Time> first_time;
     for (rapidjson::SizeType idx = 0; idx < values.Size(); ++idx) {
       const rapidjson::Value& t_v = values[idx];
       const auto time = t_v[static_cast<rapidjson::SizeType>(0)].GetUint64();
@@ -286,19 +301,46 @@ int main(int argc, char* argv[]) {
       const auto data = a2d2::DataPair::build(value, time, bus_frame_name);
 
       const auto& stamp = data.header.stamp;
-      stamps.insert(stamp);
+      if (!first_time) {
+        first_time = stamp;
+      }
+
+      const auto time_since_begin = (stamp - *first_time).toSec();
+      if (time_since_begin < min_time_offset) {
+        continue;
+      }
+
+      const auto recorded_duration = (time_since_begin - min_time_offset);
+      if (recorded_duration > duration) {
+        break;
+      }
+
       bag.write(topic_prefix + "/" + name + "/" + _HEADER_TOPC, stamp,
                 data.header);
       if (include_original) {
         bag.write(topic_prefix + "/" + name + "/" + _ORIGINAL_VALUE_TOPIC,
                   stamp, data.value);
+
+        if (no_units_yet) {
+          std_msgs::String units_msg;
+          units_msg.data = units;
+
+          bag.write(topic_prefix + "/" + name + "/" + _ORIGINAL_UNITS_TOPIC,
+                    stamp, units_msg);
+          no_units_yet = false;
+        }
       }
+
       if (include_converted) {
         const auto ros_value = a2d2::to_ros_units(units, data.value.data);
         std_msgs::Float64 ros_value_msg;
         ros_value_msg.data = ros_value;
         bag.write(topic_prefix + "/" + name + "/" + _VALUE_TOPIC, stamp,
                   ros_value_msg);
+      }
+
+      if (include_clock_topic) {
+        stamps.insert(stamp);
       }
     }
   }
@@ -307,7 +349,9 @@ int main(int argc, char* argv[]) {
   /// Write a clock message for every unique timestamp in the data set
   ///
 
-  X_INFO("Adding " << _CLOCK_TOPIC << " topic...");
+  if (include_clock_topic) {
+    X_INFO("Adding " << _CLOCK_TOPIC << " topic...");
+  }
   for (const auto& stamp : stamps) {
     rosgraph_msgs::Clock clock_msg;
     clock_msg.clock = stamp;
