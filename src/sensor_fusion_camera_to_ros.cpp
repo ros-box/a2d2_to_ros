@@ -96,8 +96,7 @@ int main(int argc, char* argv[]) {
       "output-path,o", po::value<std::string>()->default_value(_OUTPUT_PATH),
       "Optional: Path for the output bag file.")(
       "verbose,v", po::value<bool>()->default_value(_VERBOSE),
-      "Optional: Write name of each file to logger after it is successfully "
-      "processed.");
+      "Optional: Show name of each file after it is processed.");
 
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
