@@ -12,58 +12,75 @@ Answers, where available, are given directly below the questions. If a question 
 
 ## General
 
-1. Are all timestamps Unix Epoch time with microsecond units? (Mentar says they are, but the tutorial says they are TAI)
-1. What is the precision of real-valued data (e.g., 32-bit, 64-bit, etc.)?
-1. Are the labeled data a subset of the unlabeled data, or are they different sets?
 1. Do all subsets in the unlabeled data set span the same time?
+1. What convention do the timestamps follow?
+    1. *Bus signal timestamps are in [UTC](https://en.wikipedia.org/wiki/Coordinated_Universal_Time), all others are [TAI](https://en.wikipedia.org/wiki/International_Atomic_Time)*
+1. What is the precision of real-valued data (e.g., single precision, double precision, etc.)?
+    1. *None of the data in the data set was recorded with greater than single precision. (For lidar data, note that numpy stores the point data with double precision, but the data itself is only generated with single precision.)*
+1. Are the labeled data a subset of the unlabeled data, or are they different sets?
+    1. *The object detection dataset is a subset of the semantic segmentation dataset. The raw sensor fusion data (Gaimersheim, Ingolstadt, and Munich) is a different set.*
 
 ## Conventions
 
 1. Are all units in the `cams_lidars.json` file SI?
 1. Are coordinate systems right handed?
-1. For the reference frame ***g*** (described in [Section 3.1](https://arxiv.org/pdf/2004.06320.pdf)):
-    1. Is the position of the origin fixed with respect to the vehicle?
-    1. Is the z-axis is aligned to the gravity vector?
-    1. Is the x-axis is aligned to vehicle heading?
+1. In the bus signal data, what are the `roll_angle` and `pitch_angle` conventions?
+1. What are the conventions for the reference frame ***g*** (described in [Section 3.1](https://arxiv.org/pdf/2004.06320.pdf))?
+    1. *The frame ***g*** is fixed with respect to the chassis of the vehicle, and all sensor poses are static with respect to it.*
+    1. *In addition, there is a `wheels` frame that, at rest, is coincident with ***g***. In motion, ***g*** can roll and pitch (but not yaw or translate) with respect to `wheels`. In the bus signal data, the `roll_angle` and `pitch_angle` values describe these offsets.*
 
 ## Sensor configuration
 
 1. The tutorial states that `tstamp_delay` "specifies a known delay in microseconds between actual camera frame times"; what does that mean? Are these delays accounted for in the frame timestamps?
+    1. *This is baked for the semantic segmentation and object detection datasets but not for the raw datasets. You can use this delay to register lidar/camera timestamps. Lidar comes before camera, and therefore tstamp_delay correction is optionally needed here.*
 1. What are the `CorrectedImagePort` fields in `cams_lidars.json` for the `side_left` and `rear_center` cameras? Why are they `null`?
+    1. *These fields are not used and can be ignored.*
 1. What are the `view_` fields in the camera sections of `cams_lidars.json`?
+    1. *These fields are not used and can be ignored.*
 
 ## Sensor fusion bus signal data
 
 1. There is no `yaw_angle` field; is there supposed to be?
+    1. *No. See the reference frame ***g*** topic in the 'Conventions' section.*
 1. What are the `distance_pulse_*` fields and what do the values represent?
+    1. *Distance pulse data comes from pulse counter at the wheels. Counters generally run forward, even when driving backwards. If the sensor is reset due to error or failure, the value is always, without exception, to send 1 times the Init value 1021. If the value 1021 is not present in the data set, then there were resets due to error or failure.*
 1. What are the `latitude_direction` and `longitude_direction` fields and what do the values represent?
+    1. *latitude_direction: North/South Hemisphere (0 north / 1 south), longitude_direction: East/West Hemisphere (0 east, 1 west)*
 1. What are the conventions for the `steering_angle_calculated` values (i.e., what are min and max, and what is centered)?
-1. What are the conventions for the `*_sign` fields (e.g., does it follow [std::signbit](https://www.cplusplus.com/reference/cmath/signbit/) conventions)?
-1. Is `vehicle_speed` allowed to be negative? If not, how is driving in reverse indicated, or is it guaranteed that the vehicle never drives in reverse?
+    1. *Steering angle with straight-line flow correction from the position of the steering motor (0 = centered, stepsize = 0.15, min = 0, max = 614.25, init = 614.10, error = 614.25).*
+1. What are the conventions for the `*_sign` fields?
+    1. *0 = left/positive, 1 = right/negative*
+1. Is `vehicle_speed` allowed to be negative?
+    1. *No, the vehicle_speed is always between 0 and 655.35.*
 1. What is the convention for `accelerator_pedal` percent values (i.e., is 0 or 100 fully depressed)?
+    1. *100 = fully depressed*
 
 ## Sensor fusion lidar data
 
-1. What are the following lidar fields:
-    1. `pcloud_attr.rectime`?
-    1. `pcloud_attr.boundary`?
-    1. `pcloud_attr.valid`?
-1. Is `pcloud_attr.boundary` always 0 or 1? What does this indicate?
-1. What are the units for `pcloud_attr.reflectance`? Why are the values integral? The tutorial seems to treat this as an intensity value; is that the case?
-1. Are the `pcloud_attr.rectime` and `pcloud_attr.timestamp` intentionally `int64` and not `uint64`?
+1. What is the `pcloud_attr.rectime` lidar data field?
+    1. *Rectime is the recording time when this data point was recorded. It is in TAI (i.e. no leap seconds) time zone and not UTC. The same is true for the camera timestamps in the json files. However, the bus data is in UTC and therefore there’s a delta of 37s when matching/registering data from camera/lidar to bus.*
+1. What is the `pcloud_attr.boundary` lidar data field?
+    1. *Boundary flag is true if the data point is coming from bordering lidar channel, probably ring 0 and ring 15 in the data set (recorded with VLP16).*
+1. What is the `pcloud_attr.valid` lidar data field?
+    1. *Valid is only true for points that need to be considered. There are some points in the xy plane near the sensor that need not be considered. That is, if valid != true, don’t consider this point.*
+1. What are the units for `pcloud_attr.reflectance`?
+    1. *See Velodyne VLP16 manual Sec 6.1*
 1. Are the points in the point cloud ordered in any way? If so, what is the ordering?
 1. Are `pcloud_attr.depth` and `pcloud_attr.distance` strictly non-negative?
-1. Are `pcloud_attr.row` and `pcloud_attr.col` supposed to be non-negative? At least `pcloud_attr.col` has negative values in the Munich sensor fusion data set.
-1. Are the points motion compensated already?
-1. The following questions would help reduce the size of generated bag files:
-    1. Can `pcloud_attr.boundary` be stored as a `bool`?
-    1. Can `pcloud_attr.reflectance` be stored as a `uint8_t`?
+    1. *Yes.*
+1. Are `pcloud_attr.row` and `pcloud_attr.col` supposed to be non-negative? What is the convention to convert to integer pixel coordinates?
+    1. *They may be negative but then they would fall outside the image, and thus not really usable. You may choose whatever pixel conversion convention makes sense for the application you have in mind. Typically they are simply rounded to the nearest integer.*
+1. Are the lidar points in the raw sensor fusion data set motion compensated already?
+    1. *No.*
 
 ## Semantic segmentation bus signal data
 
 1. What is the `driving_direction` field and what do the values represent?
+    1. *The signal driving_direction indicates reverse driving (0 = direction not definined, 1 = foreward, 2 = reverse, 3 = standstill). Note that in the raw sensor fusion data set there is no reverse driving so the 'driving_direction' is not needed and not included in the bus signal data.*
 1. What do the values for the `gear` field represent?
+    1. *0 = Gear N, 1 = Gear 1, 2 = Gear 2, ..., 8 = Gear 8, 9 = Automatic P, 10 = Automatic forward S, 11 = Automatic forward D, 12 = Intermediate position, 13 = reverse gear, 14 = gear not defined, 15 = Error*
 1. Are `steering_angle` and `steering_angle_sign` ground truth with respect to `steering_angle_calculated` and `steering_angle_calculated_sign`?
+    1. *steering_angle is the position / shift from the middle measured on the steering link (it's no angle -> bad naming) and steering_angle_calculated is the steering wheel angle.*
 
 ## Discrepancies with online tutorial
 
