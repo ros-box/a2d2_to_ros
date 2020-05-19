@@ -57,6 +57,7 @@ Answers, where available, are given directly below the questions. If a question 
 
 ## Sensor fusion lidar data
 
+1. Are the points in the point cloud ordered in any way? If so, what is the ordering?
 1. What is the `pcloud_attr.rectime` lidar data field?
     * *Rectime is the recording time when this data point was recorded. It is in TAI (i.e. no leap seconds) time zone and not UTC. The same is true for the camera timestamps in the json files. However, the bus data is in UTC and therefore there’s a delta of 37s when matching/registering data from camera/lidar to bus.*
 1. What is the `pcloud_attr.boundary` lidar data field?
@@ -65,7 +66,6 @@ Answers, where available, are given directly below the questions. If a question 
     * *Valid is only true for points that need to be considered. There are some points in the xy plane near the sensor that need not be considered. That is, if valid != true, don’t consider this point.*
 1. What are the units for `pcloud_attr.reflectance`?
     * *See Velodyne VLP16 manual Sec 6.1*
-1. Are the points in the point cloud ordered in any way? If so, what is the ordering?
 1. Are `pcloud_attr.depth` and `pcloud_attr.distance` strictly non-negative?
     * *Yes.*
 1. Are `pcloud_attr.row` and `pcloud_attr.col` supposed to be non-negative? What is the convention to convert to integer pixel coordinates?
