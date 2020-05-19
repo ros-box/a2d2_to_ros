@@ -33,7 +33,7 @@ To convert and visualize data from the front center sensors:
 $ rosrun a2d2_to_ros sensor_fusion_camera --camera-data-path ~/data/a2d2/Ingolstadt/camera_lidar/20190401_145936/camera/cam_front_center --frame-info-schema-path ~/catkin_ws/src/a2d2_to_ros/schemas/sensor_fusion_camera_frame.schema
 ```
 
-    * This outputs the bag file: `20190401_145936_cam_front_center_camera.bag`
+This outputs the bag file: `20190401_145936_cam_front_center_camera.bag`
 
 * Convert the lidar data:
 
