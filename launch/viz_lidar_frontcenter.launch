@@ -1,3 +1,0 @@
-<launch>
-  <node pkg="rviz" type="rviz" name="rviz" output="screen" args="-d $(find a2d2_to_ros)/rviz_configs/lidar_frontcenter.rviz"/>
-</launch>
