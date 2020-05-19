@@ -62,7 +62,7 @@ static constexpr auto _OUTPUT_PATH = ".";
 static constexpr auto _DATASET_NAMESPACE = "/a2d2";
 static constexpr auto _DATASET_SUFFIX = "camera";
 static constexpr auto _VERBOSE = false;
-static constexpr auto _INCLUDE_CLOCK_TOPIC = true;
+static constexpr auto _INCLUDE_CLOCK_TOPIC = false;
 static constexpr auto _MIN_TIME_OFFSET = 0.0;
 static constexpr auto _DURATION = std::numeric_limits<double>::max();
 

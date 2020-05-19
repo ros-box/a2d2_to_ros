@@ -64,7 +64,7 @@ typedef std::unordered_map<std::string, std::tuple<std::string, DataPairSet>>
 static constexpr auto _PROGRAM_OPTIONS_LINE_LENGTH = 120u;
 static constexpr auto _INCLUDE_ORIGINAL = true;
 static constexpr auto _INCLUDE_CONVERTED = true;
-static constexpr auto _INCLUDE_CLOCK_TOPIC = true;
+static constexpr auto _INCLUDE_CLOCK_TOPIC = false;
 static constexpr auto _CLOCK_TOPIC = "/clock";
 static constexpr auto _BUS_FRAME_NAME = "bus";
 static constexpr auto _OUTPUT_PATH = ".";
