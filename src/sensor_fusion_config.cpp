@@ -339,15 +339,27 @@ int main(int argc, char* argv[]) {
 
       const Eigen::Affine3d Tx = a2d2::Tx_global_sensor(basis, origin);
 
-      // add transform to tf set
-      geometry_msgs::Transform Tx_msg;
-      tf::transformEigenToMsg(Tx, Tx_msg);
+      {
+        geometry_msgs::Transform Tx_msg;
+        tf::transformEigenToMsg(Tx, Tx_msg);
 
-      geometry_msgs::TransformStamped Tx_stamped_msg;
-      Tx_stamped_msg.transform = Tx_msg;
-      Tx_stamped_msg.header.frame_id = "vehicle";
-      Tx_stamped_msg.child_frame_id = a2d2::tf_frame_name(name, frame);
-      msgtf.transforms.push_back(Tx_stamped_msg);
+        geometry_msgs::TransformStamped Tx_stamped_msg;
+        Tx_stamped_msg.transform = Tx_msg;
+        Tx_stamped_msg.header.frame_id = "chassis";
+        Tx_stamped_msg.child_frame_id = a2d2::tf_frame_name(name, frame);
+        msgtf.transforms.push_back(Tx_stamped_msg);
+      }
+
+      {  // TODO(jeff): Compute this from roll/pitch
+        geometry_msgs::Transform Tx_msg;
+        tf::transformEigenToMsg(Eigen::Affine3d::Identity(), Tx_msg);
+
+        geometry_msgs::TransformStamped Tx_stamped_msg;
+        Tx_stamped_msg.transform = Tx_msg;
+        Tx_stamped_msg.header.frame_id = "wheels";
+        Tx_stamped_msg.child_frame_id = "chassis";
+        msgtf.transforms.push_back(Tx_stamped_msg);
+      }
     }
   }
 
