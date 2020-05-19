@@ -263,7 +263,7 @@ Available options are listed below. Arguments without default values are require
   -d [ --duration ] arg (=1.7976931348623157e+308) Optional: Seconds after min-time-offset to include in bag file.
   -o [ --output-path ] arg (=.)                    Optional: Path for the output bag file.
   -c [ --include-clock-topic ] arg (=0)            Optional: Use timestamps from the data to write a /clock topic.
-  -v [ --include-original-values ] arg (=1)        Optional: Include data set values in their original units.
+  -v [ --include-original-values ] arg (=0)        Optional: Include data set values in their original units.
   -r [ --include-converted-values ] arg (=1)       Optional: Include data set values converted to ROS standard units.
 ```
 
