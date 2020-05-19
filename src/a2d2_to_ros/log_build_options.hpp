@@ -37,11 +37,11 @@
 #ifdef USE_FLOAT64
 #define PRECISION_MSG                                                         \
   X_INFO(                                                                     \
-      "---Built to use 64-bit precision for float values; be aware this may " \
+      "---Built to use double precision for float values; be aware this may " \
       "break compatibility with Rviz.")
 #else
 #define PRECISION_MSG \
-  X_INFO("---Built to use 32-bit precision for float values.")
+  X_INFO("---Built to use single precision for float values.")
 #endif
 
 #define BUILD_INFO \

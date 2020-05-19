@@ -13,13 +13,13 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# uncomment to use 64-bit instead of 32-bit width for floats in point cloud;
-# really need full precision, best to leave it 32-bit
+# uncomment to use double precision instead of single for float values;
+# unless really need double precision, best to leave it single
 #add_definitions(-DUSE_FLOAT64)
 
 # uncomment one of these to output logging information and warnings/errors
-#add_definitions(-DENABLE_A2D2_ROS_LOGGING)
-add_definitions(-DENABLE_A2D2_STREAM_LOGGING)
+add_definitions(-DENABLE_A2D2_ROS_LOGGING)
+#add_definitions(-DENABLE_A2D2_STREAM_LOGGING)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
