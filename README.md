@@ -293,5 +293,4 @@ There is nothing very platform specific, so other reasonably similar system conf
 
 ## TODO
 
-* Update JSON schema version when possible. The `contains` keyword introduced in [draft-06](https://json-schema.org/draft-06/json-schema-validation.html#rfc.section.6.14) would enable the validation that axes are non-singular.
-* Compute the wheels <-> chassis transform from roll/pitch bus signals
+A list of open issues for the converter can be found [here](https://gitlab.com/MaplessAI/external/a2d2_to_ros/-/issues).
