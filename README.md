@@ -51,7 +51,7 @@ To get a full list of usage options, run with the `--help` switch:
 ```console
 $ rosrun a2d2_to_ros sensor_fusion_camera --help
 ---Built with stream logging enabled.
----Built to use 32-bit precision for float values.
+---Built to use single precision for float values.
 Convert sequential camera data to rosbag for the A2D2 Sensor Fusion data set. See README.md for details.
 Available options are listed below. Arguments without default values are required:
   -h [ --help ]                                    Print help and exit.
@@ -92,7 +92,7 @@ To get a full list of usage options, run with the `--help` switch:
 ```console
 $ rosrun a2d2_to_ros sensor_fusion_config --help
 ---Built with stream logging enabled.
----Built to use 32-bit precision for float values.
+---Built to use single precision for float values.
 Write a transform bag file containing the vehicle box model and tf tree for the vehicle sensor configuration. The bag is written with respect to the begin and end times of a reference bag file. This means lidar and camera bag files can be generated first, then this utility can be used to generate a tf bag file for each of them.:
   -h [ --help ]                          Print help and exit.
   -c [ --sensor-config-path ] arg        Path to the JSON for vehicle/sensor config.
@@ -128,7 +128,7 @@ To get a full list of usage options, run with the `--help` switch:
 ```console
 $ rosrun a2d2_to_ros sensor_fusion_lidar --help
 ---Built with stream logging enabled.
----Built to use 32-bit precision for float values.
+---Built to use single precision for float values.
 Convert sequential lidar data to rosbag for the A2D2 Sensor Fusion data set. See README.md for details.
 Available options are listed below. Arguments without default values are required:
   -h [ --help ]                                    Print help and exit.
@@ -145,11 +145,11 @@ Available options are listed below. Arguments without default values are require
 
 ### Type conversions
 
-In the A2D2 data set, floating point types are stored with 64-bit width. However, this much precision is typically not needed (and possibly not even necessary, see [FAQ.md](FAQ.md)).For that reason, this package converts 64-bit floating point information to 32-bit. If 64-bit width is desired, edit the [CMakeLists.txt](CMakeLists.txt) file to uncomment the `-DUSE_FLOAT64` compile definition:
+In the A2D2 data set, floating point types are stored with double precision. However, this much precision is typically not needed (and possibly not even necessary, see [FAQ.md](FAQ.md)).For that reason, this package converts double precision floating point information to single. If double precision is desired, edit the [CMakeLists.txt](CMakeLists.txt) file to uncomment the `-DUSE_FLOAT64` compile definition:
 
 ```cmake
-# uncomment to use 64-bit instead of 32-bit width for floats in point cloud;
-# really need full precision, best to leave it 32-bit
+# uncomment to use double precision instead of single for float values;
+# unless really need double precision, best to leave it single
 #add_definitions(-DUSE_FLOAT64)
 ```
 
@@ -253,7 +253,7 @@ To get a full list of usage options, run with the `--help` switch:
 ```console
 $ rosrun a2d2_to_ros sensor_fusion_bus_signals --help
 ---Built with stream logging enabled.
----Built to use 32-bit precision for float values.
+---Built to use single precision for float values.
 Convert sequential bus signal data to rosbag for the A2D2 Sensor Fusion data set. See README.md for details.
 Available options are listed below. Arguments without default values are required:
   -h [ --help ]                                    Print help and exit.
