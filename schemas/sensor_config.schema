@@ -29,7 +29,7 @@
         }
       ]
     },
-    "float_matrix": {
+    "camera_matrix": {
       "type": "array",
       "minItems": 3,
       "maxItems": 3,
@@ -116,8 +116,8 @@
           "type": "string",
           "pattern": "^Fisheye$"
         },
-        "CamMatrix": { "$ref": "#/definitions/float_matrix" },
-        "CamMatrixOriginal": { "$ref": "#/definitions/float_matrix" },
+        "CamMatrix": { "$ref": "#/definitions/camera_matrix" },
+        "CamMatrixOriginal": { "$ref": "#/definitions/camera_matrix" },
         "Distortion": { "$ref": "#/definitions/fisheye_distortion" },
         "Resolution": { "$ref": "#/definitions/int_range_pos_non_zero"  }
       },
@@ -140,8 +140,8 @@
           "type": "string",
           "pattern": "^Telecam$"
         },
-        "CamMatrix": { "$ref": "#/definitions/float_matrix" },
-        "CamMatrixOriginal": { "$ref": "#/definitions/float_matrix" },
+        "CamMatrix": { "$ref": "#/definitions/camera_matrix" },
+        "CamMatrixOriginal": { "$ref": "#/definitions/camera_matrix" },
         "Distortion": { "$ref": "#/definitions/telecam_distortion" },
         "Resolution": { "$ref": "#/definitions/int_range_pos_non_zero"  }
       },

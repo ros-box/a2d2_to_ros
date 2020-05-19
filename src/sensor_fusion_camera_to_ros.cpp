@@ -29,11 +29,13 @@
 #include <boost/optional.hpp>
 #include <boost/program_options.hpp>
 
+#include <cv_bridge/cv_bridge.h>
 #include <ros/ros.h>
 #include <rosbag/bag.h>
-#include <rosbag/view.h>
 #include <rosgraph_msgs/Clock.h>
-#include <sensor_msgs/PointCloud2.h>
+#include <sensor_msgs/CameraInfo.h>
+#include <sensor_msgs/Image.h>
+#include <opencv2/highgui/highgui.hpp>
 #include <opencv2/opencv.hpp>
 
 #include "rapidjson/document.h"
@@ -44,7 +46,6 @@
 #include "a2d2_to_ros/lib_a2d2_to_ros.hpp"
 #include "a2d2_to_ros/log_build_options.hpp"
 #include "a2d2_to_ros/logging.hpp"
-#include "ros_cnpy/cnpy.h"
 
 namespace {
 namespace a2d2 = a2d2_to_ros;
@@ -59,10 +60,9 @@ static constexpr auto _PROGRAM_OPTIONS_LINE_LENGTH = 120u;
 static constexpr auto _CLOCK_TOPIC = "/clock";
 static constexpr auto _OUTPUT_PATH = ".";
 static constexpr auto _DATASET_NAMESPACE = "/a2d2";
-static constexpr auto _DATASET_SUFFIX = "lidar";
-static constexpr auto _INCLUDE_CLOCK_TOPIC = false;
-static constexpr auto _INCLUDE_DEPTH_MAP = false;
+static constexpr auto _DATASET_SUFFIX = "camera";
 static constexpr auto _VERBOSE = false;
+static constexpr auto _INCLUDE_CLOCK_TOPIC = false;
 static constexpr auto _MIN_TIME_OFFSET = 0.0;
 static constexpr auto _DURATION = std::numeric_limits<double>::max();
 
@@ -74,22 +74,26 @@ int main(int argc, char* argv[]) {
   ///
 
   // TODO(jeff): rename "reflectance" to "intensity" assuming that's what it is
-  boost::optional<std::string> camera_frame_schema_path_opt;
-  boost::optional<std::string> lidar_path_opt;
   boost::optional<std::string> camera_path_opt;
+  boost::optional<std::string> camera_frame_schema_path_opt;
+  boost::optional<std::string> sensor_config_path_opt;
+  boost::optional<std::string> sensor_config_schema_path_opt;
   po::options_description desc(
-      "Convert sequential lidar data to rosbag for the A2D2 Sensor Fusion "
+      "Convert sequential camera data to rosbag for the A2D2 Sensor Fusion "
       "data set. See README.md for details.\nAvailable options are listed "
       "below. Arguments without default values are required",
       _PROGRAM_OPTIONS_LINE_LENGTH);
   desc.add_options()("help,h", "Print help and exit.")(
-      "lidar-data-path,d", po::value(&lidar_path_opt)->required(),
-      "Path to the lidar data files.")(
       "camera-data-path,c", po::value(&camera_path_opt)->required(),
-      "Path to the camera data files (for timestamp information).")(
+      "Path to the camera data files.")(
       "frame-info-schema-path,s",
       po::value(&camera_frame_schema_path_opt)->required(),
       "Path to the JSON schema for camera frame info files.")(
+      "sensor-config-path,c", po::value(&sensor_config_path_opt)->required(),
+      "Path to the JSON for vehicle/sensor config.")(
+      "sensor-config-schema-path,s",
+      po::value(&sensor_config_schema_path_opt)->required(),
+      "Path to the JSON schema for the vehicle/sensor config.")(
       "include-clock-topic,t",
       po::value<bool>()->default_value(_INCLUDE_CLOCK_TOPIC),
       "Optional: Use timestamps from the data to write a /clock topic.")(
@@ -99,9 +103,6 @@ int main(int argc, char* argv[]) {
       "Optional: Seconds after min-time-offset to include in bag file.")(
       "output-path,o", po::value<std::string>()->default_value(_OUTPUT_PATH),
       "Optional: Path for the output bag file.")(
-      "include-depth-map,i",
-      po::value<bool>()->default_value(_INCLUDE_DEPTH_MAP),
-      "Optional: Publish a depth map version of the lidar data.")(
       "verbose,v", po::value<bool>()->default_value(_VERBOSE),
       "Optional: Show name of each file after it is processed.");
 
@@ -127,13 +128,13 @@ int main(int argc, char* argv[]) {
   /// Get commandline parameters
   ///
 
-  const auto camera_frame_schema_path = *camera_frame_schema_path_opt;
   const auto camera_path = *camera_path_opt;
-  const auto lidar_path = *lidar_path_opt;
+  const auto camera_frame_schema_path = *camera_frame_schema_path_opt;
+  const auto sensor_config_path = *sensor_config_path_opt;
+  const auto sensor_config_schema_path = *sensor_config_schema_path_opt;
   const auto output_path = vm["output-path"].as<std::string>();
-  const auto include_depth_map = vm["include-depth-map"].as<bool>();
-  const auto include_clock_topic = vm["include-clock-topic"].as<bool>();
   const auto verbose = vm["verbose"].as<bool>();
+  const auto include_clock_topic = vm["include-clock-topic"].as<bool>();
   const auto min_time_offset = vm["min-time-offset"].as<double>();
   const auto duration = vm["duration"].as<double>();
 
@@ -150,14 +151,157 @@ int main(int argc, char* argv[]) {
     return EXIT_FAILURE;
   }
 
-  boost::filesystem::path d(lidar_path);
+  ///
+  /// Get the JSON for vehicle/sensor config
+  ///
+
+  rapidjson::Document sensor_config_d;
+  {
+    const auto sensor_config_json_string =
+        a2d2::get_json_file_as_string(sensor_config_path);
+    if (sensor_config_json_string.empty()) {
+      X_FATAL("'" << sensor_config_path << "' failed to open or is empty.");
+      return EXIT_FAILURE;
+    }
+
+    if (sensor_config_d.Parse(sensor_config_json_string.c_str())
+            .HasParseError()) {
+      X_FATAL("Error(offset "
+              << static_cast<unsigned>(sensor_config_d.GetErrorOffset())
+              << "): "
+              << rapidjson::GetParseError_En(sensor_config_d.GetParseError()));
+      return EXIT_FAILURE;
+    }
+  }
+
+  ///
+  /// Get the JSON schema for the config JSON
+  ///
+
+  rapidjson::Document schema_d;
+  {
+    // get schema file string
+    const auto schema_string =
+        a2d2::get_json_file_as_string(sensor_config_schema_path);
+    if (schema_string.empty()) {
+      X_FATAL("'" << sensor_config_schema_path
+                  << "' failed to open or is empty.");
+      return EXIT_FAILURE;
+    }
+
+    if (schema_d.Parse(schema_string.c_str()).HasParseError()) {
+      fprintf(stderr, "\nError(offset %u): %s\n",
+              static_cast<unsigned>(schema_d.GetErrorOffset()),
+              rapidjson::GetParseError_En(schema_d.GetParseError()));
+      return EXIT_FAILURE;
+    }
+  }
+  rapidjson::SchemaDocument config_schema(schema_d);
+
+  ///
+  /// Validate the data set against the schema
+  ///
+
+  {
+    rapidjson::SchemaValidator validator(config_schema);
+    if (!sensor_config_d.Accept(validator)) {
+      rapidjson::StringBuffer sb;
+      validator.GetInvalidSchemaPointer().StringifyUriFragment(sb);
+      std::stringstream ss;
+      ss << "\nInvalid schema: " << sb.GetString() << "\n";
+      ss << "Invalid keyword: " << validator.GetInvalidSchemaKeyword() << "\n";
+      sb.Clear();
+      validator.GetInvalidDocumentPointer().StringifyUriFragment(sb);
+      ss << "Invalid document: " << sb.GetString() << "\n";
+      X_FATAL(ss.str());
+      return EXIT_FAILURE;
+    } else {
+      X_INFO("Validated: " << sensor_config_schema_path);
+    }
+  }
+
+  ///
+  /// Generate camera info messages
+  ///
+  std::unordered_map<std::string, sensor_msgs::CameraInfo> camera_info_msgs;
+  {
+    const auto sensor_names = a2d2::sensors::Frames::get_sensors();
+    for (const auto& name : sensor_names) {
+      // No cameras at these positions
+      const auto is_rear_left = (name == "rear_left");
+      const auto is_rear_right = (name == "rear_right");
+      if (is_rear_left || is_rear_right) {
+        continue;
+      }
+      X_INFO("Getting camera info for: " << name);
+
+      camera_info_msgs[name] = sensor_msgs::CameraInfo();
+      auto& msg = camera_info_msgs[name];
+
+      const rapidjson::Value& camera =
+          sensor_config_d[a2d2::sensors::Names::CAMERAS.c_str()][name.c_str()];
+
+      const std::string camera_type = camera["Lens"].GetString();
+      const auto is_fisheye = (camera_type == "Fisheye");
+
+      // TODO(jeff): verify that this is right
+      msg.D.resize(5, 0.0);
+      const auto ROW_IDX = static_cast<rapidjson::SizeType>(0);
+      const auto D_size = static_cast<rapidjson::SizeType>(is_fisheye ? 4 : 5);
+      for (auto i = 0; i < D_size; ++i) {
+        const auto IDX = static_cast<rapidjson::SizeType>(i);
+        msg.D[i] = camera["Distortion"][ROW_IDX][IDX].GetDouble();
+      }
+
+      {
+        const rapidjson::Value& camera_matrix_raw = camera["CamMatrixOriginal"];
+        for (auto i = 0; i < camera_matrix_raw.Size(); ++i) {
+          const auto row_idx = static_cast<rapidjson::SizeType>(i);
+          for (auto j = 0; j < camera_matrix_raw[row_idx].Size(); ++j) {
+            const auto col_idx = static_cast<rapidjson::SizeType>(j);
+            const auto msg_idx = ((row_idx * 3) + col_idx);
+            msg.K[msg_idx] = camera_matrix_raw[row_idx][col_idx].GetDouble();
+          }
+        }
+      }
+
+      {
+        msg.P.fill(0.0);
+        const rapidjson::Value& camera_matrix = camera["CamMatrix"];
+        for (auto i = 0; i < camera_matrix.Size(); ++i) {
+          const auto row_idx = static_cast<rapidjson::SizeType>(i);
+          for (auto j = 0; j < camera_matrix[row_idx].Size(); ++j) {
+            const auto col_idx = static_cast<rapidjson::SizeType>(j);
+            const auto msg_idx = ((row_idx * 4) + col_idx);
+            msg.P[msg_idx] = camera_matrix[row_idx][col_idx].GetDouble();
+          }
+        }
+      }
+
+      constexpr auto WIDTH_IDX = static_cast<rapidjson::SizeType>(0);
+      constexpr auto HEIGHT_IDX = static_cast<rapidjson::SizeType>(1);
+      msg.width = camera["Resolution"][WIDTH_IDX].GetInt64();
+      msg.height = camera["Resolution"][HEIGHT_IDX].GetInt64();
+
+      msg.binning_x = 0;
+      msg.binning_y = 0;
+
+      msg.roi.x_offset = 0;
+      msg.roi.y_offset = 0;
+      msg.roi.height = 0;
+      msg.roi.width = 0;
+      msg.roi.do_rectify = false;
+    }
+  }
+
+  boost::filesystem::path d(camera_path);
   const auto timestamp = d.parent_path().parent_path().filename().string();
 
   const auto file_basename =
-      (timestamp + "_" + boost::filesystem::basename(lidar_path));
+      (timestamp + "_" + boost::filesystem::basename(camera_path));
 
   ///
-  /// Get list of .npz file names
+  /// Get list of .png file names
   ///
 
   std::set<std::string> files;
@@ -166,7 +310,7 @@ int main(int argc, char* argv[]) {
     const auto path = it->path().string();
     const auto extension = it->path().extension().string();
     ++it;
-    if (extension != ".npz") {
+    if (extension != ".png") {
       continue;
     }
     files.insert(path);
@@ -182,8 +326,7 @@ int main(int argc, char* argv[]) {
     const auto schema_string =
         a2d2::get_json_file_as_string(camera_frame_schema_path);
     if (schema_string.empty()) {
-      X_FATAL("'" << camera_frame_schema_path
-                  << "' failed to open or is empty.");
+      X_FATAL("'" << camera_path << "' failed to open or is empty.");
       return EXIT_FAILURE;
     }
 
@@ -197,12 +340,10 @@ int main(int argc, char* argv[]) {
   rapidjson::SchemaDocument camera_frame_schema(camera_frame_d);
 
   ///
-  /// Load each npz file, convert to PointCloud2 message, write to bag
+  /// Load each png file, convert to Image message, write to bag
   ///
 
-  const auto fields = a2d2::npz::Fields::get_fields();
-
-  X_INFO("Attempting to convert point cloud data. This may take a while...");
+  X_INFO("Attempting to convert camera data. This may take a while...");
 
   std::set<ros::Time> stamps;
   rosbag::Bag bag;
@@ -220,17 +361,7 @@ int main(int argc, char* argv[]) {
     {
       const auto p = boost::filesystem::path(f);
       const auto b = boost::filesystem::basename(p);
-      const auto camera_basename = a2d2::camera_name_from_lidar_name(b);
-      if (camera_basename.empty()) {
-        X_FATAL("Failed to get camera file corresponding to lidar file: "
-                << f << ". Cannot continue.");
-        bag.close();
-        return EXIT_FAILURE;
-      }
-
-      const auto camera_data_file =
-          camera_path + "/" + camera_basename + ".json";
-      // get json file string
+      const auto camera_data_file = (camera_path + "/" + b + ".json");
       const auto json_string = a2d2::get_json_file_as_string(camera_data_file);
       if (json_string.empty()) {
         X_FATAL("'" << camera_data_file << "' failed to open or is empty.");
@@ -288,41 +419,14 @@ int main(int argc, char* argv[]) {
     }
 
     ///
-    /// Load and verify the data
+    /// Build image message
     ///
 
-    cnpy::npz_t npz;
-    try {
-      npz = cnpy::npz_load(f);
-    } catch (const std::exception& e) {
-      X_FATAL(e.what());
-      bag.close();
-      return EXIT_FAILURE;
-    }
-
-    const auto npz_structure_valid = a2d2::verify_npz_structure(npz);
-    if (!npz_structure_valid) {
-      X_FATAL("Encountered unexpected structure in the data. Cannot continue.");
-      bag.close();
-      return EXIT_FAILURE;
-    } else {
-      // X_INFO("Successfully loaded npz data from:\n" << f);
-    }
-
-    ///
-    /// Build pointcloud message
-    ///
-
-    // capture these up front; they provide meta information about the data
-    const auto& points = npz[fields[a2d2::npz::Fields::POINTS_IDX]];
-    const auto& timestamp = npz[fields[a2d2::npz::Fields::TIMESTAMP_IDX]];
-    const auto& valid = npz[fields[a2d2::npz::Fields::VALID_IDX]];
-
-    const auto lidar_file_name = a2d2::frame_from_filename(f);
-    const auto lidar_name =
-        a2d2::get_camera_name_from_frame_name(lidar_file_name);
+    const auto camera_file_name = a2d2::frame_from_filename(f);
+    const auto camera_name =
+        a2d2::get_camera_name_from_frame_name(camera_file_name);
     const auto frame =
-        a2d2::tf_frame_name(a2d2::sensors::Names::CAMERAS, lidar_name);
+        a2d2::tf_frame_name(a2d2::sensors::Names::CAMERAS, camera_name);
     if (frame.empty()) {
       X_FATAL("Could not find frame name in filename: "
               << f << ". Cannot continue.");
@@ -330,149 +434,36 @@ int main(int argc, char* argv[]) {
       return EXIT_FAILURE;
     }
 
-    const auto is_dense = a2d2::any_lidar_points_invalid(valid);
-    const auto n_points = points.shape[a2d2::npz::Fields::ROW_SHAPE_IDX];
-    auto msg = a2d2::build_pc2_msg(frame, frame_timestamp_ros, is_dense,
-                                   static_cast<uint32_t>(n_points));
+    std_msgs::Header header;
+    header.frame_id = frame;
+    header.stamp = frame_timestamp_ros;
 
-    ///
-    /// Fill in the point cloud message
-    ///
+    cv::Mat img = cv::imread(f);
+    auto msg_ptr = cv_bridge::CvImage(header, "bgr8", img).toImageMsg();
 
-    auto iters = a2d2::A2D2_PointCloudIterators(msg, fields);
-    for (auto row = 0; row < n_points; ++row, ++iters) {
-      ///
-      /// Point data
-      ///
-
-      {
-        constexpr auto X_POS = 0;
-        constexpr auto Y_POS = 1;
-        constexpr auto Z_POS = 2;
-        const auto row_step = points.shape[a2d2::npz::Fields::COL_SHAPE_IDX];
-
-        const auto data = points.data<a2d2::npz::ReadTypes::Point>();
-        const auto x_idx = a2d2::flatten_2d_index(row_step, row, X_POS);
-        const auto y_idx = a2d2::flatten_2d_index(row_step, row, Y_POS);
-        const auto z_idx = a2d2::flatten_2d_index(row_step, row, Z_POS);
-
-        *(iters.x) = static_cast<a2d2::npz::WriteTypes::Point>(data[x_idx]);
-        *(iters.y) = static_cast<a2d2::npz::WriteTypes::Point>(data[y_idx]);
-        *(iters.z) = static_cast<a2d2::npz::WriteTypes::Point>(data[z_idx]);
-      }
-
-      ///
-      /// Scalar data
-      ///
-
-      {
-        const auto& azimuth = npz[fields[a2d2::npz::Fields::AZIMUTH_IDX]];
-        const auto data = azimuth.data<a2d2::npz::ReadTypes::Azimuth>();
-        *(iters.azimuth) = data[row];
-      }
-
-      {
-        const auto& boundary = npz[fields[a2d2::npz::Fields::BOUNDARY_IDX]];
-        const auto data = boundary.data<a2d2::npz::ReadTypes::Boundary>();
-        *(iters.boundary) =
-            static_cast<a2d2::npz::WriteTypes::Boundary>(data[row]);
-      }
-
-      {
-        const auto& image_col = npz[fields[a2d2::npz::Fields::COL_IDX]];
-        const auto data = image_col.data<a2d2::npz::ReadTypes::Col>();
-        *(iters.col) = static_cast<a2d2::npz::WriteTypes::Col>(data[row]);
-      }
-
-      {
-        const auto& depth = npz[fields[a2d2::npz::Fields::DEPTH_IDX]];
-        const auto data = depth.data<a2d2::npz::ReadTypes::Depth>();
-        *(iters.depth) = static_cast<a2d2::npz::WriteTypes::Depth>(data[row]);
-      }
-
-      {
-        const auto& distance = npz[fields[a2d2::npz::Fields::DISTANCE_IDX]];
-        const auto data = distance.data<a2d2::npz::ReadTypes::Distance>();
-        *(iters.distance) =
-            static_cast<a2d2::npz::WriteTypes::Distance>(data[row]);
-      }
-
-      {
-        const auto& lidar_id = npz[fields[a2d2::npz::Fields::ID_IDX]];
-        const auto data = lidar_id.data<a2d2::npz::ReadTypes::LidarId>();
-        *(iters.lidar_id) =
-            static_cast<a2d2::npz::WriteTypes::LidarId>(data[row]);
-      }
-
-      {
-        const auto& rectime = npz[fields[a2d2::npz::Fields::RECTIME_IDX]];
-        const auto data = rectime.data<a2d2::npz::ReadTypes::Rectime>();
-        *(iters.rectime) =
-            static_cast<a2d2::npz::WriteTypes::Rectime>(data[row]);
-      }
-
-      {
-        const auto& reflectance =
-            npz[fields[a2d2::npz::Fields::REFLECTANCE_IDX]];
-        const auto data = reflectance.data<a2d2::npz::ReadTypes::Reflectance>();
-        *(iters.reflectance) =
-            static_cast<a2d2::npz::WriteTypes::Reflectance>(data[row]);
-      }
-
-      {
-        const auto& image_row = npz[fields[a2d2::npz::Fields::ROW_IDX]];
-        const auto data = image_row.data<a2d2::npz::ReadTypes::Row>();
-        *(iters.row) = static_cast<a2d2::npz::WriteTypes::Row>(data[row]);
-      }
-
-      {
-        const auto data = timestamp.data<a2d2::npz::ReadTypes::Timestamp>();
-        *(iters.timestamp) =
-            static_cast<a2d2::npz::WriteTypes::Timestamp>(data[row]);
-      }
-
-      {
-        const auto data = valid.data<a2d2::npz::ReadTypes::Valid>();
-        *(iters.valid) = static_cast<a2d2::npz::WriteTypes::Valid>(data[row]);
-      }
+    auto it_cam_info = camera_info_msgs.find(camera_name);
+    if (std::end(camera_info_msgs) == it_cam_info) {
+      X_ERROR("Did not find camera info for: " << camera_name);
+    } else {
+      // X_INFO("Found camera info for: " << camera_name);
     }
-
-#if 0
-    {
-      const auto& reflectance = npz[fields[a2d2::npz::Fields::REFLECTANCE_IDX]];
-      const auto max_reflectance =
-          a2d2::get_max_value<a2d2::npz::ReadTypes::Reflectance>(reflectance);
-      const auto min_reflectance =
-          a2d2::get_min_value<a2d2::npz::ReadTypes::Reflectance>(reflectance);
-      std::cout << "reflectance range: [" << min_reflectance << ", "
-                << max_reflectance << "]" << std::endl;
-      const auto& boundary = npz[fields[a2d2::npz::Fields::BOUNDARY_IDX]];
-      const auto max_boundary =
-          a2d2::get_max_value<a2d2::npz::ReadTypes::Boundary>(boundary);
-      const auto min_boundary =
-          a2d2::get_min_value<a2d2::npz::ReadTypes::Boundary>(boundary);
-      std::cout << "boundary range: [" << min_boundary << ", " << max_boundary
-                << "]" << std::endl;
-      auto test = a2d2::A2D2_PointCloudIterators(msg, fields);
-      for (auto row = 0; row < n_points; ++row, ++test) {
-        std::cout << test << std::endl;
-      }
-      X_WARN("Finished debut output. Exiting.");
-      bag.close();
-      return EXIT_FAILURE;
-    }
-#endif
+    it_cam_info->second.header = msg_ptr->header;
 
     ///
     /// Write message to bag file
     ///
 
     // message time is the max timestamp of all points in the message
-    const auto topic = (std::string(_DATASET_NAMESPACE) + "/" + file_basename +
-                        "/" + std::string(_DATASET_SUFFIX));
-    bag.write(topic, msg.header.stamp, msg);
+    const auto image_topic =
+        (std::string(_DATASET_NAMESPACE) + "/" + file_basename + "/" +
+         std::string(_DATASET_SUFFIX));
+    const auto info_topic = (std::string(_DATASET_NAMESPACE) + "/" +
+                             file_basename + "/camera_info");
+    bag.write(image_topic, msg_ptr->header.stamp, *msg_ptr);
+    bag.write(info_topic, msg_ptr->header.stamp, it_cam_info->second);
+
     if (include_clock_topic) {
-      stamps.insert(msg.header.stamp);
+      stamps.insert(msg_ptr->header.stamp);
     }
 
     if (verbose) {

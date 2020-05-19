@@ -42,6 +42,7 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(RapidJSON REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system)
 find_package(Eigen3 REQUIRED)
+find_package(OpenCV REQUIRED)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -170,6 +171,8 @@ add_executable(${PROJECT_NAME}_sensor_fusion_lidar
   src/sensor_fusion_lidar_to_ros.cpp)
 add_executable(${PROJECT_NAME}_sensor_fusion_config
   src/sensor_fusion_config.cpp)
+add_executable(${PROJECT_NAME}_sensor_fusion_camera
+  src/sensor_fusion_camera_to_ros.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -181,6 +184,8 @@ set_target_properties(${PROJECT_NAME}_sensor_fusion_lidar
   PROPERTIES OUTPUT_NAME sensor_fusion_lidar PREFIX "")
 set_target_properties(${PROJECT_NAME}_sensor_fusion_config
   PROPERTIES OUTPUT_NAME sensor_fusion_config PREFIX "")
+set_target_properties(${PROJECT_NAME}_sensor_fusion_camera
+  PROPERTIES OUTPUT_NAME sensor_fusion_camera PREFIX "")
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -204,6 +209,13 @@ target_link_libraries(${PROJECT_NAME}_sensor_fusion_config
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
   ${RapidJSON_LIBRARIES}
+)
+target_link_libraries(${PROJECT_NAME}_sensor_fusion_camera
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  ${RapidJSON_LIBRARIES}
+  ${OpenCV_LIBRARIES}
 )
 
 #############

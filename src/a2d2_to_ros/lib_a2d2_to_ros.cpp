@@ -526,9 +526,13 @@ std::string get_json_file_as_string(const std::string& path) {
     return std::string("");
   }
 
-  std::string content((std::istreambuf_iterator<char>(ifs)),
-                      (std::istreambuf_iterator<char>()));
-  return content;
+  try {
+    std::string content((std::istreambuf_iterator<char>(ifs)),
+                        (std::istreambuf_iterator<char>()));
+    return content;
+  } catch (...) {
+    return std::string("");
+  }
 }
 
 //------------------------------------------------------------------------------

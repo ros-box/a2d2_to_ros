@@ -52,7 +52,6 @@
 static constexpr auto EPS = 1e-8;
 static constexpr auto _TF_FREQUENCEY = 10.0;
 static constexpr auto _PROGRAM_OPTIONS_LINE_LENGTH = 120u;
-static constexpr auto _CLOCK_TOPIC = "/clock";
 static constexpr auto _OUTPUT_PATH = ".";
 static constexpr auto _DATASET_NAMESPACE = "/a2d2";
 static constexpr auto _INCLUDE_DEPTH_MAP = false;
