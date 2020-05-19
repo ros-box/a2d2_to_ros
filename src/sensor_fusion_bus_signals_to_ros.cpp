@@ -62,11 +62,11 @@ typedef std::unordered_map<std::string, std::tuple<std::string, DataPairSet>>
 ///
 
 static constexpr auto _PROGRAM_OPTIONS_LINE_LENGTH = 120u;
-static constexpr auto _INCLUDE_ORIGINAL = true;
+static constexpr auto _INCLUDE_ORIGINAL = false;
 static constexpr auto _INCLUDE_CONVERTED = true;
 static constexpr auto _INCLUDE_CLOCK_TOPIC = false;
 static constexpr auto _CLOCK_TOPIC = "/clock";
-static constexpr auto _BUS_FRAME_NAME = "bus";
+static constexpr auto _BUS_FRAME_NAME = "wheels";  // TODO(jeff): is this right?
 static constexpr auto _OUTPUT_PATH = ".";
 static constexpr auto _DATASET_NAMESPACE = "/a2d2";
 static constexpr auto _ORIGINAL_VALUE_TOPIC = "original_value";
@@ -102,9 +102,6 @@ int main(int argc, char* argv[]) {
       "Optional: Seconds after min-time-offset to include in bag file.")(
       "output-path,o", po::value<std::string>()->default_value(_OUTPUT_PATH),
       "Optional: Path for the output bag file.")(
-      "bus-frame-name,b",
-      po::value<std::string>()->default_value(_BUS_FRAME_NAME),
-      "Optional: Frame name to use for bus signals.")(
       "include-clock-topic,c",
       po::value<bool>()->default_value(_INCLUDE_CLOCK_TOPIC),
       "Optional: Use timestamps from the data to write a /clock topic.")(
@@ -143,7 +140,6 @@ int main(int argc, char* argv[]) {
   const auto include_original = vm["include-original-values"].as<bool>();
   const auto include_converted = vm["include-converted-values"].as<bool>();
   const auto include_clock_topic = vm["include-clock-topic"].as<bool>();
-  const auto bus_frame_name = vm["bus-frame-name"].as<std::string>();
   const auto min_time_offset = vm["min-time-offset"].as<double>();
   const auto duration = vm["duration"].as<double>();
 
@@ -298,7 +294,7 @@ int main(int argc, char* argv[]) {
       }
 
       const auto value = t_v[static_cast<rapidjson::SizeType>(1)].GetDouble();
-      const auto data = a2d2::DataPair::build(value, time, bus_frame_name);
+      const auto data = a2d2::DataPair::build(value, time, _BUS_FRAME_NAME);
 
       const auto& stamp = data.header.stamp;
       if (!first_time) {

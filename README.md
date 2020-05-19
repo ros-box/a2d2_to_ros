@@ -262,7 +262,6 @@ Available options are listed below. Arguments without default values are require
   -m [ --min-time-offset ] arg (=0)                Optional: Seconds to skip ahead in the data before starting the bag.
   -d [ --duration ] arg (=1.7976931348623157e+308) Optional: Seconds after min-time-offset to include in bag file.
   -o [ --output-path ] arg (=.)                    Optional: Path for the output bag file.
-  -b [ --bus-frame-name ] arg (=bus)               Optional: Frame name to use for bus signals.
   -c [ --include-clock-topic ] arg (=0)            Optional: Use timestamps from the data to write a /clock topic.
   -v [ --include-original-values ] arg (=1)        Optional: Include data set values in their original units.
   -r [ --include-converted-values ] arg (=1)       Optional: Include data set values converted to ROS standard units.

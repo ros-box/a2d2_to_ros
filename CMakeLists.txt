@@ -18,8 +18,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #add_definitions(-DUSE_FLOAT64)
 
 # uncomment one of these to output logging information and warnings/errors
-add_definitions(-DENABLE_A2D2_ROS_LOGGING)
-#add_definitions(-DENABLE_A2D2_STREAM_LOGGING)
+#add_definitions(-DENABLE_A2D2_ROS_LOGGING)
+add_definitions(-DENABLE_A2D2_STREAM_LOGGING)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
