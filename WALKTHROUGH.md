@@ -40,16 +40,14 @@ $ rosrun a2d2_to_ros sensor_fusion_camera --camera-data-path ~/data/a2d2/Ingolst
 ```console
 $ rosrun a2d2_to_ros sensor_fusion_lidar --lidar-data-path ~/data/a2d2/Ingolstadt/camera_lidar/20190401_145936/lidar/cam_front_center --camera-data-path ~/data/a2d2/Ingolstadt/camera_lidar/20190401_145936/camera/cam_front_center --frame-info-schema-path ~/catkin_ws/src/a2d2_to_ros/schemas/sensor_fusion_camera_frame.schema
 ```
-
-    * This outputs the bag file: `20190401_145936_cam_front_center_lidar.bag`
+This outputs the bag file: `20190401_145936_cam_front_center_lidar.bag`
 
 * Convert TF data (using the camera bag as reference):
 
 ```console
 $ rosrun a2d2_to_ros sensor_fusion_config --sensor-config-path ~/data/a2d2/cams_lidars.json --sensor-config-schema-path ~/catkin_ws/src/a2d2_to_ros/schemas/sensor_config.schema --reference-bag-path 20190401_145936_cam_front_center.bag
 ```
-
-    * This outputs the bag file: `20190401_145936_cam_front_center_camera_tf.bag`
+This outputs the bag file: `20190401_145936_cam_front_center_camera_tf.bag`
 
 * Launch RViz to visualize (ensure a roscore is running)
 
@@ -62,5 +60,4 @@ $ roslaunch a2d2_to_ros visualize.launch
 ```console
 $ rosbag play 20190401_145936_cam_front_center_camera.bag 20190401_145936_cam_front_center_camera_tf.bag 20190401_145936_cam_front_center_lidar.bag
 ```
-
-    * Note that the provided RViz config visualizes all sensors but this walkthrough only converts and visualizes the front center sensors.
+Note that the provided RViz config visualizes all sensors but this walkthrough only converts and visualizes the front center sensors.
