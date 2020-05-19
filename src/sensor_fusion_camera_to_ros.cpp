@@ -233,21 +233,24 @@ int main(int argc, char* argv[]) {
       if (is_rear_left || is_rear_right) {
         continue;
       }
+      X_INFO("Getting camera info for: " << name);
 
       camera_info_msgs[name] = sensor_msgs::CameraInfo();
       auto& msg = camera_info_msgs[name];
 
-      const rapidjson::Value& camera = sensor_config_d[name.c_str()];
+      const rapidjson::Value& camera =
+          sensor_config_d[a2d2::sensors::Names::CAMERAS.c_str()][name.c_str()];
 
       const std::string camera_type = camera["Lens"].GetString();
       const auto is_fisheye = (camera_type == "Fisheye");
 
       // TODO(jeff): verify that this is right
       msg.D.resize(5, 0.0);
+      const auto ROW_IDX = static_cast<rapidjson::SizeType>(0);
       const auto D_size = static_cast<rapidjson::SizeType>(is_fisheye ? 4 : 5);
       for (auto i = 0; i < D_size; ++i) {
         const auto IDX = static_cast<rapidjson::SizeType>(i);
-        msg.D[i] = camera["Distortion"][IDX].GetDouble();
+        msg.D[i] = camera["Distortion"][ROW_IDX][IDX].GetDouble();
       }
 
       {
@@ -431,13 +434,6 @@ int main(int argc, char* argv[]) {
       return EXIT_FAILURE;
     }
 
-    const auto it_end = std::end(camera_info_msgs);
-    if (camera_info_msgs.find(camera_name) == it_end) {
-      X_INFO("Found camera info for: " << camera_name);
-    } else {
-      X_ERROR("Did not find camera info for: " << camera_name);
-    }
-
     std_msgs::Header header;
     header.frame_id = frame;
     header.stamp = frame_timestamp_ros;
@@ -445,14 +441,26 @@ int main(int argc, char* argv[]) {
     cv::Mat img = cv::imread(f);
     auto msg_ptr = cv_bridge::CvImage(header, "bgr8", img).toImageMsg();
 
+    auto it_cam_info = camera_info_msgs.find(camera_name);
+    if (std::end(camera_info_msgs) == it_cam_info) {
+      X_ERROR("Did not find camera info for: " << camera_name);
+    } else {
+      // X_INFO("Found camera info for: " << camera_name);
+    }
+    it_cam_info->second.header = msg_ptr->header;
+
     ///
     /// Write message to bag file
     ///
 
     // message time is the max timestamp of all points in the message
-    const auto topic = (std::string(_DATASET_NAMESPACE) + "/" + file_basename +
-                        "/" + std::string(_DATASET_SUFFIX));
-    bag.write(topic, msg_ptr->header.stamp, *msg_ptr);
+    const auto image_topic =
+        (std::string(_DATASET_NAMESPACE) + "/" + file_basename + "/" +
+         std::string(_DATASET_SUFFIX));
+    const auto info_topic = (std::string(_DATASET_NAMESPACE) + "/" +
+                             file_basename + "/camera_info");
+    bag.write(image_topic, msg_ptr->header.stamp, *msg_ptr);
+    bag.write(info_topic, msg_ptr->header.stamp, it_cam_info->second);
 
     if (include_clock_topic) {
       stamps.insert(msg_ptr->header.stamp);
