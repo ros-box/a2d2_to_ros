@@ -217,7 +217,7 @@ The config only includes the `front_center` lidar, but the settings should work 
 ### Bag file conventions
 
 * The message time in the bag file is the same as the timestamp in the header message.
-* Each bag file contains a `/clock` topic that has a [rosgraph\_msgs::Clock](http://docs.ros.org/api/rosgraph_msgs/html/msg/Clock.html) message for each unique frame timestamp in the data set.
+* Each bag file optionally contains a `/clock` topic that has a [rosgraph\_msgs::Clock](http://docs.ros.org/api/rosgraph_msgs/html/msg/Clock.html) message for each unique frame timestamp in the data set.
 * The output bag file is given the same basename as the directory containing the `.npz` files.
 * Each of the topics in the bag file (except for `/clock`) is prefixed with `/a2d2/[RECORD_TIME]`
 
