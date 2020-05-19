@@ -1,6 +1,6 @@
 # Walkthrough
 
-This doc gives an example walkthrough of using the data set converter.
+This doc gives an example walkthrough of using the data set converter. See [README.md](README.md) for more details.
 
 ## Prerequisites
 
