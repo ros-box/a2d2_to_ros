@@ -48,7 +48,7 @@ Visualization Manager:
         Z: 0
       Plane: XY
       Plane Cell Count: 10
-      Reference Frame: vehicle
+      Reference Frame: wheels
       Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: false
@@ -127,6 +127,8 @@ Visualization Manager:
           Value: true
         cameras_side_right:
           Value: true
+        chassis:
+          Value: true
         lidars_front_center:
           Value: true
         lidars_front_left:
@@ -137,7 +139,7 @@ Visualization Manager:
           Value: true
         lidars_rear_right:
           Value: true
-        vehicle:
+        wheels:
           Value: true
       Marker Scale: 1
       Name: TF Tree
@@ -145,29 +147,30 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
-        vehicle:
-          cameras_front_center:
-            {}
-          cameras_front_left:
-            {}
-          cameras_front_right:
-            {}
-          cameras_rear_center:
-            {}
-          cameras_side_left:
-            {}
-          cameras_side_right:
-            {}
-          lidars_front_center:
-            {}
-          lidars_front_left:
-            {}
-          lidars_front_right:
-            {}
-          lidars_rear_left:
-            {}
-          lidars_rear_right:
-            {}
+        wheels:
+          chassis:
+            cameras_front_center:
+              {}
+            cameras_front_left:
+              {}
+            cameras_front_right:
+              {}
+            cameras_rear_center:
+              {}
+            cameras_side_left:
+              {}
+            cameras_side_right:
+              {}
+            lidars_front_center:
+              {}
+            lidars_front_left:
+              {}
+            lidars_front_right:
+              {}
+            lidars_rear_left:
+              {}
+            lidars_rear_right:
+              {}
       Update Interval: 0
       Value: true
     - Class: rviz/Image
@@ -210,7 +213,7 @@ Visualization Manager:
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: vehicle
+    Fixed Frame: wheels
     Frame Rate: 30
   Name: root
   Tools:
@@ -277,4 +280,4 @@ Window Geometry:
     collapsed: false
   Width: 1356
   X: 540
-  Y: 35
+  Y: 27
