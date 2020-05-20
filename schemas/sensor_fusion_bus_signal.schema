@@ -4,8 +4,42 @@
    "title": "Bus Signals",
    "description": "A2D2 Bus Signal Data Schema for Sensor Fusion Data Set",
    "type": "object",
-   "patternProperties": {
-     "^acceleration_(x|y|z)$": {
+   "definitions": {
+    "timestamp": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "time_value_sequence": {
+      "description": "Array of timestamp/value pairs.",
+      "type": "array",
+      "items": {
+       "type": "array",
+       "minItems": 2,
+       "maxItems": 2,
+       "items": [
+         { "$ref": "#/definitions/timestamp" },
+         { "type": "number" }
+       ]
+     }
+    },
+    "time_value_sequence_binary": {
+      "description": "Array of timestamp/value pairs.",
+      "type": "array",
+      "items": {
+       "type": "array",
+       "minItems": 2,
+       "maxItems": 2,
+       "items": [
+         { "$ref": "#/definitions/timestamp" },
+         {
+           "type": "integer",
+           "minimum": 0,
+           "maximum": 1
+         }
+       ]
+     }
+    },
+    "acceleration_component": {
        "description": "Measured acceleration components in reference frame.",
        "properties": {
          "unit": {
@@ -13,34 +47,62 @@
            "type": "string",
            "pattern": "^Unit_MeterPerSeconSquar$"
          },
-         "values": {
-           "description": "Array of timestamp/value pairs.",
-           "type": "array",
-           "items": {
-             "type": "array",
-             "minItems": 2,
-             "maxItems": 2,
-             "items": [
-               {
-                 "type": "integer",
-                 "minimum": 0
-               },
-               {
-                 "type": "number"
-               }
-             ]
-           }
-         }
+         "values": { "$ref": "#/definitions/time_value_sequence" }
        },
        "required": ["unit", "values"]
-     },
-     "^angular_velocity_omega_(x|y|z)$": {
+    },
+    "angular_velocity_component": {
        "description": "Measured angular velocity components in reference frame.",
        "properties": {
          "unit": {
            "description": "Units of measure use for values.",
            "type": "string",
            "pattern": "^Unit_DegreOfArcPerSecon$"
+         },
+         "values": { "$ref": "#/definitions/time_value_sequence" }
+       },
+       "required": ["unit", "values"]
+    },
+    "sign_field": {
+       "description": "Fields containing sign information: 0 - left/positive, 1 - right/negative.",
+       "properties": {
+         "unit": {
+           "description": "Units of measure use for values.",
+           "type": "null"
+         },
+         "values": { "$ref": "#/definitions/time_value_sequence_binary" }
+       },
+       "required": ["unit", "values"]
+    },
+    "pulse_sensor": {
+       "description": "Wheel encoders: Distance pulse data comes from pulse counter at the wheels. Counters generally run forward, even when driving backwards. If the sensor is reset due to error or failure, the value is always, without exception, to send 1 times the Init value 1021. If the value 1021 is not present in the data set, then there were resets due to error or failure.",
+       "properties": {
+         "unit": {
+           "description": "Units of measure use for values.",
+           "type": "null"
+         },
+         "values": { "$ref": "#/definitions/time_value_sequence" }
+       },
+       "required": ["unit", "values"]
+    },
+    "lat_lon_direction": {
+       "description": "latitude_direction: North/South Hemisphere (0 north / 1 south), longitude_direction: East/West Hemisphere (0 east, 1 west)",
+       "properties": {
+         "unit": {
+           "description": "Units of measure use for values.",
+           "type": "null"
+         },
+         "values": { "$ref": "#/definitions/time_value_sequence_binary" }
+       },
+       "required": ["unit", "values"]
+    },
+    "roll_pitch_angle": {
+       "description": "Roll and pitch values between the chassis frame and wheels frame.",
+       "properties": {
+         "unit": {
+           "description": "Units of measure use for values.",
+           "type": "string",
+           "pattern": "^Unit_DegreOfArc$"
          },
          "values": {
            "description": "Array of timestamp/value pairs.",
@@ -50,20 +112,50 @@
              "minItems": 2,
              "maxItems": 2,
              "items": [
+               { "$ref": "#/definitions/timestamp" },
                {
-                 "type": "integer",
-                 "minimum": 0
-               },
-               {
-                 "type": "number"
+                 "type": "number",
+                 "minimum": -180,
+                 "maximum": 180,
+                 "exclusiveMaximum": true
                }
              ]
            }
          }
        },
        "required": ["unit", "values"]
+    }
+   },
+   "properties": {
+     "acceleration_x": { "$ref": "#/definitions/acceleration_component" },
+     "acceleration_y": { "$ref": "#/definitions/acceleration_component" },
+     "acceleration_z": { "$ref": "#/definitions/acceleration_component" },
+     "angular_velocity_omega_x": { "$ref": "#/definitions/angular_velocity_component" },
+     "angular_velocity_omega_y": { "$ref": "#/definitions/angular_velocity_component" },
+     "angular_velocity_omega_z": { "$ref": "#/definitions/angular_velocity_component" },
+     "accelerator_pedal_gradient_sign": { "$ref": "#/definitions/sign_field" },
+     "steering_angle_calculated_sign": { "$ref": "#/definitions/sign_field" },
+     "distance_pulse_rear_left": { "$ref": "#/definitions/pulse_sensor" },
+     "distance_pulse_rear_right": { "$ref": "#/definitions/pulse_sensor" },
+     "distance_pulse_front_left": { "$ref": "#/definitions/pulse_sensor" },
+     "distance_pulse_front_right": { "$ref": "#/definitions/pulse_sensor" },
+     "latitude_direction": { "$ref": "#/definitions/lat_lon_direction" },
+     "longitude_direction": { "$ref": "#/definitions/lat_lon_direction" },
+     "roll_angle": { "$ref": "#/definitions/roll_pitch_angle"},
+     "pitch_angle": { "$ref": "#/definitions/roll_pitch_angle"},
+     "brake_pressure": {
+       "description": "Brake pressure information.",
+       "properties": {
+         "unit": {
+           "description": "Units of measure use for values.",
+           "type": "string",
+           "pattern": "^Unit_Bar$"
+         },
+         "values": { "$ref": "#/definitions/time_value_sequence" }
+       },
+       "required": ["unit", "values"]
      },
-     "^accelerator_pedal$": {
+     "accelerator_pedal": {
        "description": "Measured position of the accelerator pedal.",
        "properties": {
          "unit": {
@@ -79,10 +171,7 @@
              "minItems": 2,
              "maxItems": 2,
              "items": [
-               {
-                 "type": "integer",
-                 "minimum": 0
-               },
+               { "$ref": "#/definitions/timestamp" },
                {
                  "type": "number",
                  "minimum": 0,
@@ -94,94 +183,7 @@
        },
        "required": ["unit", "values"]
      },
-     "_sign$": {
-       "description": "Fields containing sign information.",
-       "properties": {
-         "unit": {
-           "description": "Units of measure use for values.",
-           "type": "null"
-         },
-         "values": {
-           "description": "Array of timestamp/value pairs.",
-           "type": "array",
-           "items": {
-             "type": "array",
-             "minItems": 2,
-             "maxItems": 2,
-             "items": [
-               {
-                 "type": "integer",
-                 "minimum": 0
-               },
-               {
-                 "type": "integer",
-                 "minimum": 0,
-                 "maximum": 1
-               }
-             ]
-           }
-         }
-       },
-       "required": ["unit", "values"]
-     },
-     "^brake_pressure$": {
-       "description": "Brake pressure information.",
-       "properties": {
-         "unit": {
-           "description": "Units of measure use for values.",
-           "type": "string",
-           "pattern": "^Unit_Bar$"
-         },
-         "values": {
-           "description": "Array of timestamp/value pairs.",
-           "type": "array",
-           "items": {
-             "type": "array",
-             "minItems": 2,
-             "maxItems": 2,
-             "items": [
-               {
-                 "type": "integer",
-                 "minimum": 0
-               },
-               {
-                 "type": "number"
-               }
-             ]
-           }
-         }
-       },
-       "required": ["unit", "values"]
-     },
-     "^distance_pulse_(rear|front)_(left|right)$": {
-       "description": "Ultrasonics?",
-       "properties": {
-         "unit": {
-           "description": "Units of measure use for values.",
-           "type": "null"
-         },
-         "values": {
-           "description": "Array of timestamp/value pairs.",
-           "type": "array",
-           "items": {
-             "type": "array",
-             "minItems": 2,
-             "maxItems": 2,
-             "items": [
-               {
-                 "type": "integer",
-                 "minimum": 0
-               },
-               {
-                 "type": "integer"
-               }
-             ]
-           }
-         }
-       },
-       "required": ["unit", "values"]
-     },
-     "^latitude_degree$": {
+     "latitude_degree": {
        "description": "Latitude coordinates.",
        "properties": {
          "unit": {
@@ -197,10 +199,7 @@
              "minItems": 2,
              "maxItems": 2,
              "items": [
-               {
-                 "type": "integer",
-                 "minimum": 0
-               },
+               { "$ref": "#/definitions/timestamp" },
                {
                  "type": "number",
                  "minimum": -90,
@@ -212,7 +211,7 @@
        },
        "required": ["unit", "values"]
      },
-     "^longitude_degree$": {
+     "longitude_degree": {
        "description": "Longitude coordinates.",
        "properties": {
          "unit": {
@@ -228,10 +227,7 @@
              "minItems": 2,
              "maxItems": 2,
              "items": [
-               {
-                 "type": "integer",
-                 "minimum": 0
-               },
+               { "$ref": "#/definitions/timestamp" },
                {
                  "type": "number",
                  "minimum": -180,
@@ -243,36 +239,8 @@
        },
        "required": ["unit", "values"]
      },
-     "^(latitude|longitude)_direction$": {
-       "description": "?",
-       "properties": {
-         "unit": {
-           "description": "Units of measure use for values.",
-           "type": "null"
-         },
-         "values": {
-           "description": "Array of timestamp/value pairs.",
-           "type": "array",
-           "items": {
-             "type": "array",
-             "minItems": 2,
-             "maxItems": 2,
-             "items": [
-               {
-                 "type": "integer",
-                 "minimum": 0
-               },
-               {
-                 "type": "number"
-               }
-             ]
-           }
-         }
-       },
-       "required": ["unit", "values"]
-     },
-     "^(roll|pitch)_angle$": {
-       "description": "Roll and pitch values.",
+     "steering_angle_calculated": {
+       "description": "Steering angle with straight-line flow correction from the position of the steering motor (0 = centered, stepsize = 0.15, min = 0, max = 614.25, init = 614.10, error = 614.25).",
        "properties": {
          "unit": {
            "description": "Units of measure use for values.",
@@ -287,15 +255,11 @@
              "minItems": 2,
              "maxItems": 2,
              "items": [
-               {
-                 "type": "integer",
-                 "minimum": 0
-               },
+               { "$ref": "#/definitions/timestamp" },
                {
                  "type": "number",
-                 "minimum": -180,
-                 "maximum": 180,
-                 "exclusiveMaximum": true
+                 "minimum": 0,
+                 "maximum": 614.25
                }
              ]
            }
@@ -303,38 +267,8 @@
        },
        "required": ["unit", "values"]
      },
-     "^steering_angle_calculated$": {
-       "description": "Steering angle.",
-       "properties": {
-         "unit": {
-           "description": "Units of measure use for values.",
-           "type": "string",
-           "pattern": "^Unit_DegreOfArc$"
-         },
-         "values": {
-           "description": "Array of timestamp/value pairs.",
-           "type": "array",
-           "items": {
-             "type": "array",
-             "minItems": 2,
-             "maxItems": 2,
-             "items": [
-               {
-                 "type": "integer",
-                 "minimum": 0
-               },
-               {
-                 "type": "number",
-                 "minimum": 0
-               }
-             ]
-           }
-         }
-       },
-       "required": ["unit", "values"]
-     },
-     "^vehicle_speed$": {
-       "description": "Longitudinal vehicle speed.",
+     "vehicle_speed": {
+       "description": "The vehicle_speed is always between 0 and 655.35.",
        "properties": {
          "unit": {
            "description": "Units of measure use for values.",
@@ -349,13 +283,11 @@
              "minItems": 2,
              "maxItems": 2,
              "items": [
-               {
-                 "type": "integer",
-                 "minimum": 0
-               },
+               { "$ref": "#/definitions/timestamp" },
                {
                  "type": "number",
-                 "minimum": 0
+                 "minimum": 0,
+                 "maximum": 655.35
                }
              ]
            }

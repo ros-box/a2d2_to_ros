@@ -19,13 +19,13 @@ An example invocation is given below. For the example, assume the following loca
 * Data set: `~/data/a2d2/Ingolstadt`
 
 ```console
-$ rosrun a2d2_to_ros sensor_fusion_camera --camera-data-path ~/data/a2d2/Ingolstadt/camera_lidar/20190401_145936/camera/cam_front_left --frame-info-schema-path ~/catkin_ws/src/a2d2_to_ros/schemas/sensor_fusion_camera_frame.schema --verbose true
+$ rosrun a2d2_to_ros sensor_fusion_camera --camera-data-path ~/data/a2d2/Ingolstadt/camera_lidar/20190401_145936/camera/cam_front_center --frame-info-schema-path ~/catkin_ws/src/a2d2_to_ros/schemas/sensor_fusion_camera_frame.schema --sensor-config-path ~/data/a2d2/cams_lidars.json --sensor-config-schema-path ~/catkin_ws/src/a2d2_to_ros/schemas/sensor_config.schema
 ```
 
 This command will create the following bag file:
 
 ```console
-./20190401_145936_cam_front_left_camera.bag
+./20190401_145936_cam_front_center_camera.bag
 ```
 
 To get a full list of usage options, run with the `--help` switch:
