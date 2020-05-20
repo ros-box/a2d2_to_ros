@@ -21,19 +21,36 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
-#ifndef A2D2_TO_ROS__LIB_A2D2_TO_ROS_HPP_
-#define A2D2_TO_ROS__LIB_A2D2_TO_ROS_HPP_
+#ifndef A2D2_TO_ROS__NAME_UTILS_HPP_
+#define A2D2_TO_ROS__NAME_UTILS_HPP_
 
-#include "a2d2_to_ros/checks.hpp"
-#include "a2d2_to_ros/conversions.hpp"
-#include "a2d2_to_ros/data_pair.hpp"
-#include "a2d2_to_ros/file_utils.hpp"
-#include "a2d2_to_ros/logging.hpp"
-#include "a2d2_to_ros/msg_utils.hpp"
-#include "a2d2_to_ros/name_utils.hpp"
-#include "a2d2_to_ros/npz.hpp"
-#include "a2d2_to_ros/point_cloud_iterators.hpp"
-#include "a2d2_to_ros/sensors.hpp"
-#include "a2d2_to_ros/transform_utils.hpp"
+#include <string>
 
-#endif  // A2D2_TO_ROS__LIB_A2D2_TO_ROS_HPP_
+namespace a2d2_to_ros {
+
+/**
+ * @brief Convenience method to generate a standard TF frame name.
+ * @note This function has no test coverage.
+ */
+std::string tf_frame_name(const std::string& sensor_type,
+                          const std::string& sensor_frame);
+
+/**
+ * @brief Get camera file basename corresponding to the given lidar basename.
+ * @pre The input must be a basename (no directory and no extension)
+ * @return The basename with 'lidar' replaced by 'camera', or the empty string
+ * if 'lidar' is not present in the input.
+ */
+std::string camera_name_from_lidar_name(const std::string& basename);
+
+/**
+ * @brief Map camera name from npz lidar filename to camera name
+ * @note This function has no test coverage.
+ * @return The camera name corresponding to the lidar frame, or empty string if
+ * not found.
+ */
+std::string get_camera_name_from_frame_name(const std::string& name);
+
+}  // namespace a2d2_to_ros
+
+#endif  // A2D2_TO_ROS__NAME_UTILS_HPP_

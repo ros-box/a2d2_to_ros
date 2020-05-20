@@ -21,19 +21,38 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
-#ifndef A2D2_TO_ROS__LIB_A2D2_TO_ROS_HPP_
-#define A2D2_TO_ROS__LIB_A2D2_TO_ROS_HPP_
-
-#include "a2d2_to_ros/checks.hpp"
-#include "a2d2_to_ros/conversions.hpp"
 #include "a2d2_to_ros/data_pair.hpp"
-#include "a2d2_to_ros/file_utils.hpp"
-#include "a2d2_to_ros/logging.hpp"
-#include "a2d2_to_ros/msg_utils.hpp"
-#include "a2d2_to_ros/name_utils.hpp"
-#include "a2d2_to_ros/npz.hpp"
-#include "a2d2_to_ros/point_cloud_iterators.hpp"
-#include "a2d2_to_ros/sensors.hpp"
-#include "a2d2_to_ros/transform_utils.hpp"
 
-#endif  // A2D2_TO_ROS__LIB_A2D2_TO_ROS_HPP_
+#include "a2d2_to_ros/conversions.hpp"
+
+namespace a2d2_to_ros {
+
+//------------------------------------------------------------------------------
+
+DataPair::DataPair(std_msgs::Header header, value_type value)
+    : header(std::move(header)), value(std::move(value)) {}
+
+//------------------------------------------------------------------------------
+
+bool DataPairTimeComparator::operator()(const DataPair& lhs,
+                                        const DataPair& rhs) const {
+  return (lhs.header.stamp < rhs.header.stamp);
+}
+
+//------------------------------------------------------------------------------
+
+DataPair DataPair::build(double value, uint64_t time, std::string frame_id) {
+  std_msgs::Header header;
+  header.seq = 0;
+  header.frame_id = std::move(frame_id);
+  header.stamp = a2d2_timestamp_to_ros_time(time);
+
+  value_type val;
+  val.data = value;
+
+  return DataPair(header, val);
+}
+
+//------------------------------------------------------------------------------
+
+}  // namespace a2d2_to_ros

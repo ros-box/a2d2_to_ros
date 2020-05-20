@@ -171,7 +171,7 @@ int main(int argc, char* argv[]) {
   rapidjson::Document d_schema;
   {
     // get schema file string
-    const auto schema_string = a2d2::get_json_file_as_string(schema_path);
+    const auto schema_string = a2d2::get_file_as_string(schema_path);
     if (schema_string.empty()) {
       X_FATAL("'" << schema_path << "' failed to open or is empty.");
       return EXIT_FAILURE;
@@ -193,7 +193,7 @@ int main(int argc, char* argv[]) {
   rapidjson::Document d_json;
   {
     // get json file string
-    const auto json_string = a2d2::get_json_file_as_string(json_path);
+    const auto json_string = a2d2::get_file_as_string(json_path);
     if (json_string.empty()) {
       X_FATAL("'" << json_path << "' failed to open or is empty.");
       return EXIT_FAILURE;

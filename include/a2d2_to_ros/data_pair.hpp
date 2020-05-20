@@ -21,19 +21,46 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
-#ifndef A2D2_TO_ROS__LIB_A2D2_TO_ROS_HPP_
-#define A2D2_TO_ROS__LIB_A2D2_TO_ROS_HPP_
+#ifndef A2D2_TO_ROS__DATA_PAIR_HPP_
+#define A2D2_TO_ROS__DATA_PAIR_HPP_
 
-#include "a2d2_to_ros/checks.hpp"
-#include "a2d2_to_ros/conversions.hpp"
-#include "a2d2_to_ros/data_pair.hpp"
-#include "a2d2_to_ros/file_utils.hpp"
-#include "a2d2_to_ros/logging.hpp"
-#include "a2d2_to_ros/msg_utils.hpp"
-#include "a2d2_to_ros/name_utils.hpp"
-#include "a2d2_to_ros/npz.hpp"
-#include "a2d2_to_ros/point_cloud_iterators.hpp"
-#include "a2d2_to_ros/sensors.hpp"
-#include "a2d2_to_ros/transform_utils.hpp"
+#include <std_msgs/Header.h>
+#ifdef USE_FLOAT64
+#include <std_msgs/Float64.h>
+#else
+#include <std_msgs/Float32.h>
+#endif
 
-#endif  // A2D2_TO_ROS__LIB_A2D2_TO_ROS_HPP_
+namespace a2d2_to_ros {
+
+/** @brief Convenience storage for timestamp/value pair. */
+struct DataPair {
+#ifdef USE_FLOAT64
+  typedef std_msgs::Float64 value_type;
+#else
+  typedef std_msgs::Float32 value_type;
+#endif
+  const value_type value;
+  const std_msgs::Header header;
+
+  /**
+   * @brief Factory method to build a DataPair.
+   * @pre time is valid according to valid_ros_timestamp.
+   */
+  static DataPair build(double value, uint64_t time, std::string frame_id);
+
+ private:
+  DataPair(std_msgs::Header header, value_type value);
+};  // struct DataPair
+
+/**
+ * @brief Compare two DataPair objects by timestamp.
+ * @note Operator returns true iff lhs < rhs.
+ */
+struct DataPairTimeComparator {
+  bool operator()(const DataPair& lhs, const DataPair& rhs) const;
+};  // struct DataPairComparator
+
+}  // namespace a2d2_to_ros
+
+#endif  // A2D2_TO_ROS__DATA_PAIR_HPP_
