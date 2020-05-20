@@ -41,33 +41,23 @@ Available options are listed below. Arguments without default values are require
 
 ## Type conversions
 
-In the A2D2 data set, floating point types are stored with double precision. However, this much precision is typically not needed (and possibly not even necessary, see [FAQ.md](FAQ.md)).For that reason, this package converts double precision floating point information to single. If double precision is desired, edit the [CMakeLists.txt](CMakeLists.txt) file to uncomment the `-DUSE_FLOAT64` compile definition:
+In the A2D2 data set, floating point types are stored with double precision. However, this much precision is not necessary (see [FAQ.md](FAQ.md)). For that reason, this package converts double precision floating point information to single. Additionally, in the interest of saving space where possible, integer and bool fields use smaller width data types.
 
-```cmake
-# uncomment to use double precision instead of single for float values;
-# unless really need double precision, best to leave it single
-#add_definitions(-DUSE_FLOAT64)
-```
+The full mapping of types is provided in the table below. **A2D2 type** is the type used by numpy to store the data, **PointCloud2 type** is the type used to write data to the point cloud message (for this the type itself is not so important as the width), and **Use type** is the type the value should be interpreted as when retrieving it from the message. Programmatically the type conversion information is available in the `ReadTypes` and `WriteTypes` structs in [include/a2d2\_to\_ros/lib\_a2d2\_to\_ros.hpp](include/a2d2_to_ros/lib_a2d2_to_ros.hpp):
 
-As noted in the cmake file, this can cause ROS tools, such as RViz, to be unable to interpret the messages.
-
-Additionally, in the interest of saving space where possible, integer and bool fields use smaller width data types. Unlike the float values, however, this does not result in potential loss of information because the full integer widths are never used.
-
-The full mapping of types is provided in the table below. **A2D2 type** is the type used by numpy to store the data, **PointCloud2 type** is the type used to write data to the point cloud message (for this the type itself is not so important as the width), and **Interpretation type** is the type the value should be interpreted as when retrieving it from the message. Programmatically the type conversion information is available in the `ReadTypes` and `WriteTypes` structs in [include/a2d2\_to\_ros/lib\_a2d2\_to\_ros.hpp](include/a2d2_to_ros/lib_a2d2_to_ros.hpp):
-
-| A2D2 field                 | A2D2 type | PointCloud2 type                         | Interpretation type |
-|----------------------------|:---------:|:----------------------------------------:|--------------------:|
-| *pcloud\_points*           | `float64` | `sensor_msgs::PointField::FLOAT(32\|64)` | `(float\|double)`   |
-| *pcloud\_attr.col*         | `float64` | `sensor_msgs::PointField::FLOAT(32\|64)` | `(float\|double)`   |
-| *pcloud\_attr.depth*       | `float64` | `sensor_msgs::PointField::FLOAT(32\|64)` | `(float\|double)`   |
-| *pcloud\_attr.distance*    | `float64` | `sensor_msgs::PointField::FLOAT(32\|64)` | `(float\|double)`   |
-| *pcloud\_attr.row*         | `float64` | `sensor_msgs::PointField::FLOAT(32\|64)` | `(float\|double)`   |
-| *pcloud\_attr.rectime*     | `int64`   | `sensor_msgs::PointField::FLOAT64`       | `uint64_t`          |
-| *pcloud\_attr.timestamp*   | `int64`   | `sensor_msgs::PointField::FLOAT64`       | `uint64_t`          |
-| *pcloud\_attr.lidar\_id*   | `int64`   | `sensor_msgs::PointField::UINT8`         | `uint8_t`           |
-| *pcloud\_attr.reflectance* | `int64`   | `sensor_msgs::PointField::UINT8`         | `uint8_t`           |
-| *pcloud\_attr.boundary*    | `int64`   | `sensor_msgs::PointField::UINT8`         | `bool`              |
-| *pcloud\_attr.valid*       | `int64`   | `sensor_msgs::PointField::UINT8`         | `bool`              |
+| A2D2 field                 | A2D2 type | PointCloud2 type                   | Use type   |
+|----------------------------|:---------:|:----------------------------------:|-----------:|
+| *pcloud\_points*           | `float64` | `sensor_msgs::PointField::FLOAT32` | `float`    |
+| *pcloud\_attr.col*         | `float64` | `sensor_msgs::PointField::FLOAT32` | `float`    |
+| *pcloud\_attr.depth*       | `float64` | `sensor_msgs::PointField::FLOAT32` | `float`    |
+| *pcloud\_attr.distance*    | `float64` | `sensor_msgs::PointField::FLOAT32` | `float`    |
+| *pcloud\_attr.row*         | `float64` | `sensor_msgs::PointField::FLOAT32` | `float`    |
+| *pcloud\_attr.rectime*     | `int64`   | `sensor_msgs::PointField::FLOAT64` | `uint64_t` |
+| *pcloud\_attr.timestamp*   | `int64`   | `sensor_msgs::PointField::FLOAT64` | `uint64_t` |
+| *pcloud\_attr.lidar\_id*   | `int64`   | `sensor_msgs::PointField::UINT8`   | `uint8_t`  |
+| *pcloud\_attr.reflectance* | `int64`   | `sensor_msgs::PointField::UINT8`   | `uint8_t`  |
+| *pcloud\_attr.boundary*    | `int64`   | `sensor_msgs::PointField::UINT8`   | `bool`     |
+| *pcloud\_attr.valid*       | `int64`   | `sensor_msgs::PointField::UINT8`   | `bool`     |
 
 An iterator struct is provided for convenience to programmatically store and retrieve the data in the point clouds. An example of using the iterator struct is given below:
 

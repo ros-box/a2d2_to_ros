@@ -14,7 +14,7 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # uncomment to use double precision instead of single for float values;
-# unless really need double precision, best to leave it single
+# there shouldn't be any reason to actually use this
 #add_definitions(-DUSE_FLOAT64)
 
 # uncomment one of these to output logging information and warnings/errors

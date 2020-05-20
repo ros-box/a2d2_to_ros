@@ -475,7 +475,7 @@ DataPair DataPair::build(double value, uint64_t time, std::string frame_id) {
   header.frame_id = std::move(frame_id);
   header.stamp = a2d2_timestamp_to_ros_time(time);
 
-  std_msgs::Float64 val;
+  value_type val;
   val.data = value;
 
   return DataPair(header, val);
@@ -483,7 +483,7 @@ DataPair DataPair::build(double value, uint64_t time, std::string frame_id) {
 
 //------------------------------------------------------------------------------
 
-DataPair::DataPair(std_msgs::Header header, std_msgs::Float64 value)
+DataPair::DataPair(std_msgs::Header header, value_type value)
     : header(std::move(header)), value(std::move(value)) {}
 
 //------------------------------------------------------------------------------
