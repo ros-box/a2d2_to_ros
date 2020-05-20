@@ -1,6 +1,6 @@
 # Converter: Sensor Fusion > Sensor Configuration
 
-This converter parses the `cams_lidars.json` sensor config file and publishes the corresponding [TF2](http://wiki.ros.org/tf2) tree 
+This converter parses the `cams_lidars.json` sensor config file and publishes the corresponding [TF2](http://wiki.ros.org/tf2) tree.
 
 ### Usage
 
@@ -10,16 +10,16 @@ An example invocation is given below. For the example, assume the following loca
 * Data set: `~/data/a2d2/Ingolstadt`
 
 ```console
-$ rosrun a2d2_to_ros sensor_fusion_config --sensor-config-path ~/data/a2d2/cams_lidars.json --sensor-config-schema-path ~/catkin_ws/src/a2d2_to_ros/schemas/sensor_config.schema --reference-bag-path ~/catkin_ws/20190401_145936_cam_front_center.bag
+$ rosrun a2d2_to_ros sensor_fusion_config --sensor-config-path ~/data/a2d2/cams_lidars.json --sensor-config-schema-path ~/catkin_ws/src/a2d2_to_ros/schemas/sensor_config.schema --reference-bag-path ~/catkin_ws/20190401_145936_cam_front_center_lidar.bag
 ```
 
 This command will create the following bag file, whose name is the same as the reference bag with "\_tf" appended to the basename:
 
 ```console
-./20190401_145936_cam_front_center_tf.bag
+./20190401_145936_cam_front_center_lidar_tf.bag
 ```
 
-The time span that TF messages are published for is taken from the bag file givne by `--reference-bag-path` argument. So, for instance, if the lidar bags are generated, this utility can then be used to generate a corresponding TF bag file.
+The time span that TF messages are published for is taken from the bag file given by `--reference-bag-path` argument. So, for instance, if the lidar bags are generated, this utility can then be used to generate a corresponding TF bag file.
 
 To get a full list of usage options, run with the `--help` switch:
 

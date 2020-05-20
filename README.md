@@ -32,6 +32,16 @@ $ rosdep install a2d2_to_ros --ignore-src -r -y
 * [Sensor Fusion > Lidar](docs/LIDAR_CONVERTER.md)
 * [Sensor Fusion > Bus Signal](docs/BUS_SIGNAL_CONVERTER.md)
 
+## Visualization
+
+An example RViz config is included along a convenience launch file:
+
+```console
+$ roslaunch a2d2_to_ros visualize.launch
+```
+
+This launches RViz pre-configured to visualize the TF tree, and the front-facing camera and lidar data.
+
 ## Compatibility
 
 This code is built and tested under:

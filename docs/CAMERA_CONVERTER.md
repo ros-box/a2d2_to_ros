@@ -2,6 +2,15 @@
 
 This converter parses camera frame data converts each to a `sensor_msgs::Image` message.
 
+## JSON validation
+
+Two [JSON Schema](http://json-schema.org/) files are provided to perform validation of the data set file:
+
+* [schemas/sensor\_config.schema](schemas/sensor_config.schema): validates configuration file `cams_lidars.json`, which contains camera calibration information
+* [schemas/sensor\_fusion\_camera\_frame.schema](schemas/sensor_fusion_camera_frame.schema): validates the frame info JSON files associated with each camera frame, which contains timestamp information
+
+As of this writing, RapidJSON validates against [JSON Schema draft 04](https://rapidjson.org/md_doc_schema.html#Conformance).
+
 ## Usage
 
 An example invocation is given below. For the example, assume the following locations:
@@ -36,3 +45,9 @@ Available options are listed below. Arguments without default values are require
   -o [ --output-path ] arg (=.)                    Optional: Path for the output bag file.
   -v [ --verbose ] arg (=0)                        Optional: Show name of each file after it is processed.
 ```
+
+## Bag file conventions
+
+* The message time in the bag file is the same as the timestamp in the header message.
+* The output bag file is given the same basename as the input JSON file.
+* Each of the topics in the bag file (except for `/clock`) is prefixed with `/a2d2/[RECORD_TIME]`
