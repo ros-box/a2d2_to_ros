@@ -1,5 +1,5 @@
 {
-  "$id": "",
+  "$id": "https://gitlab.com/MaplessAI/external/a2d2_to_ros/-/blob/master/schemas/sensor_config.schema",
   "$schema": "http://json-schema.org/draft-04/schema#",
   "title": "Sensor Configuration",
   "description": "A2D2 Data Set Sensor Configuration",
