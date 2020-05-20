@@ -57,20 +57,20 @@ Answers, where available, are given directly below the questions. If a question 
 
 ## Sensor fusion lidar data
 
-1. Are the points in the point cloud ordered in any way? If so, what is the ordering?
-1. What is the `pcloud_attr.rectime` lidar data field?
+1. **Are the points in the point cloud ordered in any way? If so, what is the ordering?**
+1. **What is the `pcloud_attr.rectime` lidar data field?**
     * *Rectime is the recording time when this data point was recorded. It is in TAI (i.e. no leap seconds) time zone and not UTC. The same is true for the camera timestamps in the json files. However, the bus data is in UTC and therefore there’s a delta of 37s when matching/registering data from camera/lidar to bus.*
-1. What is the `pcloud_attr.boundary` lidar data field?
+1. **What is the `pcloud_attr.boundary` lidar data field?**
     * *Boundary flag is true if the data point is coming from bordering lidar channel, probably ring 0 and ring 15 in the data set (recorded with VLP16).*
-1. What is the `pcloud_attr.valid` lidar data field?
+1. **What is the `pcloud_attr.valid` lidar data field?**
     * *Valid is only true for points that need to be considered. There are some points in the xy plane near the sensor that need not be considered. That is, if valid != true, don’t consider this point.*
-1. What are the units for `pcloud_attr.reflectance`?
+1. **What are the units for `pcloud_attr.reflectance`?**
     * *See Velodyne VLP16 manual Sec 6.1*
-1. Are `pcloud_attr.depth` and `pcloud_attr.distance` strictly non-negative?
+1. **Are `pcloud_attr.depth` and `pcloud_attr.distance` strictly non-negative?**
     * *Yes.*
-1. Are `pcloud_attr.row` and `pcloud_attr.col` supposed to be non-negative? What is the convention to convert to integer pixel coordinates?
+1. **Are `pcloud_attr.row` and `pcloud_attr.col` supposed to be non-negative? What is the convention to convert to integer pixel coordinates?**
     * *They may be negative but then they would fall outside the image, and thus not really usable. You may choose whatever pixel conversion convention makes sense for the application you have in mind. Typically they are simply rounded to the nearest integer.*
-1. Are the lidar points in the raw sensor fusion data set motion compensated already?
+1. **Are the lidar points in the raw sensor fusion data set motion compensated already?**
     * *No.*
 
 ## Semantic segmentation bus signal data
