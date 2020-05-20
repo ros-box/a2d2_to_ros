@@ -4,83 +4,53 @@
   "title": "Camera Frame Info",
   "description": "A2D2 Camera Frame Info Schema for Sensor Fusion Data Set",
   "type": "object",
+  "definitions": {
+    "axis": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": [
+        { "type": "number" },
+        { "type": "number" },
+        { "type": "number" }
+      ]
+    },
+    "axes": {
+      "type": "object",
+      "properties": {
+        "origin": { "$ref": "#/definitions/axis" },
+        "x-axis": { "$ref": "#/definitions/axis" },
+        "y-axis": { "$ref": "#/definitions/axis" }
+      },
+      "required": [ "origin", "x-axis", "y-axis" ]
+    },
+    "lidar_id": {
+      "type": "string",
+      "pattern": "^(front_center|front_left|front_right|rear_left|rear_right)$"
+    },
+    "camera_id": {
+      "type": "string",
+      "pattern": "^(front_center|front_left|front_right|side_left|side_right|rear_center)$"
+    }
+  },
   "properties": {
     "cam_tstamp": {
       "type": "integer",
       "minimum": 0
     },
-    "cam_name": {
-      "type": "string",
-      "pattern": "^(front_center|front_left|front_right|side_left|side_right|rear_center)$"
-    },
-    "image_zoom": {
-      "type": "number"
-    },
-    "image_png": {
-      "type": "string"
-    },
-    "pcld_npz": {
-      "type": "string"
-    },
-    "pcld_view": {
-      "type": "object",
-      "properties": {
-        "origin": {
-          "type": "array",
-          "minItems": 3,
-          "maxItems": 3,
-          "items": [
-            { "type": "number" },
-            { "type": "number" },
-            { "type": "number" }
-          ]
-        },
-        "x-axis": {
-          "type": "array",
-          "minItems": 3,
-          "maxItems": 3,
-          "items": [
-            { "type": "number" },
-            { "type": "number" },
-            { "type": "number" }
-          ]
-        },
-        "y-axis": {
-          "type": "array",
-          "minItems": 3,
-          "maxItems": 3,
-          "items": [
-            { "type": "number" },
-            { "type": "number" },
-            { "type": "number" }
-          ]
-        }
-      },
-      "required": [ "origin", "x-axis", "y-axis" ]
-    },
+    "cam_name": { "$ref": "#/definitions/camera_id" },
+    "image_zoom": { "type": "number" },
+    "image_png": { "type": "string" },
+    "pcld_npz": { "type": "string" },
+    "pcld_view": { "$ref": "#/definitions/axes" },
     "lidar_ids": {
       "type": "object",
       "properties": {
-        "0": {
-          "type": "string",
-          "pattern": "^(front_center|front_left|front_right|rear_left|rear_right)$"
-        },
-        "1": {
-          "type": "string",
-          "pattern": "^(front_center|front_left|front_right|rear_left|rear_right)$"
-        },
-        "2": {
-          "type": "string",
-          "pattern": "^(front_center|front_left|front_right|rear_left|rear_right)$"
-        },
-        "3": {
-          "type": "string",
-          "pattern": "^(front_center|front_left|front_right|rear_left|rear_right)$"
-        },
-        "4": {
-          "type": "string",
-          "pattern": "^(front_center|front_left|front_right|rear_left|rear_right)$"
-        }
+        "0": { "$ref": "#/definitions/lidar_id" },
+        "1": { "$ref": "#/definitions/lidar_id" },
+        "2": { "$ref": "#/definitions/lidar_id" },
+        "3": { "$ref": "#/definitions/lidar_id" },
+        "4": { "$ref": "#/definitions/lidar_id" }
       },
       "required": [ "0", "1", "2", "3", "4" ]
     }
