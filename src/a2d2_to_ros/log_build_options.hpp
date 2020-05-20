@@ -38,7 +38,7 @@
 #define PRECISION_MSG                                                         \
   X_INFO(                                                                     \
       "---Built to use double precision for float values; be aware this may " \
-      "break compatibility with Rviz.")
+      "break compatibility with RViz.")
 #else
 #define PRECISION_MSG \
   X_INFO("---Built to use single precision for float values.")

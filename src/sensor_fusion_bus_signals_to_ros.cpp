@@ -35,7 +35,11 @@
 #include <rosbag/bag.h>
 #include <rosbag/view.h>
 #include <rosgraph_msgs/Clock.h>
+#ifdef USE_FLOAT64
 #include <std_msgs/Float64.h>
+#else
+#include <std_msgs/Float32.h>
+#endif
 #include <std_msgs/Header.h>
 #include <std_msgs/String.h>
 
@@ -329,7 +333,7 @@ int main(int argc, char* argv[]) {
 
       if (include_converted) {
         const auto ros_value = a2d2::to_ros_units(units, data.value.data);
-        std_msgs::Float64 ros_value_msg;
+        a2d2::DataPair::value_type ros_value_msg;
         ros_value_msg.data = ros_value;
         bag.write(topic_prefix + "/" + name + "/" + _VALUE_TOPIC, stamp,
                   ros_value_msg);

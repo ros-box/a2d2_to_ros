@@ -15,7 +15,7 @@ Answers, where available, are given directly below the questions and have come f
 1. **Do all subsets in the unlabeled data set span the same time?**
     * ?
 1. **What convention do the timestamps follow?**
-    * *Bus signal timestamps are in [UTC](https://en.wikipedia.org/wiki/Coordinated_Universal_Time), all others are [TAI](https://en.wikipedia.org/wiki/International_Atomic_Time)*
+    * *All timestamps encode microseconds since Epoch begin. Bus signal timestamps are in [UTC](https://en.wikipedia.org/wiki/Coordinated_Universal_Time), all others are [TAI](https://en.wikipedia.org/wiki/International_Atomic_Time)*
 1. **What is the precision of real-valued data (e.g., single precision, double precision, etc.)?**
     * *None of the data in the data set was recorded with greater than single precision. (For lidar data, note that numpy stores the point data with double precision, but the data itself is only generated with single precision.)*
 1. **Are the labeled data a subset of the unlabeled data, or are they different sets?**

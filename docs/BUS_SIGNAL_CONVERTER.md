@@ -49,9 +49,9 @@ Available options are listed below. Arguments without default values are require
 ## Bag file conventions
 
 * Each field in the JSON file corresponds to up to four topics in the generated bag:
-    * `original_value`: The original value recorded in the JSON file as a [std\_msgs::Float64](http://docs.ros.org/api/std_msgs/html/msg/Float64.html) message
+    * `original_value`: The original value recorded in the JSON file as a [std\_msgs::Float32](http://docs.ros.org/api/std_msgs/html/msg/Float32.html) message
     * `original_units`: The units of the original value recorded in the JSON file as a [std\_msgs::String](http://docs.ros.org/api/std_msgs/html/msg/String.html) message (this is published only once per bag file).
-    * `value`: The value in the JSON file converted to ROS standard units as a [std\_msgs::Float64](http://docs.ros.org/api/std_msgs/html/msg/Float64.html) message
+    * `value`: The value in the JSON file converted to ROS standard units as a [std\_msgs::Float32](http://docs.ros.org/api/std_msgs/html/msg/Float32.html) message
     * `header`: A [std\_msgs::Header](https://docs.ros.org/melodic/api/std_msgs/html/msg/Header.html) message that contains the timestamp of the recorded data
 * The topics under each field name are guaranteed to all have the same header time stamp and message time
 * The `original_value` and `original_units` topics are not included if the converter is run with `--include-original-values false`

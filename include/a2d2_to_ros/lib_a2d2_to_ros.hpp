@@ -41,7 +41,11 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/point_cloud2_iterator.h>
 #include <shape_msgs/SolidPrimitive.h>
+#ifdef USE_FLOAT64
 #include <std_msgs/Float64.h>
+#else
+#include <std_msgs/Float32.h>
+#endif
 #include <std_msgs/Header.h>
 #include <Eigen/Geometry>
 #include "ros_cnpy/cnpy.h"
@@ -367,8 +371,13 @@ bool verify_npz_structure(const std::map<std::string, cnpy::NpyArray>& npz);
 
 /** @brief Convenience storage for timestamp/value pair. */
 struct DataPair {
+#ifdef USE_FLOAT64
+  typedef std_msgs::Float64 value_type;
+#else
+  typedef std_msgs::Float32 value_type;
+#endif
+  const value_type value;
   const std_msgs::Header header;
-  const std_msgs::Float64 value;
 
   /**
    * @brief Factory method to build a DataPair.
@@ -377,7 +386,7 @@ struct DataPair {
   static DataPair build(double value, uint64_t time, std::string frame_id);
 
  private:
-  DataPair(std_msgs::Header header, std_msgs::Float64 value);
+  DataPair(std_msgs::Header header, value_type value);
 };  // struct DataPair
 
 /**
