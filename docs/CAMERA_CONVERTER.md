@@ -1,6 +1,6 @@
 # Converter: Sensor Fusion > Camera
 
-This converter parses camera frame data converts each to a `sensor_msgs::Image` message.
+This converter parses camera frame data converts each to a [sensor\_msgs::Image](https://docs.ros.org/melodic/api/sensor_msgs/html/msg/Image.html) message. In addition, the camera calibration data is published in a [sensor\_msgs::CameraInfo](https://docs.ros.org/melodic/api/sensor_msgs/html/msg/CameraInfo.html) message.
 
 ## JSON validation
 
