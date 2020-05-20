@@ -180,7 +180,7 @@ int main(int argc, char* argv[]) {
   {
     // get schema file string
     const auto schema_string =
-        a2d2::get_json_file_as_string(camera_frame_schema_path);
+        a2d2::get_file_as_string(camera_frame_schema_path);
     if (schema_string.empty()) {
       X_FATAL("'" << camera_frame_schema_path
                   << "' failed to open or is empty.");
@@ -231,7 +231,7 @@ int main(int argc, char* argv[]) {
       const auto camera_data_file =
           camera_path + "/" + camera_basename + ".json";
       // get json file string
-      const auto json_string = a2d2::get_json_file_as_string(camera_data_file);
+      const auto json_string = a2d2::get_file_as_string(camera_data_file);
       if (json_string.empty()) {
         X_FATAL("'" << camera_data_file << "' failed to open or is empty.");
         bag.close();
@@ -300,7 +300,7 @@ int main(int argc, char* argv[]) {
       return EXIT_FAILURE;
     }
 
-    const auto npz_structure_valid = a2d2::verify_npz_structure(npz);
+    const auto npz_structure_valid = a2d2::npz::verify_structure(npz);
     if (!npz_structure_valid) {
       X_FATAL("Encountered unexpected structure in the data. Cannot continue.");
       bag.close();
@@ -330,7 +330,7 @@ int main(int argc, char* argv[]) {
       return EXIT_FAILURE;
     }
 
-    const auto is_dense = a2d2::any_lidar_points_invalid(valid);
+    const auto is_dense = a2d2::npz::any_points_invalid(valid);
     const auto n_points = points.shape[a2d2::npz::Fields::ROW_SHAPE_IDX];
     auto msg = a2d2::build_pc2_msg(frame, frame_timestamp_ros, is_dense,
                                    static_cast<uint32_t>(n_points));

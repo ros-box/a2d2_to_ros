@@ -21,19 +21,31 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
-#ifndef A2D2_TO_ROS__LIB_A2D2_TO_ROS_HPP_
-#define A2D2_TO_ROS__LIB_A2D2_TO_ROS_HPP_
-
-#include "a2d2_to_ros/checks.hpp"
-#include "a2d2_to_ros/conversions.hpp"
-#include "a2d2_to_ros/data_pair.hpp"
-#include "a2d2_to_ros/file_utils.hpp"
-#include "a2d2_to_ros/logging.hpp"
-#include "a2d2_to_ros/msg_utils.hpp"
-#include "a2d2_to_ros/name_utils.hpp"
-#include "a2d2_to_ros/npz.hpp"
-#include "a2d2_to_ros/point_cloud_iterators.hpp"
 #include "a2d2_to_ros/sensors.hpp"
-#include "a2d2_to_ros/transform_utils.hpp"
 
-#endif  // A2D2_TO_ROS__LIB_A2D2_TO_ROS_HPP_
+namespace a2d2_to_ros {
+namespace sensors {
+
+//------------------------------------------------------------------------------
+
+const std::string Names::LIDARS = "lidars";
+const std::string Names::CAMERAS = "cameras";
+
+//------------------------------------------------------------------------------
+
+std::array<std::string, 8> Frames::get_files() {
+  return {"frontcenter", "frontleft",  "frontright", "sideleft",
+          "sideright",   "rearcenter", "rearleft",   "rearright"};
+}
+
+//------------------------------------------------------------------------------
+
+std::array<std::string, 8> Frames::get_sensors() {
+  return {"front_center", "front_left",  "front_right", "side_left",
+          "side_right",   "rear_center", "rear_left",   "rear_right"};
+}
+
+//------------------------------------------------------------------------------
+
+}  // namespace sensors
+}  // namespace a2d2_to_ros

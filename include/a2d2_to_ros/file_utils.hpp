@@ -21,19 +21,28 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
-#ifndef A2D2_TO_ROS__LIB_A2D2_TO_ROS_HPP_
-#define A2D2_TO_ROS__LIB_A2D2_TO_ROS_HPP_
+#ifndef A2D2_TO_ROS__FILE_UTILS_HPP_
+#define A2D2_TO_ROS__FILE_UTILS_HPP_
 
-#include "a2d2_to_ros/checks.hpp"
-#include "a2d2_to_ros/conversions.hpp"
-#include "a2d2_to_ros/data_pair.hpp"
-#include "a2d2_to_ros/file_utils.hpp"
-#include "a2d2_to_ros/logging.hpp"
-#include "a2d2_to_ros/msg_utils.hpp"
-#include "a2d2_to_ros/name_utils.hpp"
-#include "a2d2_to_ros/npz.hpp"
-#include "a2d2_to_ros/point_cloud_iterators.hpp"
-#include "a2d2_to_ros/sensors.hpp"
-#include "a2d2_to_ros/transform_utils.hpp"
+#include <string>
 
-#endif  // A2D2_TO_ROS__LIB_A2D2_TO_ROS_HPP_
+namespace a2d2_to_ros {
+
+/**
+ * @brief Get the frame of the data from its filename.
+ * @return The empty string if a frame name is not present or if multiple
+ * different names are present.
+ */
+std::string frame_from_filename(const std::string& filename);
+
+/**
+ * @brief Load an entire file into memory as a string.
+ * @pre The file pointed to by path is non-empty.
+ * @note This function has no test coverage.
+ * @return The file text, or an empty string if loading the file failed.
+ */
+std::string get_file_as_string(const std::string& path);
+
+}  // namespace a2d2_to_ros
+
+#endif  // A2D2_TO_ROS__FILE_UTILS_HPP_

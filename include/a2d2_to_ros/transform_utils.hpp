@@ -21,19 +21,30 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
-#ifndef A2D2_TO_ROS__LIB_A2D2_TO_ROS_HPP_
-#define A2D2_TO_ROS__LIB_A2D2_TO_ROS_HPP_
+#ifndef A2D2_TO_ROS__TRANSFORM_UTILS_HPP_
+#define A2D2_TO_ROS__TRANSFORM_UTILS_HPP_
 
-#include "a2d2_to_ros/checks.hpp"
-#include "a2d2_to_ros/conversions.hpp"
-#include "a2d2_to_ros/data_pair.hpp"
-#include "a2d2_to_ros/file_utils.hpp"
-#include "a2d2_to_ros/logging.hpp"
-#include "a2d2_to_ros/msg_utils.hpp"
-#include "a2d2_to_ros/name_utils.hpp"
-#include "a2d2_to_ros/npz.hpp"
-#include "a2d2_to_ros/point_cloud_iterators.hpp"
-#include "a2d2_to_ros/sensors.hpp"
-#include "a2d2_to_ros/transform_utils.hpp"
+#include <Eigen/Geometry>
 
-#endif  // A2D2_TO_ROS__LIB_A2D2_TO_ROS_HPP_
+namespace a2d2_to_ros {
+
+/**
+ * @brief Given an X and a Y axis in 3-space, compute a right-handed orthonormal
+ * basis with Z orthogonal to the input X and Y, and a new Y orthogonal to X and
+ * the computed Z.
+ * @pre Vectors X and Y are unique and non-singular.
+ * @return A 3x3 matrix whose columns [X, Y, Z] form a right-handed orthonormal
+ * basis. If input X and Y are not valid, a zero matrix is returned.
+ */
+Eigen::Matrix3d get_orthonormal_basis(const Eigen::Vector3d& X,
+                                      const Eigen::Vector3d& Y, double epsilon);
+
+/**
+ * @brief Compute transform between sensor and global coordinates.
+ */
+Eigen::Affine3d Tx_global_sensor(const Eigen::Matrix3d& basis,
+                                 const Eigen::Vector3d& origin);
+
+}  // namespace a2d2_to_ros
+
+#endif  // A2D2_TO_ROS__TRANSFORM_UTILS_HPP_

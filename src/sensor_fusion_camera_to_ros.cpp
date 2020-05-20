@@ -158,7 +158,7 @@ int main(int argc, char* argv[]) {
   rapidjson::Document sensor_config_d;
   {
     const auto sensor_config_json_string =
-        a2d2::get_json_file_as_string(sensor_config_path);
+        a2d2::get_file_as_string(sensor_config_path);
     if (sensor_config_json_string.empty()) {
       X_FATAL("'" << sensor_config_path << "' failed to open or is empty.");
       return EXIT_FAILURE;
@@ -182,7 +182,7 @@ int main(int argc, char* argv[]) {
   {
     // get schema file string
     const auto schema_string =
-        a2d2::get_json_file_as_string(sensor_config_schema_path);
+        a2d2::get_file_as_string(sensor_config_schema_path);
     if (schema_string.empty()) {
       X_FATAL("'" << sensor_config_schema_path
                   << "' failed to open or is empty.");
@@ -324,7 +324,7 @@ int main(int argc, char* argv[]) {
   {
     // get schema file string
     const auto schema_string =
-        a2d2::get_json_file_as_string(camera_frame_schema_path);
+        a2d2::get_file_as_string(camera_frame_schema_path);
     if (schema_string.empty()) {
       X_FATAL("'" << camera_path << "' failed to open or is empty.");
       return EXIT_FAILURE;
@@ -362,7 +362,7 @@ int main(int argc, char* argv[]) {
       const auto p = boost::filesystem::path(f);
       const auto b = boost::filesystem::basename(p);
       const auto camera_data_file = (camera_path + "/" + b + ".json");
-      const auto json_string = a2d2::get_json_file_as_string(camera_data_file);
+      const auto json_string = a2d2::get_file_as_string(camera_data_file);
       if (json_string.empty()) {
         X_FATAL("'" << camera_data_file << "' failed to open or is empty.");
         bag.close();

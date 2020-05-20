@@ -21,19 +21,42 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
-#ifndef A2D2_TO_ROS__LIB_A2D2_TO_ROS_HPP_
-#define A2D2_TO_ROS__LIB_A2D2_TO_ROS_HPP_
-
-#include "a2d2_to_ros/checks.hpp"
-#include "a2d2_to_ros/conversions.hpp"
-#include "a2d2_to_ros/data_pair.hpp"
-#include "a2d2_to_ros/file_utils.hpp"
-#include "a2d2_to_ros/logging.hpp"
-#include "a2d2_to_ros/msg_utils.hpp"
-#include "a2d2_to_ros/name_utils.hpp"
-#include "a2d2_to_ros/npz.hpp"
-#include "a2d2_to_ros/point_cloud_iterators.hpp"
-#include "a2d2_to_ros/sensors.hpp"
 #include "a2d2_to_ros/transform_utils.hpp"
 
-#endif  // A2D2_TO_ROS__LIB_A2D2_TO_ROS_HPP_
+#include "a2d2_to_ros/checks.hpp"
+
+namespace a2d2_to_ros {
+
+//------------------------------------------------------------------------------
+
+Eigen::Matrix3d get_orthonormal_basis(const Eigen::Vector3d& X,
+                                      const Eigen::Vector3d& Y,
+                                      double epsilon) {
+  Eigen::Matrix3d basis;
+  basis.setZero();
+  if (!axes_are_valid(X, Y, epsilon)) {
+    return basis;
+  }
+
+  const Eigen::Vector3d Z = X.cross(Y);
+  const Eigen::Vector3d Y_ortho = Z.cross(X);
+
+  basis.col(0) = X.normalized();
+  basis.col(1) = Y_ortho.normalized();
+  basis.col(2) = Z.normalized();
+  return basis;
+}
+
+//------------------------------------------------------------------------------
+
+Eigen::Affine3d Tx_global_sensor(const Eigen::Matrix3d& basis,
+                                 const Eigen::Vector3d& origin) {
+  const Eigen::Matrix3d R = basis;
+  const Eigen::Translation3d T(origin);
+  Eigen::Affine3d Tx = (T * R);
+  return Tx;
+}
+
+//------------------------------------------------------------------------------
+
+}  // namespace a2d2_to_ros

@@ -21,19 +21,39 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
-#ifndef A2D2_TO_ROS__LIB_A2D2_TO_ROS_HPP_
-#define A2D2_TO_ROS__LIB_A2D2_TO_ROS_HPP_
+#include <gtest/gtest.h>
 
-#include "a2d2_to_ros/checks.hpp"
-#include "a2d2_to_ros/conversions.hpp"
-#include "a2d2_to_ros/data_pair.hpp"
-#include "a2d2_to_ros/file_utils.hpp"
-#include "a2d2_to_ros/logging.hpp"
-#include "a2d2_to_ros/msg_utils.hpp"
 #include "a2d2_to_ros/name_utils.hpp"
-#include "a2d2_to_ros/npz.hpp"
-#include "a2d2_to_ros/point_cloud_iterators.hpp"
-#include "a2d2_to_ros/sensors.hpp"
-#include "a2d2_to_ros/transform_utils.hpp"
 
-#endif  // A2D2_TO_ROS__LIB_A2D2_TO_ROS_HPP_
+namespace a2d2_to_ros {
+
+//------------------------------------------------------------------------------
+
+TEST(A2D2_to_ROS_name_utils, camera_name_from_lidar_name) {
+  {
+    const auto name = std::string("20190401145936_lidar_frontcenter_000000080");
+    const auto camera_name = camera_name_from_lidar_name(name);
+    const auto camera_name_expected =
+        std::string("20190401145936_camera_frontcenter_000000080");
+    EXPECT_EQ(camera_name, camera_name_expected);
+  }
+
+  {
+    const auto name = std::string("lidar");
+    const auto camera_name = camera_name_from_lidar_name(name);
+    const auto camera_name_expected = std::string("camera");
+    EXPECT_EQ(camera_name, camera_name_expected);
+  }
+
+  {
+    const auto name = std::string("20190401145936_ldar_frontcenter_000000080");
+    const auto camera_name = camera_name_from_lidar_name(name);
+    const auto camera_name_expected = std::string("");
+    EXPECT_EQ(camera_name, camera_name_expected);
+  }
+}
+
+//------------------------------------------------------------------------------
+
+}  // namespace a2d2_to_ros
+

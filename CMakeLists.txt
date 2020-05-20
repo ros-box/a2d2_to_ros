@@ -152,7 +152,19 @@ include_directories(
 )
 
 ## Declare a C++ library
-add_library(${PROJECT_NAME} src/${PROJECT_NAME}/lib_a2d2_to_ros.cpp)
+add_library(${PROJECT_NAME}
+  src/${PROJECT_NAME}/transform_utils.cpp
+  src/${PROJECT_NAME}/msg_utils.cpp
+  src/${PROJECT_NAME}/conversions.cpp
+  src/${PROJECT_NAME}/checks.cpp
+  src/${PROJECT_NAME}/data_pair.cpp
+  src/${PROJECT_NAME}/point_cloud_iterators.cpp
+  src/${PROJECT_NAME}/npz.cpp
+  src/${PROJECT_NAME}/sensors.cpp
+  src/${PROJECT_NAME}/file_utils.cpp
+  src/${PROJECT_NAME}/name_utils.cpp
+  src/${PROJECT_NAME}/transform_utils.cpp
+)
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
@@ -265,7 +277,12 @@ install(DIRECTORY
 ## Add gtest based cpp test target and link libraries
 if(CATKIN_ENABLE_TESTING)
   catkin_add_gtest(${PROJECT_NAME}-test
-    test/test_lib_a2d2_to_ros.cpp
+    test/test_checks.cpp
+    test/test_conversions.cpp
+    test/test_file_utils.cpp
+    test/test_msg_utils.cpp
+    test/test_name_utils.cpp
+    test/test_transform_utils.cpp
     test/test_main.cpp
   )
   if(TARGET ${PROJECT_NAME}-test)
