@@ -43,7 +43,7 @@ Available options are listed below. Arguments without default values are require
 
 In the A2D2 data set, floating point types are stored with double precision. However, this much precision is not necessary (see [FAQ.md](FAQ.md)). For that reason, this package converts double precision floating point information to single. Additionally, in the interest of saving space where possible, integer and bool fields use smaller width data types.
 
-The full mapping of types is provided in the table below. **A2D2 type** is the type used by numpy to store the data, **PointCloud2 type** is the type used to write data to the point cloud message (for this the type itself is not so important as the width), and **Use type** is the type the value should be interpreted as when retrieving it from the message. Programmatically the type conversion information is available in the `ReadTypes` and `WriteTypes` structs in [include/a2d2\_to\_ros/lib\_a2d2\_to\_ros.hpp](include/a2d2_to_ros/lib_a2d2_to_ros.hpp):
+The full mapping of types is provided in the table below. **A2D2 type** is the type used by numpy to store the data, **PointCloud2 type** is the type used to write data to the point cloud message (for this the type itself is not so important as the width), and **Use type** is the type the value should be interpreted as when retrieving it from the message. Programmatically the type conversion information is available in the `ReadTypes` and `WriteTypes` structs in [include/a2d2\_to\_ros/npz.hpp](include/a2d2_to_ros/npz.hpp):
 
 | A2D2 field                 | A2D2 type | PointCloud2 type                   | Use type   |
 |----------------------------|:---------:|:----------------------------------:|-----------:|
@@ -67,7 +67,7 @@ namespace a2d2 = a2d2_to_ros;
 
 // Assume 'msg' is the PointCloud2 message
 
-const auto fields = a2d2::get_npz_fields();
+const auto fields = a2d2::npz::Fields::get_fields();
 auto iters = a2d2::A2D2_PointCloudIterators(msg, fields);
 for (auto row = 0; row < msg.width; ++row, ++iters) {
   // the below is equivalent to: std::cout << iters << "\n";
