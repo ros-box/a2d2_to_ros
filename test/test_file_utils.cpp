@@ -33,7 +33,7 @@ TEST(A2D2_to_ROS_file_utils, frame_from_filename) {
   {
     const auto frame_expected = "frontcenter";
     const auto filename =
-        "/home/maeve/data/a2d2/Ingolstadt/camera_lidar/20190401_145936/lidar/"
+        "/data/a2d2/Ingolstadt/camera_lidar/20190401_145936/lidar/"
         "cam_front_center/20190401145936_lidar_frontcenter_000000080.npz";
     const auto frame = frame_from_filename(filename);
     EXPECT_EQ(frame_expected, frame);
