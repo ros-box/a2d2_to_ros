@@ -56,3 +56,7 @@ There is nothing very platform specific, so other reasonably similar system conf
 ## TODO
 
 A list of open issues for the converter can be found [here](https://gitlab.com/MaplessAI/external/a2d2_to_ros/-/issues).
+
+## Contact
+
+For any questions or comments about the converter, please reach out to <jeff@mapless.ai>.
