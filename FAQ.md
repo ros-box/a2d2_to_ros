@@ -76,7 +76,7 @@ Answers, where available, are given directly below the questions and have come f
 1. **Are `pcloud_attr.row` and `pcloud_attr.col` supposed to be non-negative? What is the convention to convert to integer pixel coordinates?**
     * *They may be negative but then they would fall outside the image, and thus not really usable. You may choose whatever pixel conversion convention makes sense for the application you have in mind. Typically they are simply rounded to the nearest integer.*
 1. **Are the lidar points in the raw sensor fusion data set motion compensated already?**
-    * *No.*
+    * *Yes.*
 
 ## Semantic segmentation bus signal data
 
