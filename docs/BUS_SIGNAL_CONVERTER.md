@@ -14,7 +14,7 @@ As of this writing, RapidJSON validates against [JSON Schema draft 04](https://r
 
 When specifying a location (i.e., directory) as an argument, you probably do not want to use a trailing slash, e.g.:
 
-```console
+```
 --schema-path /foo/bar    # do this
 --schema-path /foo/bar/   # not this
 ```

@@ -6,7 +6,7 @@ This converter parses the `cams_lidars.json` sensor config file and publishes th
 
 When specifying a location (i.e., directory) as an argument, you probably do not want to use a trailing slash, e.g.:
 
-```console
+```
 --sensor-config-path /foo/bar    # do this
 --sensor-condig-path /foo/bar/   # not this
 ```
