@@ -10,6 +10,17 @@ A [JSON Schema](http://json-schema.org/) file is provided to perform validation:
 
 As of this writing, RapidJSON validates against [JSON Schema draft 04](https://rapidjson.org/md_doc_schema.html#Conformance).
 
+## PLEASE NOTE
+
+When specifying a location (i.e., directory) as an argument, you probably do not want to use a trailing slash, e.g.:
+
+```console
+--schema-path /foo/bar    # do this
+--schema-path /foo/bar/   # not this
+```
+
+The converters traverse the directory hierarchies to extract information from the directory names, and including a trailing slash changes the behavior of that traversal in (likely) unintended ways. See <https://www.boost.org/doc/libs/1_60_0/libs/filesystem/doc/reference.html#path-parent_path>.
+
 ## Usage
 
 An example invocation is given below. For the example, assume the following locations:

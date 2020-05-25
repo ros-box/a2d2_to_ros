@@ -2,6 +2,17 @@
 
 This converter parses the `cams_lidars.json` sensor config file and publishes the corresponding [TF2](http://wiki.ros.org/tf2) tree.
 
+## PLEASE NOTE
+
+When specifying a location (i.e., directory) as an argument, you probably do not want to use a trailing slash, e.g.:
+
+```console
+--sensor-config-path /foo/bar    # do this
+--sensor-condig-path /foo/bar/   # not this
+```
+
+The converters traverse the directory hierarchies to extract information from the directory names, and including a trailing slash changes the behavior of that traversal in (likely) unintended ways. See <https://www.boost.org/doc/libs/1_60_0/libs/filesystem/doc/reference.html#path-parent_path>.
+
 ### Usage
 
 An example invocation is given below. For the example, assume the following locations:

@@ -17,6 +17,17 @@ $ rosdep install a2d2_to_ros --ignore-src -r -y
 
 Ensure all packages are built.
 
+## PLEASE NOTE
+
+When specifying a location (i.e., directory) as an argument, you probably do not want to use a trailing slash, e.g.:
+
+```console
+--camera-data-path /foo/bar    # do this
+--camera-data-path /foo/bar/   # not this
+```
+
+The converters traverse the directory hierarchies to extract information from the directory names, and including a trailing slash changes the behavior of that traversal in (likely) unintended ways. See <https://www.boost.org/doc/libs/1_60_0/libs/filesystem/doc/reference.html#path-parent_path>.
+
 ## Convert and visualize Front Center sensor data
 
 For the example below, assume the following locations:
@@ -26,7 +37,7 @@ For the example below, assume the following locations:
 
 To convert and visualize data from the front center sensors:
 
-* Download "Camera – Front Center" and "Lidar – Front Center" from one of the cities from [https://www.a2d2.audi/a2d2/en/download.html](https://www.a2d2.audi/a2d2/en/download.html)
+* Download "Camera – Front Center" and "Lidar – Front Center" from one of the cities from <https://www.a2d2.audi/a2d2/en/download.html>
 * Convert the camera data:
 
 ```console

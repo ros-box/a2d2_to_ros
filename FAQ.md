@@ -12,6 +12,8 @@ Answers, where available, are given directly below the questions and have come f
 
 ## General
 
+1. **Why do converters only run on portions of the data set instead of the whole thing?**
+    * The data set is quite large (~2.3TB). Many people won't be able to download and convert the whole thing at once, which would likely require over 5TB of free storage.
 1. **Do all subsets in the unlabeled data set span the same time?**
     * ?
 1. **What convention do the timestamps follow?**
