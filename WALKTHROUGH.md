@@ -21,7 +21,7 @@ Ensure all packages are built.
 
 When specifying a location (i.e., directory) as an argument, you probably do not want to use a trailing slash, e.g.:
 
-```console
+```
 --camera-data-path /foo/bar    # do this
 --camera-data-path /foo/bar/   # not this
 ```
