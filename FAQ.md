@@ -26,11 +26,11 @@ Answers, where available, are given directly below the questions and have come f
 ## Conventions
 
 1. **Are all units in the `cams_lidars.json` file SI?**
-    * ?
+    * *Distances are in meters, timestamp_delay is in microseconds*
 1. **Are coordinate systems right handed?**
-    * ?
+    * Yes.
 1. **In the bus signal data, what are the `roll_angle` and `pitch_angle` conventions?**
-    * ?
+    * *Euler/Tait-Bryan angles that describe the offset from the wheels frame to the chassis frame, with sign convention from DIN 9000.*
 1. **What are the conventions for the reference frame ***g*** (described in [Section 3.1](https://arxiv.org/pdf/2004.06320.pdf))?**
     * *The frame ***g*** is fixed with respect to the chassis of the vehicle, and all sensor poses are static with respect to it.*
     * *In addition, there is a `wheels` frame that, at rest, is coincident with ***g***. In motion, ***g*** can roll and pitch (but not yaw or translate) with respect to `wheels`. In the bus signal data, the `roll_angle` and `pitch_angle` values describe these offsets.*
