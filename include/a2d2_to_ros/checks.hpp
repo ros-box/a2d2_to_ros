@@ -29,6 +29,24 @@
 namespace a2d2_to_ros {
 
 /**
+ * @brief Check that a value is > 0
+ */
+template <typename T>
+bool strictly_positive(const T& val) {
+  return (val > static_cast<T>(0));
+}
+
+/**
+ * @brief Check that a value is > 0
+ */
+template <typename T>
+bool strictly_non_negative(const T& val) {
+  const auto is_strictly_positive = strictly_positive(val);
+  const auto is_zero = (val == static_cast<T>(0));
+  return (is_strictly_positive || is_zero);
+}
+
+/**
  * @brief Verify that the vector is valid.
  * @return true iff the vector is finite and real-valued
  */
