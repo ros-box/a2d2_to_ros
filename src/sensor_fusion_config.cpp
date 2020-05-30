@@ -35,14 +35,10 @@
 #include <rosbag/view.h>
 #include <tf2_msgs/TFMessage.h>
 
-#include "rapidjson/document.h"
-#include "rapidjson/error/en.h"
-#include "rapidjson/schema.h"
-#include "rapidjson/stringbuffer.h"
-
 #include "a2d2_to_ros/lib_a2d2_to_ros.hpp"
 #include "a2d2_to_ros/log_build_options.hpp"
 #include "a2d2_to_ros/logging.hpp"
+#include "a2d2_to_ros/sensor_config_utils.hpp"
 #include "ros_cnpy/cnpy.h"
 
 ///
@@ -54,7 +50,6 @@ static constexpr auto _TF_FREQUENCEY = 10.0;
 static constexpr auto _PROGRAM_OPTIONS_LINE_LENGTH = 120u;
 static constexpr auto _OUTPUT_PATH = ".";
 static constexpr auto _DATASET_NAMESPACE = "/a2d2";
-static constexpr auto _INCLUDE_DEPTH_MAP = false;
 static constexpr auto _VERBOSE = false;
 
 ///
@@ -81,45 +76,6 @@ static constexpr auto _VERBOSE = false;
 namespace {
 namespace a2d2 = a2d2_to_ros;
 namespace po = boost::program_options;
-
-/**
- * @brief Utility to convert an axis from a JSON DOM to Eigen.
- * @pre The rapidjson value is valid ['view']['(x|y)-axis'] according to the
- * schema.
- */
-Eigen::Vector3d json_axis_to_eigen_vector(const rapidjson::Value& json_axis) {
-  constexpr auto X_IDX = static_cast<rapidjson::SizeType>(0);
-  constexpr auto Y_IDX = static_cast<rapidjson::SizeType>(1);
-  constexpr auto Z_IDX = static_cast<rapidjson::SizeType>(2);
-  return Eigen::Vector3d(json_axis[X_IDX].GetDouble(),
-                         json_axis[Y_IDX].GetDouble(),
-                         json_axis[Z_IDX].GetDouble());
-}
-
-/**
- * @brief Utility to retrieve an orthonormal basis from a JSON doc.
- * @pre The doc must validate according to the schema
- */
-Eigen::Matrix3d json_axes_to_eigen_basis(const rapidjson::Document& d,
-                                         const std::string& sensor,
-                                         const std::string& frame) {
-  const rapidjson::Value& view = d[sensor.c_str()][frame.c_str()]["view"];
-
-  const Eigen::Vector3d x_axis = json_axis_to_eigen_vector(view["x-axis"]);
-  const Eigen::Vector3d y_axis = json_axis_to_eigen_vector(view["y-axis"]);
-  return a2d2::get_orthonormal_basis(x_axis, y_axis, EPS);
-}
-
-/**
- * @brief Utility to retrieve a basis origin from a JSON doc.
- * @pre The doc must validate according to the schema
- */
-Eigen::Vector3d json_origin_to_eigen_vector(const rapidjson::Document& d,
-                                            const std::string& sensor,
-                                            const std::string& frame) {
-  return json_axis_to_eigen_vector(
-      d[sensor.c_str()][frame.c_str()]["view"]["origin"]);
-}
 }  // namespace
 
 //------------------------------------------------------------------------------
@@ -332,9 +288,9 @@ int main(int argc, char* argv[]) {
 
       // compute transform between sensor and vehicle
       const Eigen::Matrix3d basis =
-          json_axes_to_eigen_basis(sensor_config_d, name, frame);
+          a2d2::json_axes_to_eigen_basis(sensor_config_d, name, frame, EPS);
       const Eigen::Vector3d origin =
-          json_origin_to_eigen_vector(sensor_config_d, name, frame);
+          a2d2::json_origin_to_eigen_vector(sensor_config_d, name, frame);
       VERIFY_BASIS_ORIGIN(basis, origin, name, frame);
 
       const Eigen::Affine3d Tx = a2d2::Tx_global_sensor(basis, origin);
