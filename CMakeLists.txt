@@ -182,8 +182,6 @@ add_executable(${PROJECT_NAME}_sensor_fusion_bus_signals
   src/sensor_fusion_bus_signals_to_ros.cpp)
 add_executable(${PROJECT_NAME}_sensor_fusion_lidar
   src/sensor_fusion_lidar_to_ros.cpp)
-add_executable(${PROJECT_NAME}_sensor_fusion_config
-  src/sensor_fusion_config.cpp)
 add_executable(${PROJECT_NAME}_sensor_fusion_camera
   src/sensor_fusion_camera_to_ros.cpp)
 
@@ -195,8 +193,6 @@ set_target_properties(${PROJECT_NAME}_sensor_fusion_bus_signals
   PROPERTIES OUTPUT_NAME sensor_fusion_bus_signals PREFIX "")
 set_target_properties(${PROJECT_NAME}_sensor_fusion_lidar
   PROPERTIES OUTPUT_NAME sensor_fusion_lidar PREFIX "")
-set_target_properties(${PROJECT_NAME}_sensor_fusion_config
-  PROPERTIES OUTPUT_NAME sensor_fusion_config PREFIX "")
 set_target_properties(${PROJECT_NAME}_sensor_fusion_camera
   PROPERTIES OUTPUT_NAME sensor_fusion_camera PREFIX "")
 
@@ -212,12 +208,6 @@ target_link_libraries(${PROJECT_NAME}_sensor_fusion_bus_signals
   ${RapidJSON_LIBRARIES}
 )
 target_link_libraries(${PROJECT_NAME}_sensor_fusion_lidar
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-  ${RapidJSON_LIBRARIES}
-)
-target_link_libraries(${PROJECT_NAME}_sensor_fusion_config
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
