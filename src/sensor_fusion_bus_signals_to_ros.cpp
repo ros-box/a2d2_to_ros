@@ -389,10 +389,12 @@ int main(int argc, char* argv[]) {
   std::map<uint64_t, float> roll_angles;
   std::map<uint64_t, float> pitch_angles;
 
-  rosbag::Bag bag;
   std::set<ros::Time> stamps;
-  const auto bag_name = output_path + "/" + file_basename + ".bag";
-  bag.open(bag_name, rosbag::bagmode::Write);
+  rosbag::Bag bus_signal_bag;
+  {
+    const auto bag_name = output_path + "/" + file_basename + ".bag";
+    bus_signal_bag.open(bag_name, rosbag::bagmode::Write);
+  }
   const rapidjson::Value& r = d_schema["required"];
   for (rapidjson::SizeType idx = 0; idx < r.Size(); ++idx) {
     const auto name = std::string(r[idx].GetString());
@@ -455,18 +457,20 @@ int main(int argc, char* argv[]) {
       }
 
       // TODO(jeff): typo _HEADER_TOPC
-      bag.write(topic_prefix + "/" + name + "/" + _HEADER_TOPC, stamp,
-                data.header);
+      bus_signal_bag.write(topic_prefix + "/" + name + "/" + _HEADER_TOPC,
+                           stamp, data.header);
       if (include_original) {
-        bag.write(topic_prefix + "/" + name + "/" + _ORIGINAL_VALUE_TOPIC,
-                  stamp, data.value);
+        bus_signal_bag.write(
+            topic_prefix + "/" + name + "/" + _ORIGINAL_VALUE_TOPIC, stamp,
+            data.value);
 
         if (no_units_yet) {
           std_msgs::String units_msg;
           units_msg.data = units;
 
-          bag.write(topic_prefix + "/" + name + "/" + _ORIGINAL_UNITS_TOPIC,
-                    stamp, units_msg);
+          bus_signal_bag.write(
+              topic_prefix + "/" + name + "/" + _ORIGINAL_UNITS_TOPIC, stamp,
+              units_msg);
           no_units_yet = false;
         }
       }
@@ -475,8 +479,8 @@ int main(int argc, char* argv[]) {
         const auto ros_value = a2d2::to_ros_units(units, data.value.data);
         a2d2::DataPair::value_type ros_value_msg;
         ros_value_msg.data = ros_value;
-        bag.write(topic_prefix + "/" + name + "/" + _VALUE_TOPIC, stamp,
-                  ros_value_msg);
+        bus_signal_bag.write(topic_prefix + "/" + name + "/" + _VALUE_TOPIC,
+                             stamp, ros_value_msg);
       }
 
       if (include_clock_topic) {
@@ -484,6 +488,12 @@ int main(int argc, char* argv[]) {
       }
     }
   }
+
+  ///
+  /// Finish the bus signal bag
+  ///
+
+  bus_signal_bag.close();
 
   ///
   /// Write TF bag
@@ -497,15 +507,33 @@ int main(int argc, char* argv[]) {
     return EXIT_FAILURE;
   }
 
+  ///
+  /// Write all tf messages to the bag
+  ///
+
+  X_INFO("Writing TF bag file...");
+
+  rosbag::Bag tf_bag;
+  {
+    const auto bag_name = output_path + "/" + file_basename + "_tf.bag";
+    tf_bag.open(bag_name, rosbag::bagmode::Write);
+  }
   for (const auto& p : roll_angles) {
-    if (pitch_angles.find(p.first) == std::end(pitch_angles)) {
+    const auto it_pitch = pitch_angles.find(p.first);
+    if (it_pitch == std::end(pitch_angles)) {
       X_FATAL("Could not find timestamp "
               << p.first << " from roll data in pitch data. Cannot continue.");
+      tf_bag.close();
       return EXIT_FAILURE;
     }
-  }
 
-  X_INFO("Roll and pitch values validated");
+    const auto ros_time = a2d2::a2d2_timestamp_to_ros_time(p.first);
+    for (auto& msg : msgtf.transforms) {
+      msg.header.stamp = ros_time;
+    }
+    tf_bag.write("/tf", ros_time, msgtf);
+    tf_bag.write("/a2d2/ego_shape", ros_time, ego_shape_msg);
+  }
 
   ///
   /// Write a clock message for every unique timestamp in the data set
@@ -513,18 +541,14 @@ int main(int argc, char* argv[]) {
 
   // TODO(jeff): add this to tf bag
   if (include_clock_topic) {
-    X_INFO("Adding " << _CLOCK_TOPIC << " topic...");
+    X_INFO("Adding " << _CLOCK_TOPIC << " topic to TF bag file...");
   }
   for (const auto& stamp : stamps) {
     rosgraph_msgs::Clock clock_msg;
     clock_msg.clock = stamp;
-    bag.write(_CLOCK_TOPIC, stamp, clock_msg);
+    tf_bag.write(_CLOCK_TOPIC, stamp, clock_msg);
   }
 
-  ///
-  /// Finish the bag and exit
-  ///
-
-  bag.close();
+  tf_bag.close();
   return EXIT_SUCCESS;
 }
