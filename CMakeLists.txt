@@ -164,7 +164,7 @@ add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/file_utils.cpp
   src/${PROJECT_NAME}/name_utils.cpp
   src/${PROJECT_NAME}/transform_utils.cpp
-  src/${PROJECT_NAME}/sensor_config_utils.cpp
+  src/${PROJECT_NAME}/json_utils.cpp
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}

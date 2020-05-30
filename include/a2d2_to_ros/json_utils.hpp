@@ -21,45 +21,59 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
-#include "a2d2_to_ros/sensor_config_utils.hpp"
+#ifndef A2D2_TO_ROS__JSON_UTILS_HPP_
+#define A2D2_TO_ROS__JSON_UTILS_HPP_
 
-#include "a2d2_to_ros/transform_utils.hpp"
+#include <string>
+
+#include <Eigen/Core>
+#include <boost/optional.hpp>
+
+#include "rapidjson/document.h"
+#include "rapidjson/error/en.h"
+#include "rapidjson/schema.h"
+#include "rapidjson/stringbuffer.h"
 
 namespace a2d2_to_ros {
 
-//------------------------------------------------------------------------------
+/**
+ * @brief Get validator error in string format.
+ * @pre There exists a validator error.
+ */
+std::string get_validator_error_string(
+    const rapidjson::SchemaValidator& validator);
 
-Eigen::Vector3d json_axis_to_eigen_vector(const rapidjson::Value& json_axis) {
-  constexpr auto X_IDX = static_cast<rapidjson::SizeType>(0);
-  constexpr auto Y_IDX = static_cast<rapidjson::SizeType>(1);
-  constexpr auto Z_IDX = static_cast<rapidjson::SizeType>(2);
-  return Eigen::Vector3d(json_axis[X_IDX].GetDouble(),
-                         json_axis[Y_IDX].GetDouble(),
-                         json_axis[Z_IDX].GetDouble());
-}
+/**
+ * @brief Load a given json file into a DOM object.
+ * @return A nullable object that either contains the DOM object or a null
+ * referece.
+ */
+boost::optional<rapidjson::Document> get_rapidjson_dom(const std::string& path);
 
-//------------------------------------------------------------------------------
+/**
+ * @brief Utility to convert an axis from a JSON DOM to Eigen.
+ * @pre The rapidjson value is valid ['view']['(x|y)-axis'] according to the
+ * schema.
+ */
+Eigen::Vector3d json_axis_to_eigen_vector(const rapidjson::Value& json_axis);
 
+/**
+ * @brief Utility to retrieve an orthonormal basis from a JSON doc.
+ * @pre The doc must validate according to the schema
+ */
 Eigen::Matrix3d json_axes_to_eigen_basis(const rapidjson::Document& d,
                                          const std::string& sensor,
                                          const std::string& frame,
-                                         double epsilon) {
-  const rapidjson::Value& view = d[sensor.c_str()][frame.c_str()]["view"];
+                                         double epsilon);
 
-  const Eigen::Vector3d x_axis = json_axis_to_eigen_vector(view["x-axis"]);
-  const Eigen::Vector3d y_axis = json_axis_to_eigen_vector(view["y-axis"]);
-  return get_orthonormal_basis(x_axis, y_axis, epsilon);
-}
-
-//------------------------------------------------------------------------------
-
+/**
+ * @brief Utility to retrieve a basis origin from a JSON doc.
+ * @pre The doc must validate according to the schema
+ */
 Eigen::Vector3d json_origin_to_eigen_vector(const rapidjson::Document& d,
                                             const std::string& sensor,
-                                            const std::string& frame) {
-  return json_axis_to_eigen_vector(
-      d[sensor.c_str()][frame.c_str()]["view"]["origin"]);
-}
-
-//------------------------------------------------------------------------------
+                                            const std::string& frame);
 
 }  // namespace a2d2_to_ros
+
+#endif  // A2D2_TO_ROS__JSON_UTILS_HPP_
