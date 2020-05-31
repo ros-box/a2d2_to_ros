@@ -64,7 +64,7 @@ static constexpr auto _INCLUDE_ORIGINAL = false;
 static constexpr auto _INCLUDE_CONVERTED = true;
 static constexpr auto _INCLUDE_CLOCK_TOPIC = false;
 static constexpr auto _CLOCK_TOPIC = "/clock";
-static constexpr auto _BUS_FRAME_NAME = "wheels";  // TODO(jeff): is this right?
+static constexpr auto _BUS_FRAME_NAME = "wheels";
 static constexpr auto _OUTPUT_PATH = ".";
 static constexpr auto _DATASET_NAMESPACE = "/a2d2";
 static constexpr auto _ORIGINAL_VALUE_TOPIC = "original_value";
@@ -74,6 +74,7 @@ static constexpr auto _HEADER_TOPC = "header";
 static constexpr auto _MIN_TIME_OFFSET = 0.0;
 static constexpr auto _VERBOSE = false;
 static constexpr auto _DURATION = std::numeric_limits<double>::max();
+static constexpr auto _SENSOR_CONFIG_FILENAME = "cams_lidars.json";
 
 ///
 /// Executable specific stuff
@@ -176,7 +177,8 @@ int main(int argc, char* argv[]) {
   /// Get commandline parameters
   ///
 
-  const auto sensor_config_path = *sensor_config_path_opt + "/cams_lidars.json";
+  const auto sensor_config_path =
+      *sensor_config_path_opt + "/" + _SENSOR_CONFIG_FILENAME;
   const auto sensor_config_schema_path = *sensor_config_schema_path_opt;
   const auto schema_path = *schema_path_opt;
   const auto json_data_path = *json_path_opt;
@@ -481,7 +483,7 @@ int main(int argc, char* argv[]) {
                   << time << ". Cannot continue.");
           return EXIT_FAILURE;
         }
-        roll_angles[time] = value;
+        roll_angles[time] = a2d2::to_ros_units(units, value);
       }
 
       if (name == "pitch_angle") {
@@ -490,7 +492,7 @@ int main(int argc, char* argv[]) {
                   << time << ". Cannot continue.");
           return EXIT_FAILURE;
         }
-        pitch_angles[time] = value;
+        pitch_angles[time] = a2d2::to_ros_units(units, value);
       }
 
       // TODO(jeff): typo _HEADER_TOPC
@@ -563,12 +565,38 @@ int main(int argc, char* argv[]) {
       tf_bag.close();
       return EXIT_FAILURE;
     }
-
     const auto ros_time = a2d2::a2d2_timestamp_to_ros_time(p.first);
+    const auto roll = p.second;
+    const auto pitch = it_pitch->second;
+
+    {
+      tf2_msgs::TFMessage chassistf;
+
+      Eigen::Matrix3d R;
+      R = (Eigen::AngleAxisd(roll, Eigen::Vector3d::UnitX()) *
+           Eigen::AngleAxisd(pitch, Eigen::Vector3d::UnitZ()) *
+           Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitX()));
+
+      const Eigen::Affine3d Tx = (Eigen::Translation3d::Identity() * R);
+      {
+        geometry_msgs::Transform Tx_msg;
+        tf::transformEigenToMsg(Tx, Tx_msg);
+
+        geometry_msgs::TransformStamped Tx_stamped_msg;
+        Tx_stamped_msg.transform = Tx_msg;
+        Tx_stamped_msg.header.stamp = ros_time;
+        Tx_stamped_msg.header.frame_id = "wheels";
+        Tx_stamped_msg.child_frame_id = "chassis";
+        chassistf.transforms.push_back(Tx_stamped_msg);
+      }
+
+      tf_bag.write("/tf", ros_time, chassistf);
+    }
+
     for (auto& msg : msgtf.transforms) {
       msg.header.stamp = ros_time;
     }
-    tf_bag.write("/tf", ros_time, msgtf);
+    tf_bag.write("/tf_static", ros_time, msgtf);
     tf_bag.write("/a2d2/ego_shape", ros_time, ego_shape_msg);
   }
 
