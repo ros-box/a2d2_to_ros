@@ -37,10 +37,9 @@ For the example below, assume the following locations:
 * Package: `~/catkin_ws/src/a2d2_to_ros`
 * Data set: `~/data/a2d2/Ingolstadt`
 
-To convert and visualize data from the front center sensors:
+To convert and visualize data from the front center sensors, download "Bus Signals", "Camera – Front Center", and "Lidar – Front Center" from one of the cities from <https://www.a2d2.audi/a2d2/en/download.html>
 
-* Download "Bus Signals", "Camera – Front Center", and "Lidar – Front Center" from one of the cities from <https://www.a2d2.audi/a2d2/en/download.html>
-* Convert the camera data:
+### Convert the camera data:
 
 ```console
 $ rosrun a2d2_to_ros sensor_fusion_camera --camera-data-path ~/data/a2d2/Ingolstadt/camera_lidar/20190401_145936/camera/cam_front_center --frame-info-schema-path ~/catkin_ws/src/a2d2_to_ros/schemas/sensor_fusion_camera_frame.schema --sensor-config-path ~/data/a2d2 --sensor-config-schema-path ~/catkin_ws/src/a2d2_to_ros/schemas/sensor_config.schema
@@ -48,7 +47,7 @@ $ rosrun a2d2_to_ros sensor_fusion_camera --camera-data-path ~/data/a2d2/Ingolst
 
 This outputs the bag file: `20190401_145936_cam_front_center_camera.bag`
 
-* Convert the lidar data:
+### Convert the lidar data:
 
 ```console
 $ rosrun a2d2_to_ros sensor_fusion_lidar --lidar-data-path ~/data/a2d2/Ingolstadt/camera_lidar/20190401_145936/lidar/cam_front_center --camera-data-path ~/data/a2d2/Ingolstadt/camera_lidar/20190401_145936/camera/cam_front_center --frame-info-schema-path ~/catkin_ws/src/a2d2_to_ros/schemas/sensor_fusion_camera_frame.schema
@@ -56,7 +55,7 @@ $ rosrun a2d2_to_ros sensor_fusion_lidar --lidar-data-path ~/data/a2d2/Ingolstad
 
 This outputs the bag file: `20190401_145936_cam_front_center_lidar.bag`
 
-* Convert bus signal data:
+### Convert bus signal data:
 
 ```console
 $ rosrun a2d2_to_ros sensor_fusion_bus_signals --sensor-config-json-path ~/data/a2d2 --sensor-config-schema-path ~/catkin_ws/src/a2d2_to_ros/schemas/sensor_config.schema --bus-signal-json-path ~/data/a2d2/Ingolstadt/camera_lidar/20190401_145936/bus/20190401145936_bus_signals.json --bus-signal-schema-path ~/catkin_ws/src/a2d2_to_ros/schemas/sensor_fusion_bus_signal.schema
@@ -69,14 +68,16 @@ This outputs the bag files:
 20190401145936_bus_signals_tf.bag
 ```
 
-* Launch RViz to visualize (ensure a roscore is running)
+### Playback and launch RViz to visualize (ensure a roscore is running)
 
-```console
-$ roslaunch a2d2_to_ros visualize.launch
-```
-
-* Play back files to visualize in RViz
+In one terminal:
 
 ```console
 $ rosbag play 20190401145936_bus_signals_tf.bag 20190401_145936_cam_front_center_camera.bag 20190401_145936_cam_front_center_lidar.bag
+```
+
+In another terminal:
+
+```console
+$ roslaunch a2d2_to_ros visualize.launch
 ```
