@@ -43,7 +43,7 @@ To convert and visualize data from the front center sensors:
 * Convert the camera data:
 
 ```console
-$ rosrun a2d2_to_ros sensor_fusion_camera --camera-data-path ~/data/a2d2/Ingolstadt/camera_lidar/20190401_145936/camera/cam_front_center --frame-info-schema-path ~/catkin_ws/src/a2d2_to_ros/schemas/sensor_fusion_camera_frame.schema --sensor-config-path ~/data/a2d2/cams_lidars.json --sensor-config-schema-path ~/catkin_ws/src/a2d2_to_ros/schemas/sensor_config.schema
+$ rosrun a2d2_to_ros sensor_fusion_camera --camera-data-path ~/data/a2d2/Ingolstadt/camera_lidar/20190401_145936/camera/cam_front_center --frame-info-schema-path ~/catkin_ws/src/a2d2_to_ros/schemas/sensor_fusion_camera_frame.schema --sensor-config-path ~/data/a2d2 --sensor-config-schema-path ~/catkin_ws/src/a2d2_to_ros/schemas/sensor_config.schema
 ```
 
 This outputs the bag file: `20190401_145936_cam_front_center_camera.bag`
@@ -59,7 +59,7 @@ This outputs the bag file: `20190401_145936_cam_front_center_lidar.bag`
 * Convert bus signal data:
 
 ```console
-$ rosrun a2d2_to_ros sensor_fusion_bus_signals --sensor-config-json-path ~/data/a2d2/cams_lidars.json --sensor-config-schema-path ~/catkin_ws/src/a2d2_to_ros/schemas/sensor_config.schema --bus-signal-json-path ~/data/a2d2/Ingolstadt/camera_lidar/20190401_145936/bus/20190401145936_bus_signals.json --bus-signal-schema-path ~/catkin_ws/src/a2d2_to_ros/schemas/sensor_fusion_bus_signal.schema
+$ rosrun a2d2_to_ros sensor_fusion_bus_signals --sensor-config-json-path ~/data/a2d2 --sensor-config-schema-path ~/catkin_ws/src/a2d2_to_ros/schemas/sensor_config.schema --bus-signal-json-path ~/data/a2d2/Ingolstadt/camera_lidar/20190401_145936/bus/20190401145936_bus_signals.json --bus-signal-schema-path ~/catkin_ws/src/a2d2_to_ros/schemas/sensor_fusion_bus_signal.schema
 ```
 
 This outputs the bag files:

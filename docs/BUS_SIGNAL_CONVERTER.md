@@ -29,7 +29,7 @@ An example invocation is given below. For the example, assume the following loca
 * Data set: `~/data/a2d2/Munich`
 
 ```console
-$ rosrun a2d2_to_ros sensor_fusion_bus_signals --sensor-config-json-path ~/data/a2d2/cams_lidars.json --sensor-config-schema-path ~/catkin_ws/src/a2d2_to_ros/schemas/sensor_config.schema --bus-signal-json-path ~/data/a2d2/Ingolstadt/camera_lidar/20190401_145936/bus/20190401145936_bus_signals.json --bus-signal-schema-path ~/catkin_ws/src/a2d2_to_ros/schemas/sensor_fusion_bus_signal.schema
+$ rosrun a2d2_to_ros sensor_fusion_bus_signals --sensor-config-json-path ~/data/a2d2 --sensor-config-schema-path ~/catkin_ws/src/a2d2_to_ros/schemas/sensor_config.schema --bus-signal-json-path ~/data/a2d2/Ingolstadt/camera_lidar --bus-signal-schema-path ~/catkin_ws/src/a2d2_to_ros/schemas/sensor_fusion_bus_signal.schema
 ```
 
 This command will create the following bag files:
@@ -43,21 +43,23 @@ To get a full list of usage options, run with the `--help` switch:
 
 ```console
 $ rosrun a2d2_to_ros sensor_fusion_bus_signals --help
+<Bus Signal Converter>
 ---Built with stream logging enabled.
 ---Built to use single precision for float values.
 Convert sequential bus signal data to rosbag for the A2D2 Sensor Fusion data set. In addition, write a transform bag file containing the vehicle box model and tf tree for the vehicle sensor configuration. See README.md for details.
 Available options are listed  below. Arguments without default values are required:
   -h [ --help ]                                    Print help and exit.
-  -c [ --sensor-config-json-path ] arg             Path to the JSON for vehicle/sensor config.
+  -c [ --sensor-config-json-path ] arg             Path to the directory containing the JSON for vehicle/sensor config.
   -s [ --sensor-config-schema-path ] arg           Path to the JSON schema for the vehicle/sensor config.
-  -j [ --bus-signal-json-path ] arg                Path to the JSON bus signal file.
+  -j [ --bus-signal-json-path ] arg                Path to the directory containing the JSON bus signal file.
   -b [ --bus-signal-schema-path ] arg              Path to the JSON schema for bus signal data.
   -m [ --min-time-offset ] arg (=0)                Optional: Seconds to skip ahead in the data before starting the bag.
   -d [ --duration ] arg (=1.7976931348623157e+308) Optional: Seconds after min-time-offset to include in bag file.
   -o [ --output-path ] arg (=.)                    Optional: Path for the output bag file.
   -t [ --include-clock-topic ] arg (=0)            Optional: Write bus signal times to a /clock topic in the TF bag.
-  -v [ --include-original-values ] arg (=0)        Optional: Include data set values in their original units.
+  -i [ --include-original-values ] arg (=0)        Optional: Include data set values in their original units.
   -r [ --include-converted-values ] arg (=1)       Optional: Include data set values converted to ROS standard units.
+  -v [ --verbose ] arg (=0)                        Optional: Show name of each file after it is processed.
 ```
 
 ## Bag file conventions

@@ -63,6 +63,7 @@ static constexpr auto _MIN_TIME_OFFSET = 0.0;
 static constexpr auto _DURATION = std::numeric_limits<double>::max();
 
 int main(int argc, char* argv[]) {
+  X_INFO("<Lidar Converter>");
   BUILD_INFO;  // just write to log what build options were specified
 
   ///

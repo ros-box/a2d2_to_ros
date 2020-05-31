@@ -25,7 +25,7 @@ $ rosdep install a2d2_to_ros --ignore-src -r -y
 
 ## FAQ
 
-[FAQ.md](FAQ.md) contains common questions about the A2D2 data set.
+[docs/FAQ.md](docs/FAQ.md) contains common questions about the A2D2 data set.
 
 ## Converters
 

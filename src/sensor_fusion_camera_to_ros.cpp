@@ -63,6 +63,7 @@ static constexpr auto _MIN_TIME_OFFSET = 0.0;
 static constexpr auto _DURATION = std::numeric_limits<double>::max();
 
 int main(int argc, char* argv[]) {
+  X_INFO("<Camera Converter>");
   BUILD_INFO;  // just write to log what build options were specified
 
   ///
@@ -126,7 +127,7 @@ int main(int argc, char* argv[]) {
 
   const auto camera_path = *camera_path_opt;
   const auto camera_frame_schema_path = *camera_frame_schema_path_opt;
-  const auto sensor_config_path = *sensor_config_path_opt;
+  const auto sensor_config_path = *sensor_config_path_opt + "/cams_lidars.json";
   const auto sensor_config_schema_path = *sensor_config_schema_path_opt;
   const auto output_path = vm["output-path"].as<std::string>();
   const auto verbose = vm["verbose"].as<bool>();
@@ -196,7 +197,9 @@ int main(int argc, char* argv[]) {
       if (is_rear_left || is_rear_right) {
         continue;
       }
-      X_INFO("Getting camera info for: " << name);
+      if (verbose) {
+        X_INFO("Getting camera info for: " << name);
+      }
 
       camera_info_msgs[name] = sensor_msgs::CameraInfo();
       auto& msg = camera_info_msgs[name];
@@ -335,14 +338,17 @@ int main(int argc, char* argv[]) {
       /// Validate the data set against the schema
       ///
 
-      rapidjson::SchemaValidator validator(camera_frame_schema);
-      if (!d_json.Accept(validator)) {
-        const auto err_string = a2d2::get_validator_error_string(validator);
-        X_FATAL(err_string);
-        bag.close();
-        return EXIT_FAILURE;
-      } else {
-        // X_INFO("Validated: " << camera_data_file);
+      {
+        rapidjson::SchemaValidator validator(camera_frame_schema);
+        if (!d_json.Accept(validator)) {
+          const auto err_string = a2d2::get_validator_error_string(validator);
+          X_FATAL(err_string);
+          bag.close();
+          return EXIT_FAILURE;
+        }
+        if (verbose) {
+          X_INFO("Validated: " << camera_data_file);
+        }
       }
 
       const auto frame_timestamp = d_json["cam_tstamp"].GetUint64();
