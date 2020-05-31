@@ -43,6 +43,7 @@ To get a full list of usage options, run with the `--help` switch:
 
 ```console
 $ rosrun a2d2_to_ros sensor_fusion_camera --help
+<Camera Converter>
 ---Built with stream logging enabled.
 ---Built to use single precision for float values.
 Convert sequential camera data to rosbag for the A2D2 Sensor Fusion data set. See README.md for details.
@@ -50,6 +51,8 @@ Available options are listed below. Arguments without default values are require
   -h [ --help ]                                    Print help and exit.
   -c [ --camera-data-path ] arg                    Path to the camera data files.
   -s [ --frame-info-schema-path ] arg              Path to the JSON schema for camera frame info files.
+  -c [ --sensor-config-path ] arg                  Path to the JSON for vehicle/sensor config.
+  -s [ --sensor-config-schema-path ] arg           Path to the JSON schema for the vehicle/sensor config.
   -t [ --include-clock-topic ] arg (=0)            Optional: Use timestamps from the data to write a /clock topic.
   -m [ --min-time-offset ] arg (=0)                Optional: Seconds to skip ahead in the data before starting the bag.
   -d [ --duration ] arg (=1.7976931348623157e+308) Optional: Seconds after min-time-offset to include in bag file.

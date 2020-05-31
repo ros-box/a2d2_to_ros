@@ -106,6 +106,7 @@ typedef std::unordered_map<std::string, std::tuple<std::string, DataPairSet>>
     DataPairMap;
 
 int main(int argc, char* argv[]) {
+  X_INFO("<Bus Signal Converter>");
   BUILD_INFO;  // just write to log what build options were specified
 
   ///
@@ -127,12 +128,12 @@ int main(int argc, char* argv[]) {
   desc.add_options()("help,h", "Print help and exit.")(
       "sensor-config-json-path,c",
       po::value(&sensor_config_path_opt)->required(),
-      "Path to the JSON for vehicle/sensor config.")(
+      "Path to the directory containing the JSON for vehicle/sensor config.")(
       "sensor-config-schema-path,s",
       po::value(&sensor_config_schema_path_opt)->required(),
       "Path to the JSON schema for the vehicle/sensor config.")(
       "bus-signal-json-path,j", po::value(&json_path_opt)->required(),
-      "Path to the JSON bus signal file.")(
+      "Path to the directory containing the JSON bus signal file.")(
       "bus-signal-schema-path,b", po::value(&schema_path_opt)->required(),
       "Path to the JSON schema for bus signal data.")(
       "min-time-offset,m", po::value<double>()->default_value(_MIN_TIME_OFFSET),
@@ -144,12 +145,14 @@ int main(int argc, char* argv[]) {
       "include-clock-topic,t",
       po::value<bool>()->default_value(_INCLUDE_CLOCK_TOPIC),
       "Optional: Write bus signal times to a /clock topic in the TF bag.")(
-      "include-original-values,v",
+      "include-original-values,i",
       po::value<bool>()->default_value(_INCLUDE_ORIGINAL),
       "Optional: Include data set values in their original units.")(
       "include-converted-values,r",
       po::value<bool>()->default_value(_INCLUDE_CONVERTED),
-      "Optional: Include data set values converted to ROS standard units.");
+      "Optional: Include data set values converted to ROS standard units.")(
+      "verbose,v", po::value<bool>()->default_value(_VERBOSE),
+      "Optional: Show name of each file after it is processed.");
 
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -173,16 +176,17 @@ int main(int argc, char* argv[]) {
   /// Get commandline parameters
   ///
 
-  const auto sensor_config_path = *sensor_config_path_opt;
+  const auto sensor_config_path = *sensor_config_path_opt + "/cams_lidars.json";
   const auto sensor_config_schema_path = *sensor_config_schema_path_opt;
   const auto schema_path = *schema_path_opt;
-  const auto json_path = *json_path_opt;
+  const auto json_data_path = *json_path_opt;
   const auto output_path = vm["output-path"].as<std::string>();
   const auto include_original = vm["include-original-values"].as<bool>();
   const auto include_converted = vm["include-converted-values"].as<bool>();
   const auto include_clock_topic = vm["include-clock-topic"].as<bool>();
   const auto min_time_offset = vm["min-time-offset"].as<double>();
   const auto duration = vm["duration"].as<double>();
+  const auto verbose = vm["verbose"].as<bool>();
 
   const auto valid_min_offset = (std::isfinite(min_time_offset) &&
                                  a2d2::strictly_non_negative(min_time_offset));
@@ -195,6 +199,37 @@ int main(int argc, char* argv[]) {
         << "} are not valid. They must be finite, real valued, and >= 0.0.");
     return EXIT_FAILURE;
   }
+
+  ///
+  /// Get the path for the bus signal JSON data
+  /// There should be only one file in the directory, and it should be the data
+  ///
+  boost::filesystem::directory_iterator it{json_data_path};
+  std::string json_path;
+  auto iteration = 0;
+  constexpr auto MAX_ITERATIONS = 100;
+  while (it != boost::filesystem::directory_iterator{}) {
+    const auto path = it->path().string();
+    const auto extension = it->path().extension().string();
+    if (extension == ".json") {
+      json_path = path;
+    }
+    ++it;
+    ++iteration;
+    if (iteration >= MAX_ITERATIONS) {
+      break;
+    }
+  }
+
+  if (json_path.empty()) {
+    X_FATAL(
+        "Could not find bus signal data. Either no json file exists in "
+        "location, or the directory contains too many files (examined: "
+        << iteration << ", max allowed: " << MAX_ITERATIONS << ").");
+    return EXIT_FAILURE;
+  }
+  X_INFO("Found json file: " << json_path
+                             << ", assuming this is bus signal data.");
 
   const auto file_basename = boost::filesystem::basename(json_path);
   const auto topic_prefix =
@@ -236,7 +271,7 @@ int main(int argc, char* argv[]) {
       X_FATAL(err_string);
       return EXIT_FAILURE;
     }
-    X_INFO("JSON bus signal data validated against schema.");
+    X_INFO("Validated: " << json_path);
   }
 
   ///
@@ -273,7 +308,7 @@ int main(int argc, char* argv[]) {
       X_FATAL(err_string);
       return EXIT_FAILURE;
     }
-    X_INFO("Validated: " << sensor_config_schema_path);
+    X_INFO("Validated: " << sensor_config_path);
   }
 
   ///
@@ -398,7 +433,9 @@ int main(int argc, char* argv[]) {
   const rapidjson::Value& r = d_schema["required"];
   for (rapidjson::SizeType idx = 0; idx < r.Size(); ++idx) {
     const auto name = std::string(r[idx].GetString());
-    X_INFO("Converting " << name << "...");
+    if (verbose) {
+      X_INFO("Converting " << name << "...");
+    }
 
     const rapidjson::Value& obj = d_json[name.c_str()].GetObject();
     const rapidjson::Value& values = obj["values"];

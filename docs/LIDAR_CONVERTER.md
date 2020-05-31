@@ -34,6 +34,7 @@ To get a full list of usage options, run with the `--help` switch:
 
 ```console
 $ rosrun a2d2_to_ros sensor_fusion_lidar --help
+<Lidar Converter>
 ---Built with stream logging enabled.
 ---Built to use single precision for float values.
 Convert sequential lidar data to rosbag for the A2D2 Sensor Fusion data set. See README.md for details.
@@ -52,7 +53,7 @@ Available options are listed below. Arguments without default values are require
 
 ## Type conversions
 
-In the A2D2 data set, floating point types are stored with double precision. However, this much precision is not necessary (see [FAQ.md](FAQ.md)). For that reason, this package converts double precision floating point information to single. Additionally, in the interest of saving space where possible, integer and bool fields use smaller width data types.
+In the A2D2 data set, floating point types are stored with double precision. However, this much precision is not necessary (see [docs/FAQ.md](docs/FAQ.md)). For that reason, this package converts double precision floating point information to single. Additionally, in the interest of saving space where possible, integer and bool fields use smaller width data types.
 
 The full mapping of types is provided in the table below. **A2D2 type** is the type used by numpy to store the data, **PointCloud2 type** is the type used to write data to the point cloud message (for this the type itself is not so important as the width), and **Use type** is the type the value should be interpreted as when retrieving it from the message. Programmatically the type conversion information is available in the `ReadTypes` and `WriteTypes` structs in [include/a2d2\_to\_ros/npz.hpp](include/a2d2_to_ros/npz.hpp):
 
