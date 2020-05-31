@@ -35,6 +35,28 @@ namespace a2d2_to_ros {
 
 //------------------------------------------------------------------------------
 
+TEST(A2D2_to_ROS_checks, strictly_non_negative) {
+  EXPECT_TRUE(strictly_non_negative(1));
+  EXPECT_TRUE(strictly_non_negative(0));
+  EXPECT_FALSE(strictly_non_negative(-1));
+  EXPECT_FALSE(strictly_non_negative(NaN));
+  EXPECT_FALSE(strictly_non_negative(-INF));
+  EXPECT_TRUE(strictly_non_negative(INF));
+}
+
+//------------------------------------------------------------------------------
+
+TEST(A2D2_to_ROS_checks, strictly_positive) {
+  EXPECT_TRUE(strictly_positive(1));
+  EXPECT_FALSE(strictly_positive(0));
+  EXPECT_FALSE(strictly_positive(-1));
+  EXPECT_FALSE(strictly_positive(NaN));
+  EXPECT_FALSE(strictly_positive(-INF));
+  EXPECT_TRUE(strictly_positive(INF));
+}
+
+//------------------------------------------------------------------------------
+
 TEST(A2D2_to_ROS_checks, axis_is_valid) {
   {
     const Eigen::Vector3d axis(1.0, 0.0, INF);

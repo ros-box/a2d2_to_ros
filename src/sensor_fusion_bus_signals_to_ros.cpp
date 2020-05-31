@@ -21,20 +21,24 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
+#include <algorithm>
 #include <limits>
 #include <set>
 #include <sstream>
 #include <tuple>
 #include <unordered_map>
+#include <vector>
 
 #include <boost/filesystem/convenience.hpp>  // TODO(jeff): use std::filesystem in C++17
 #include <boost/optional.hpp>
 #include <boost/program_options.hpp>
 
+#include <eigen_conversions/eigen_msg.h>
 #include <ros/ros.h>
 #include <rosbag/bag.h>
 #include <rosbag/view.h>
 #include <rosgraph_msgs/Clock.h>
+#include <tf2_msgs/TFMessage.h>
 #ifdef USE_FLOAT64
 #include <std_msgs/Float64.h>
 #else
@@ -43,28 +47,18 @@
 #include <std_msgs/Header.h>
 #include <std_msgs/String.h>
 
-#include "rapidjson/document.h"
-#include "rapidjson/error/en.h"
-#include "rapidjson/schema.h"
-#include "rapidjson/stringbuffer.h"
-
+#include "a2d2_to_ros/json_utils.hpp"
 #include "a2d2_to_ros/lib_a2d2_to_ros.hpp"
 #include "a2d2_to_ros/log_build_options.hpp"
 #include "a2d2_to_ros/logging.hpp"
-
-namespace {
-namespace a2d2 = a2d2_to_ros;
-namespace po = boost::program_options;
-}  // namespace
-
-typedef std::set<a2d2::DataPair, a2d2::DataPairTimeComparator> DataPairSet;
-typedef std::unordered_map<std::string, std::tuple<std::string, DataPairSet>>
-    DataPairMap;
+#include "ros_cnpy/cnpy.h"
 
 ///
 /// Program constants and defaults.
 ///
 
+static constexpr auto EPS = 1e-8;
+static constexpr auto _TF_FREQUENCEY = 10.0;
 static constexpr auto _PROGRAM_OPTIONS_LINE_LENGTH = 120u;
 static constexpr auto _INCLUDE_ORIGINAL = false;
 static constexpr auto _INCLUDE_CONVERTED = true;
@@ -78,7 +72,38 @@ static constexpr auto _ORIGINAL_UNITS_TOPIC = "original_units";
 static constexpr auto _VALUE_TOPIC = "value";
 static constexpr auto _HEADER_TOPC = "header";
 static constexpr auto _MIN_TIME_OFFSET = 0.0;
+static constexpr auto _VERBOSE = false;
 static constexpr auto _DURATION = std::numeric_limits<double>::max();
+
+///
+/// Executable specific stuff
+///
+
+#define VERIFY_BASIS_ORIGIN(basis, origin, sensors, frame)                  \
+  {                                                                         \
+    if (!a2d2::vector_is_valid(origin)) {                                   \
+      X_FATAL("Origin for " << sensors << "::" << frame                     \
+                            << " is not valid. Origin must be finite and "  \
+                               "real valued. Cannot continue.");            \
+      return EXIT_FAILURE;                                                  \
+    }                                                                       \
+    if (basis.isZero(0.0)) {                                                \
+      X_FATAL(                                                              \
+          "Basis for "                                                      \
+          << sensors << "::" << frame                                       \
+          << " cannot be constructed. Check that the X/Y axes are valid."); \
+      return EXIT_FAILURE;                                                  \
+    }                                                                       \
+  }
+
+namespace {
+namespace a2d2 = a2d2_to_ros;
+namespace po = boost::program_options;
+}  // namespace
+
+typedef std::set<a2d2::DataPair, a2d2::DataPairTimeComparator> DataPairSet;
+typedef std::unordered_map<std::string, std::tuple<std::string, DataPairSet>>
+    DataPairMap;
 
 int main(int argc, char* argv[]) {
   BUILD_INFO;  // just write to log what build options were specified
@@ -89,26 +114,36 @@ int main(int argc, char* argv[]) {
 
   boost::optional<std::string> schema_path_opt;
   boost::optional<std::string> json_path_opt;
+  boost::optional<std::string> sensor_config_path_opt;
+  boost::optional<std::string> sensor_config_schema_path_opt;
 
   po::options_description desc(
       "Convert sequential bus signal data to rosbag for the A2D2 Sensor Fusion "
-      "data set. See README.md for details.\nAvailable options are listed "
-      "below. Arguments without default values are required",
+      "data set. In addition, write a transform bag file containing the "
+      "vehicle box model and tf tree for the vehicle sensor configuration. See "
+      "README.md for details.\nAvailable options are listed  below. Arguments "
+      "without default values are required",
       _PROGRAM_OPTIONS_LINE_LENGTH);
   desc.add_options()("help,h", "Print help and exit.")(
-      "schema-path,s", po::value(&schema_path_opt)->required(),
-      "Path to the JSON schema.")("json-path,j",
-                                  po::value(&json_path_opt)->required(),
-                                  "Path to the JSON data set file.")(
+      "sensor-config-json-path,c",
+      po::value(&sensor_config_path_opt)->required(),
+      "Path to the JSON for vehicle/sensor config.")(
+      "sensor-config-schema-path,s",
+      po::value(&sensor_config_schema_path_opt)->required(),
+      "Path to the JSON schema for the vehicle/sensor config.")(
+      "bus-signal-json-path,j", po::value(&json_path_opt)->required(),
+      "Path to the JSON bus signal file.")(
+      "bus-signal-schema-path,b", po::value(&schema_path_opt)->required(),
+      "Path to the JSON schema for bus signal data.")(
       "min-time-offset,m", po::value<double>()->default_value(_MIN_TIME_OFFSET),
       "Optional: Seconds to skip ahead in the data before starting the bag.")(
       "duration,d", po::value<double>()->default_value(_DURATION),
       "Optional: Seconds after min-time-offset to include in bag file.")(
       "output-path,o", po::value<std::string>()->default_value(_OUTPUT_PATH),
       "Optional: Path for the output bag file.")(
-      "include-clock-topic,c",
+      "include-clock-topic,t",
       po::value<bool>()->default_value(_INCLUDE_CLOCK_TOPIC),
-      "Optional: Use timestamps from the data to write a /clock topic.")(
+      "Optional: Write bus signal times to a /clock topic in the TF bag.")(
       "include-original-values,v",
       po::value<bool>()->default_value(_INCLUDE_ORIGINAL),
       "Optional: Include data set values in their original units.")(
@@ -138,6 +173,8 @@ int main(int argc, char* argv[]) {
   /// Get commandline parameters
   ///
 
+  const auto sensor_config_path = *sensor_config_path_opt;
+  const auto sensor_config_schema_path = *sensor_config_schema_path_opt;
   const auto schema_path = *schema_path_opt;
   const auto json_path = *json_path_opt;
   const auto output_path = vm["output-path"].as<std::string>();
@@ -147,11 +184,10 @@ int main(int argc, char* argv[]) {
   const auto min_time_offset = vm["min-time-offset"].as<double>();
   const auto duration = vm["duration"].as<double>();
 
-  // TODO(jeff): remove trailing slashes from paths
-
-  const auto valid_min_offset =
-      (std::isfinite(min_time_offset) && (min_time_offset >= 0.0));
-  const auto valid_duration = (std::isfinite(duration) && (duration >= 0.0));
+  const auto valid_min_offset = (std::isfinite(min_time_offset) &&
+                                 a2d2::strictly_non_negative(min_time_offset));
+  const auto valid_duration =
+      (std::isfinite(duration) && a2d2::strictly_non_negative(duration));
   if (!valid_min_offset || !valid_duration) {
     X_FATAL(
         "Time constraints {min-time-offset: "
@@ -168,44 +204,24 @@ int main(int argc, char* argv[]) {
   /// Get the JSON schema for the data set
   ///
 
-  rapidjson::Document d_schema;
-  {
-    // get schema file string
-    const auto schema_string = a2d2::get_file_as_string(schema_path);
-    if (schema_string.empty()) {
-      X_FATAL("'" << schema_path << "' failed to open or is empty.");
-      return EXIT_FAILURE;
-    }
-
-    if (d_schema.Parse(schema_string.c_str()).HasParseError()) {
-      fprintf(stderr, "\nError(offset %u): %s\n",
-              static_cast<unsigned>(d_schema.GetErrorOffset()),
-              rapidjson::GetParseError_En(d_schema.GetParseError()));
-      return EXIT_FAILURE;
-    }
+  auto d_schema_opt = a2d2::get_rapidjson_dom(schema_path);
+  if (!d_schema_opt) {
+    X_FATAL("Could not open '" << schema_path);
+    return EXIT_FAILURE;
   }
+  auto& d_schema = *d_schema_opt;
   rapidjson::SchemaDocument schema(d_schema);
 
   ///
   /// Get the JSON data set
   ///
 
-  rapidjson::Document d_json;
-  {
-    // get json file string
-    const auto json_string = a2d2::get_file_as_string(json_path);
-    if (json_string.empty()) {
-      X_FATAL("'" << json_path << "' failed to open or is empty.");
-      return EXIT_FAILURE;
-    }
-
-    if (d_json.Parse(json_string.c_str()).HasParseError()) {
-      X_FATAL("Error(offset "
-              << static_cast<unsigned>(d_json.GetErrorOffset())
-              << "): " << rapidjson::GetParseError_En(d_json.GetParseError()));
-      return EXIT_FAILURE;
-    }
+  auto d_json_opt = a2d2::get_rapidjson_dom(json_path);
+  if (!d_json_opt) {
+    X_FATAL("Could not open '" << json_path);
+    return EXIT_FAILURE;
   }
+  auto& d_json = *d_json_opt;
 
   X_INFO("Loaded and parsed schema and data set successfully.");
 
@@ -213,51 +229,153 @@ int main(int argc, char* argv[]) {
   /// Validate the data set against the schema
   ///
 
-  rapidjson::SchemaValidator validator(schema);
-  if (!d_json.Accept(validator)) {
-    rapidjson::StringBuffer sb;
-    validator.GetInvalidSchemaPointer().StringifyUriFragment(sb);
-    std::stringstream ss;
-    ss << "\nInvalid schema: " << sb.GetString() << "\n";
-    ss << "Invalid keyword: " << validator.GetInvalidSchemaKeyword() << "\n";
-    sb.Clear();
-    validator.GetInvalidDocumentPointer().StringifyUriFragment(sb);
-    ss << "Invalid document: " << sb.GetString() << "\n";
-    X_FATAL(ss.str());
-    return EXIT_FAILURE;
+  {
+    rapidjson::SchemaValidator validator(schema);
+    if (!d_json.Accept(validator)) {
+      const auto err_string = a2d2::get_validator_error_string(validator);
+      X_FATAL(err_string);
+      return EXIT_FAILURE;
+    }
+    X_INFO("JSON bus signal data validated against schema.");
   }
 
-  X_INFO("JSON data validated against schema, ready to convert.");
+  ///
+  /// Get the JSON for vehicle/sensor config
+  ///
+
+  auto d_sensor_config_opt = a2d2::get_rapidjson_dom(sensor_config_path);
+  if (!d_sensor_config_opt) {
+    X_FATAL("Could not open '" << sensor_config_path);
+    return EXIT_FAILURE;
+  }
+  auto& sensor_config_d = *d_sensor_config_opt;
 
   ///
-  /// Ensure that the schema has necessary information for the bag file
+  /// Get the JSON schema for the config JSON
+  ///
+
+  auto d_sensor_config_schema_opt =
+      a2d2::get_rapidjson_dom(sensor_config_schema_path);
+  if (!d_sensor_config_schema_opt) {
+    X_FATAL("Could not open '" << sensor_config_schema_path);
+    return EXIT_FAILURE;
+  }
+  rapidjson::SchemaDocument config_schema(*d_sensor_config_schema_opt);
+
+  ///
+  /// Validate the sensor config against the schema
   ///
 
   {
-    const auto has_required = d_schema.HasMember("required");
-    const auto is_array = d_schema["required"].IsArray();
-    const auto is_empty = (is_array && d_schema["required"].GetArray().Empty());
-    if (!has_required || !is_array || is_empty) {
-      X_FATAL(
-          "Schema either does not have a 'required' member, or the member is "
-          "not "
-          "an array, or the array is empty: HasMember('required'): "
-          << has_required << ", isArray(): " << is_array
-          << ", Empty(): " << is_empty);
+    rapidjson::SchemaValidator validator(config_schema);
+    if (!sensor_config_d.Accept(validator)) {
+      const auto err_string = a2d2::get_validator_error_string(validator);
+      X_FATAL(err_string);
       return EXIT_FAILURE;
     }
+    X_INFO("Validated: " << sensor_config_schema_path);
+  }
 
-    const rapidjson::Value& r = d_schema["required"];
-    for (rapidjson::SizeType idx = 0; idx < r.Size(); ++idx) {
-      if (!r[idx].IsString()) {
-        X_FATAL("Required field at index " << idx << " is not a string type.");
-        return EXIT_FAILURE;
+  ///
+  /// Build ego vehicle shape message
+  ///
+
+  const rapidjson::Value& ego_dims =
+      sensor_config_d["vehicle"]["ego-dimensions"];
+  const rapidjson::Value& x_dims = ego_dims["x-range"];
+  const rapidjson::Value& y_dims = ego_dims["y-range"];
+  const rapidjson::Value& z_dims = ego_dims["z-range"];
+
+  constexpr auto MIN_IDX = static_cast<rapidjson::SizeType>(0);
+  constexpr auto MAX_IDX = static_cast<rapidjson::SizeType>(1);
+  const auto x_min = x_dims[MIN_IDX].GetDouble();
+  const auto x_max = x_dims[MAX_IDX].GetDouble();
+  const auto y_min = y_dims[MIN_IDX].GetDouble();
+  const auto y_max = y_dims[MAX_IDX].GetDouble();
+  const auto z_min = z_dims[MIN_IDX].GetDouble();
+  const auto z_max = z_dims[MAX_IDX].GetDouble();
+
+  const auto ego_bbox_valid =
+      a2d2::verify_ego_bbox_params(x_min, x_max, y_min, y_max, z_min, z_max);
+  if (!ego_bbox_valid) {
+    X_FATAL(
+        "Ego bounding box parameters are invalid. They must be finite, "
+        "real-valued, and ordered: x: ["
+        << x_min << ", " << x_max << "], y: [" << y_min << ", " << y_max
+        << "], z: [" << z_min << ", " << z_max << "]");
+    return EXIT_FAILURE;
+  }
+
+  const auto ego_shape_msg =
+      a2d2::build_ego_shape_msg(x_min, x_max, y_min, y_max, z_min, z_max);
+
+  ///
+  /// Get sensor poses
+  ///
+
+  const auto sensors = a2d2::sensors::Frames::get_sensors();
+
+  // each block will add its transform message to this container
+  tf2_msgs::TFMessage msgtf;
+
+  // For each sensor type...
+  for (const auto& name :
+       {a2d2::sensors::Names::CAMERAS, a2d2::sensors::Names::LIDARS}) {
+    const auto is_camera = (name == a2d2::sensors::Names::CAMERAS);
+    const auto is_lidar = (name == a2d2::sensors::Names::LIDARS);
+
+    // For each sensor position...
+    for (auto i = 0; i < sensors.size(); ++i) {
+      const auto& frame = sensors[i];
+
+      // No lidars at these positions
+      const auto is_side_left = (a2d2::sensors::Frames::SIDE_LEFT_IDX == i);
+      const auto is_side_right = (a2d2::sensors::Frames::SIDE_RIGHT_IDX == i);
+      const auto is_rear_center = (a2d2::sensors::Frames::REAR_CENTER_IDX == i);
+      if (is_lidar) {
+        if (is_side_left || is_side_right || is_rear_center) {
+          continue;
+        }
       }
 
-      const auto name = std::string(r[idx].GetString());
-      if (name.empty()) {
-        X_FATAL("Required field name at index " << idx << " is empty.");
-        return EXIT_FAILURE;
+      // No cameras at these positions
+      const auto is_rear_left = (a2d2::sensors::Frames::REAR_LEFT_IDX == i);
+      const auto is_rear_right = (a2d2::sensors::Frames::REAR_RIGHT_IDX == i);
+      if (is_camera) {
+        if (is_rear_left || is_rear_right) {
+          continue;
+        }
+      }
+
+      // compute transform between sensor and vehicle
+      const Eigen::Matrix3d basis =
+          a2d2::json_axes_to_eigen_basis(sensor_config_d, name, frame, EPS);
+      const Eigen::Vector3d origin =
+          a2d2::json_origin_to_eigen_vector(sensor_config_d, name, frame);
+      VERIFY_BASIS_ORIGIN(basis, origin, name, frame);
+
+      const Eigen::Affine3d Tx = a2d2::Tx_global_sensor(basis, origin);
+
+      {
+        geometry_msgs::Transform Tx_msg;
+        tf::transformEigenToMsg(Tx, Tx_msg);
+
+        geometry_msgs::TransformStamped Tx_stamped_msg;
+        Tx_stamped_msg.transform = Tx_msg;
+        Tx_stamped_msg.header.frame_id = "chassis";
+        Tx_stamped_msg.child_frame_id = a2d2::tf_frame_name(name, frame);
+        msgtf.transforms.push_back(Tx_stamped_msg);
+      }
+
+      {  // TODO(jeff): Compute this from roll/pitch
+        geometry_msgs::Transform Tx_msg;
+        tf::transformEigenToMsg(Eigen::Affine3d::Identity(), Tx_msg);
+
+        geometry_msgs::TransformStamped Tx_stamped_msg;
+        Tx_stamped_msg.transform = Tx_msg;
+        Tx_stamped_msg.header.frame_id = "wheels";
+        Tx_stamped_msg.child_frame_id = "chassis";
+        msgtf.transforms.push_back(Tx_stamped_msg);
       }
     }
   }
@@ -268,10 +386,15 @@ int main(int argc, char* argv[]) {
   /// have been validated by the schema.
   ///
 
-  rosbag::Bag bag;
+  std::map<uint64_t, float> roll_angles;
+  std::map<uint64_t, float> pitch_angles;
+
   std::set<ros::Time> stamps;
-  const auto bag_name = output_path + "/" + file_basename + ".bag";
-  bag.open(bag_name, rosbag::bagmode::Write);
+  rosbag::Bag bus_signal_bag;
+  {
+    const auto bag_name = output_path + "/" + file_basename + ".bag";
+    bus_signal_bag.open(bag_name, rosbag::bagmode::Write);
+  }
   const rapidjson::Value& r = d_schema["required"];
   for (rapidjson::SizeType idx = 0; idx < r.Size(); ++idx) {
     const auto name = std::string(r[idx].GetString());
@@ -315,18 +438,39 @@ int main(int argc, char* argv[]) {
         break;
       }
 
-      bag.write(topic_prefix + "/" + name + "/" + _HEADER_TOPC, stamp,
-                data.header);
+      if (name == "roll_angle") {
+        if (roll_angles.find(time) != std::end(roll_angles)) {
+          X_FATAL("Non unique values for roll angle time: "
+                  << time << ". Cannot continue.");
+          return EXIT_FAILURE;
+        }
+        roll_angles[time] = value;
+      }
+
+      if (name == "pitch_angle") {
+        if (pitch_angles.find(time) != std::end(pitch_angles)) {
+          X_FATAL("Non unique values for pitch angle time: "
+                  << time << ". Cannot continue.");
+          return EXIT_FAILURE;
+        }
+        pitch_angles[time] = value;
+      }
+
+      // TODO(jeff): typo _HEADER_TOPC
+      bus_signal_bag.write(topic_prefix + "/" + name + "/" + _HEADER_TOPC,
+                           stamp, data.header);
       if (include_original) {
-        bag.write(topic_prefix + "/" + name + "/" + _ORIGINAL_VALUE_TOPIC,
-                  stamp, data.value);
+        bus_signal_bag.write(
+            topic_prefix + "/" + name + "/" + _ORIGINAL_VALUE_TOPIC, stamp,
+            data.value);
 
         if (no_units_yet) {
           std_msgs::String units_msg;
           units_msg.data = units;
 
-          bag.write(topic_prefix + "/" + name + "/" + _ORIGINAL_UNITS_TOPIC,
-                    stamp, units_msg);
+          bus_signal_bag.write(
+              topic_prefix + "/" + name + "/" + _ORIGINAL_UNITS_TOPIC, stamp,
+              units_msg);
           no_units_yet = false;
         }
       }
@@ -335,8 +479,8 @@ int main(int argc, char* argv[]) {
         const auto ros_value = a2d2::to_ros_units(units, data.value.data);
         a2d2::DataPair::value_type ros_value_msg;
         ros_value_msg.data = ros_value;
-        bag.write(topic_prefix + "/" + name + "/" + _VALUE_TOPIC, stamp,
-                  ros_value_msg);
+        bus_signal_bag.write(topic_prefix + "/" + name + "/" + _VALUE_TOPIC,
+                             stamp, ros_value_msg);
       }
 
       if (include_clock_topic) {
@@ -346,22 +490,65 @@ int main(int argc, char* argv[]) {
   }
 
   ///
+  /// Finish the bus signal bag
+  ///
+
+  bus_signal_bag.close();
+
+  ///
+  /// Write TF bag
+  ///
+
+  // TODO(jeff)
+  if (roll_angles.size() != pitch_angles.size()) {
+    X_FATAL("roll/pitch angle size mismatch: "
+            << roll_angles.size() << " roll values, but " << pitch_angles.size()
+            << " pitch values. Cannot continue.");
+    return EXIT_FAILURE;
+  }
+
+  ///
+  /// Write all tf messages to the bag
+  ///
+
+  X_INFO("Writing TF bag file...");
+
+  rosbag::Bag tf_bag;
+  {
+    const auto bag_name = output_path + "/" + file_basename + "_tf.bag";
+    tf_bag.open(bag_name, rosbag::bagmode::Write);
+  }
+  for (const auto& p : roll_angles) {
+    const auto it_pitch = pitch_angles.find(p.first);
+    if (it_pitch == std::end(pitch_angles)) {
+      X_FATAL("Could not find timestamp "
+              << p.first << " from roll data in pitch data. Cannot continue.");
+      tf_bag.close();
+      return EXIT_FAILURE;
+    }
+
+    const auto ros_time = a2d2::a2d2_timestamp_to_ros_time(p.first);
+    for (auto& msg : msgtf.transforms) {
+      msg.header.stamp = ros_time;
+    }
+    tf_bag.write("/tf", ros_time, msgtf);
+    tf_bag.write("/a2d2/ego_shape", ros_time, ego_shape_msg);
+  }
+
+  ///
   /// Write a clock message for every unique timestamp in the data set
   ///
 
+  // TODO(jeff): add this to tf bag
   if (include_clock_topic) {
-    X_INFO("Adding " << _CLOCK_TOPIC << " topic...");
+    X_INFO("Adding " << _CLOCK_TOPIC << " topic to TF bag file...");
   }
   for (const auto& stamp : stamps) {
     rosgraph_msgs::Clock clock_msg;
     clock_msg.clock = stamp;
-    bag.write(_CLOCK_TOPIC, stamp, clock_msg);
+    tf_bag.write(_CLOCK_TOPIC, stamp, clock_msg);
   }
 
-  ///
-  /// Finish the bag and exit
-  ///
-
-  bag.close();
+  tf_bag.close();
   return EXIT_SUCCESS;
 }
