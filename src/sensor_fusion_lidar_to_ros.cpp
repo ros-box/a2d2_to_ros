@@ -36,11 +36,7 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <opencv2/opencv.hpp>
 
-#include "rapidjson/document.h"
-#include "rapidjson/error/en.h"
-#include "rapidjson/schema.h"
-#include "rapidjson/stringbuffer.h"
-
+#include "a2d2_to_ros/json_utils.hpp"
 #include "a2d2_to_ros/lib_a2d2_to_ros.hpp"
 #include "a2d2_to_ros/log_build_options.hpp"
 #include "a2d2_to_ros/logging.hpp"
@@ -73,7 +69,6 @@ int main(int argc, char* argv[]) {
   /// Set up command line arguments
   ///
 
-  // TODO(jeff): rename "reflectance" to "intensity" assuming that's what it is
   boost::optional<std::string> camera_frame_schema_path_opt;
   boost::optional<std::string> lidar_path_opt;
   boost::optional<std::string> camera_path_opt;
@@ -137,11 +132,10 @@ int main(int argc, char* argv[]) {
   const auto min_time_offset = vm["min-time-offset"].as<double>();
   const auto duration = vm["duration"].as<double>();
 
-  // TODO(jeff): remove trailing slashes from paths
-
-  const auto valid_min_offset =
-      (std::isfinite(min_time_offset) && (min_time_offset >= 0.0));
-  const auto valid_duration = (std::isfinite(duration) && (duration >= 0.0));
+  const auto valid_min_offset = (std::isfinite(min_time_offset) &&
+                                 a2d2::strictly_non_negative(min_time_offset));
+  const auto valid_duration =
+      (std::isfinite(duration) && a2d2::strictly_non_negative(duration));
   if (!valid_min_offset || !valid_duration) {
     X_FATAL(
         "Time constraints {min-time-offset: "
@@ -176,24 +170,13 @@ int main(int argc, char* argv[]) {
   /// Get the JSON schema for the camera frame info files
   ///
 
-  rapidjson::Document camera_frame_d;
-  {
-    // get schema file string
-    const auto schema_string =
-        a2d2::get_file_as_string(camera_frame_schema_path);
-    if (schema_string.empty()) {
-      X_FATAL("'" << camera_frame_schema_path
-                  << "' failed to open or is empty.");
-      return EXIT_FAILURE;
-    }
-
-    if (camera_frame_d.Parse(schema_string.c_str()).HasParseError()) {
-      fprintf(stderr, "\nError(offset %u): %s\n",
-              static_cast<unsigned>(camera_frame_d.GetErrorOffset()),
-              rapidjson::GetParseError_En(camera_frame_d.GetParseError()));
-      return EXIT_FAILURE;
-    }
+  auto d_camera_frame_schema_opt =
+      a2d2::get_rapidjson_dom(camera_frame_schema_path);
+  if (!d_camera_frame_schema_opt) {
+    X_FATAL("Could not open '" << camera_frame_schema_path);
+    return EXIT_FAILURE;
   }
+  auto& camera_frame_d = *d_camera_frame_schema_opt;
   rapidjson::SchemaDocument camera_frame_schema(camera_frame_d);
 
   ///
@@ -253,16 +236,8 @@ int main(int argc, char* argv[]) {
 
       rapidjson::SchemaValidator validator(camera_frame_schema);
       if (!d_json.Accept(validator)) {
-        rapidjson::StringBuffer sb;
-        validator.GetInvalidSchemaPointer().StringifyUriFragment(sb);
-        std::stringstream ss;
-        ss << "\nInvalid schema: " << sb.GetString() << "\n";
-        ss << "Invalid keyword: " << validator.GetInvalidSchemaKeyword()
-           << "\n";
-        sb.Clear();
-        validator.GetInvalidDocumentPointer().StringifyUriFragment(sb);
-        ss << "Invalid document: " << sb.GetString() << "\n";
-        X_FATAL(ss.str());
+        const auto err_string = a2d2::get_validator_error_string(validator);
+        X_FATAL(err_string);
         bag.close();
         return EXIT_FAILURE;
       } else {
