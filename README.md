@@ -35,6 +35,38 @@ $ rosdep install a2d2_to_ros --ignore-src -r -y
 
 > Note: The Bus Signal converter also creates a bag file that publishes the TF tree for the vehicle.
 
+## Batch conversion
+
+For convenience, a shell script is provided that can batch convert the whole data set. Before running the script, be sure to open it and set the configuration options appropriately:
+
+```bash
+#
+# START: CONFIGURATION OPTIONS
+#
+
+# The below two paths should point to the data set root and ROS package
+package_source=~/catkin_ws/src/a2d2_to_ros
+data_root=~/data/a2d2-preview
+
+# This should point to the particular sensor fusion data set being converted
+sensor_data=camera_lidar/20180810_150607
+
+bus_data_subdir_full=/bus
+bus_data_subdir_preview=
+# Set this depending on which data you're converting (preview or full)
+bus_data_subdir=$bus_data_subdir_preview
+
+#
+# END: CONFIGURATION OPTIONS
+#
+```
+
+To run the script:
+
+```console
+$ rosrun a2d2_to_ros convert.sh
+```
+
 ## Visualization
 
 An example RViz config is included along a convenience launch file:
