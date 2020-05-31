@@ -23,6 +23,10 @@ The ROS CNPY package can be downloaded at the above link, and RapidJSON can be i
 $ rosdep install a2d2_to_ros --ignore-src -r -y
 ```
 
+## Recommendations
+
+Use `wget` for downloading the data set files. Using a browser can be unreliable, likely due in part to the large size of the files.
+
 ## FAQ
 
 [docs/FAQ.md](docs/FAQ.md) contains common questions about the A2D2 data set.
