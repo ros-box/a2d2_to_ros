@@ -9,7 +9,7 @@ package_source=~/catkin_ws/src/a2d2_to_ros
 data_root=~/data/a2d2-preview
 
 # This should point to the particular sensor fusion data set being converted
-sensor_data=camera_lidar/20180810_150607
+sensor_data=camera_lidar/20190401_145936
 
 bus_data_subdir_full=/bus
 bus_data_subdir_preview=
