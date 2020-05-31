@@ -141,9 +141,9 @@ int main(int argc, char* argv[]) {
       "Optional: Seconds after min-time-offset to include in bag file.")(
       "output-path,o", po::value<std::string>()->default_value(_OUTPUT_PATH),
       "Optional: Path for the output bag file.")(
-      "include-clock-topic,c",
+      "include-clock-topic,t",
       po::value<bool>()->default_value(_INCLUDE_CLOCK_TOPIC),
-      "Optional: Use timestamps from the data to write a /clock topic.")(
+      "Optional: Write bus signal times to a /clock topic in the TF bag.")(
       "include-original-values,v",
       po::value<bool>()->default_value(_INCLUDE_ORIGINAL),
       "Optional: Include data set values in their original units.")(

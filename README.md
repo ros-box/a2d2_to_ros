@@ -4,7 +4,7 @@
 
 Utilities for converting [A2D2 data sets](https://www.a2d2.audi/) to ROS bags.
 
-The idea is that there is an executuable for each sensor modality: camera, lidar, and bus. Bag files are generated for these modalities independently.
+There is an executuable for each sensor modality: camera, lidar, and bus. Bag files are generated for these modalities independently.
 
 ## Step-by-step example
 
@@ -30,9 +30,10 @@ $ rosdep install a2d2_to_ros --ignore-src -r -y
 ## Converters
 
 * [Sensor Fusion > Camera](docs/CAMERA_CONVERTER.md)
-* [Sensor Fusion > Sensor Configuration](docs/CONFIG_CONVERTER.md)
 * [Sensor Fusion > Lidar](docs/LIDAR_CONVERTER.md)
 * [Sensor Fusion > Bus Signal](docs/BUS_SIGNAL_CONVERTER.md)
+
+> Note: The Bus Signal converter also creates a bag file that publishes the TF tree for the vehicle.
 
 ## Visualization
 

@@ -1,6 +1,6 @@
 # Converter: Sensor Fusion > Bus Signal
 
-This converter parses a bus signal data JSON file and outputs the data into a bag file.
+This converter parses a bus signal data JSON file and outputs the data into a bag file. In addition, this converter creates a bag file that publishes TF data for the vehicle along with the vehicle box model.
 
 ## JSON validation
 
@@ -29,13 +29,14 @@ An example invocation is given below. For the example, assume the following loca
 * Data set: `~/data/a2d2/Munich`
 
 ```console
-$ rosrun a2d2_to_ros sensor_fusion_bus_signals --schema-path ~/catkin_ws/src/a2d2_to_ros/schemas/sensor_fusion_bus_signal.schema --json-path ~/data/a2d2/Munich/camera_lidar/20190401_121727/bus/20190401121727_bus_signals.json
+$ rosrun a2d2_to_ros sensor_fusion_bus_signals --sensor-config-json-path ~/data/a2d2/cams_lidars.json --sensor-config-schema-path ~/catkin_ws/src/a2d2_to_ros/schemas/sensor_config.schema --bus-signal-json-path ~/data/a2d2/Ingolstadt/camera_lidar/20190401_145936/bus/20190401145936_bus_signals.json --bus-signal-schema-path ~/catkin_ws/src/a2d2_to_ros/schemas/sensor_fusion_bus_signal.schema
 ```
 
-This command will create the following bag file:
+This command will create the following bag files:
 
 ```console
 ./20190401121727_bus_signals.bag
+./20190401121727_bus_signals_tf.bag
 ```
 
 To get a full list of usage options, run with the `--help` switch:
@@ -44,15 +45,17 @@ To get a full list of usage options, run with the `--help` switch:
 $ rosrun a2d2_to_ros sensor_fusion_bus_signals --help
 ---Built with stream logging enabled.
 ---Built to use single precision for float values.
-Convert sequential bus signal data to rosbag for the A2D2 Sensor Fusion data set. See README.md for details.
-Available options are listed below. Arguments without default values are required:
+Convert sequential bus signal data to rosbag for the A2D2 Sensor Fusion data set. In addition, write a transform bag file containing the vehicle box model and tf tree for the vehicle sensor configuration. See README.md for details.
+Available options are listed  below. Arguments without default values are required:
   -h [ --help ]                                    Print help and exit.
-  -s [ --schema-path ] arg                         Path to the JSON schema.
-  -j [ --json-path ] arg                           Path to the JSON data set file.
+  -c [ --sensor-config-json-path ] arg             Path to the JSON for vehicle/sensor config.
+  -s [ --sensor-config-schema-path ] arg           Path to the JSON schema for the vehicle/sensor config.
+  -j [ --bus-signal-json-path ] arg                Path to the JSON bus signal file.
+  -b [ --bus-signal-schema-path ] arg              Path to the JSON schema for bus signal data.
   -m [ --min-time-offset ] arg (=0)                Optional: Seconds to skip ahead in the data before starting the bag.
   -d [ --duration ] arg (=1.7976931348623157e+308) Optional: Seconds after min-time-offset to include in bag file.
   -o [ --output-path ] arg (=.)                    Optional: Path for the output bag file.
-  -c [ --include-clock-topic ] arg (=0)            Optional: Use timestamps from the data to write a /clock topic.
+  -t [ --include-clock-topic ] arg (=0)            Optional: Write bus signal times to a /clock topic in the TF bag.
   -v [ --include-original-values ] arg (=0)        Optional: Include data set values in their original units.
   -r [ --include-converted-values ] arg (=1)       Optional: Include data set values converted to ROS standard units.
 ```
@@ -68,6 +71,6 @@ Available options are listed below. Arguments without default values are require
 * The `original_value` and `original_units` topics are not included if the converter is run with `--include-original-values false`
 * The `value` topic is not included if the converter is run with `--include-converted-values false`
 * The message time in the bag file is the same as the timestamp in the header message.
-* Each bag file contains a `/clock` topic that has a [rosgraph\_msgs::Clock](http://docs.ros.org/api/rosgraph_msgs/html/msg/Clock.html) message for each unique timestamp in the data set.
+* The optional `/clock` topic in the TF bag has a [rosgraph\_msgs::Clock](http://docs.ros.org/api/rosgraph_msgs/html/msg/Clock.html) message for each unique timestamp in the data set.
 * The output bag file is given the same basename as the input JSON file.
 * Each of the topics in the bag file (except for `/clock`) is prefixed with `/a2d2/[JSON_FILE_BASENAME]`
