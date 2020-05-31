@@ -8,7 +8,7 @@ There is an executuable for each sensor modality: camera, lidar, and bus. Bag fi
 
 ## Step-by-step example
 
-For a step-by-step example of how to use the converters, see [WALKTHROUGH.md](WALKTHROUGH.md).
+For a step-by-step example of how to use the converters, see [WALKTHROUGH.md](docs/WALKTHROUGH.md).
 
 ## Requirements
 
