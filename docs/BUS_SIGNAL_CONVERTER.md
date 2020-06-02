@@ -53,6 +53,7 @@ Available options are listed  below. Arguments without default values are requir
   -s [ --sensor-config-schema-path ] arg           Path to the JSON schema for the vehicle/sensor config.
   -j [ --bus-signal-json-path ] arg                Path to the directory containing the JSON bus signal file.
   -b [ --bus-signal-schema-path ] arg              Path to the JSON schema for bus signal data.
+  -a [ --start-time ] arg (=0)                     Optional: Start on or after this time (TAI microseconds).
   -m [ --min-time-offset ] arg (=0)                Optional: Seconds to skip ahead in the data before starting the bag.
   -d [ --duration ] arg (=1.7976931348623157e+308) Optional: Seconds after min-time-offset to include in bag file.
   -o [ --output-path ] arg (=.)                    Optional: Path for the output bag file.

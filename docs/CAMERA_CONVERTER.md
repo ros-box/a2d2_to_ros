@@ -50,10 +50,11 @@ Convert sequential camera data to rosbag for the A2D2 Sensor Fusion data set. Se
 Available options are listed below. Arguments without default values are required:
   -h [ --help ]                                    Print help and exit.
   -c [ --camera-data-path ] arg                    Path to the camera data files.
-  -s [ --frame-info-schema-path ] arg              Path to the JSON schema for camera frame info files.
-  -c [ --sensor-config-path ] arg                  Path to the JSON for vehicle/sensor config.
+  -f [ --frame-info-schema-path ] arg              Path to the JSON schema for camera frame info files.
+  -p [ --sensor-config-path ] arg                  Path to the JSON for vehicle/sensor config.
   -s [ --sensor-config-schema-path ] arg           Path to the JSON schema for the vehicle/sensor config.
   -t [ --include-clock-topic ] arg (=0)            Optional: Use timestamps from the data to write a /clock topic.
+  -a [ --start-time ] arg (=0)                     Optional: Start on or after this time (TAI microseconds).
   -m [ --min-time-offset ] arg (=0)                Optional: Seconds to skip ahead in the data before starting the bag.
   -d [ --duration ] arg (=1.7976931348623157e+308) Optional: Seconds after min-time-offset to include in bag file.
   -o [ --output-path ] arg (=.)                    Optional: Path for the output bag file.

@@ -81,7 +81,7 @@ To run the script:
 $ rosrun a2d2_to_ros convert.sh
 ```
 
-> Note: Be aware that the batch converter skips a bit of time at the beginning of certain sensor logs in order to enusre that split bag files are time aligned. See [docs/FAQ.md](docs/FAQ.md).
+> Note: Be aware that the batch converter skips a bit of time at the beginning of certain sensor logs in order to enusre that split bag files are better time aligned; not all logs begin at the same time. See [docs/FAQ.md](docs/FAQ.md).
 
 ## Visualization
 

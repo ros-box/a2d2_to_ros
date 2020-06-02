@@ -84,10 +84,10 @@ int main(int argc, char* argv[]) {
   desc.add_options()("help,h", "Print help and exit.")(
       "camera-data-path,c", po::value(&camera_path_opt)->required(),
       "Path to the camera data files.")(
-      "frame-info-schema-path,s",
+      "frame-info-schema-path,f",
       po::value(&camera_frame_schema_path_opt)->required(),
       "Path to the JSON schema for camera frame info files.")(
-      "sensor-config-path,c", po::value(&sensor_config_path_opt)->required(),
+      "sensor-config-path,p", po::value(&sensor_config_path_opt)->required(),
       "Path to the JSON for vehicle/sensor config.")(
       "sensor-config-schema-path,s",
       po::value(&sensor_config_schema_path_opt)->required(),
@@ -96,8 +96,7 @@ int main(int argc, char* argv[]) {
       po::value<bool>()->default_value(_INCLUDE_CLOCK_TOPIC),
       "Optional: Use timestamps from the data to write a /clock topic.")(
       "start-time,a", po::value<uint64_t>()->default_value(_START_TIME),
-      "Optional: Only convert data recorded at or after this time (TAI "
-      "microseconds).")(
+      "Optional: Start on or after this time (TAI microseconds).")(
       "min-time-offset,m", po::value<double>()->default_value(_MIN_TIME_OFFSET),
       "Optional: Seconds to skip ahead in the data before starting the bag.")(
       "duration,d", po::value<double>()->default_value(_DURATION),
