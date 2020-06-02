@@ -4,16 +4,15 @@
 # START: CONFIGURATION OPTIONS
 #
 
-# Duration to record into a single bag file
-# (try not to make this larger than data_set_duration; output names get confusing otherwise)
-split_duration=7
-
 # The below two paths should point to the data set root and ROS package
 package_source=~/catkin_ws/src/a2d2_to_ros
 data_root=~/data/a2d2
 
 # This should point to the particular sensor fusion data set being converted
 sensor_data=camera_lidar/20190401_145936
+
+# Duration (in integer seconds) to record into a single bag file
+split_duration=7
 
 #
 # END: CONFIGURATION OPTIONS
