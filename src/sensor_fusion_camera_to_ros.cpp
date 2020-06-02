@@ -59,6 +59,7 @@ static constexpr auto _DATASET_NAMESPACE = "/a2d2";
 static constexpr auto _DATASET_SUFFIX = "camera";
 static constexpr auto _VERBOSE = false;
 static constexpr auto _INCLUDE_CLOCK_TOPIC = false;
+static constexpr auto _START_TIME = static_cast<uint64_t>(0);
 static constexpr auto _MIN_TIME_OFFSET = 0.0;
 static constexpr auto _DURATION = std::numeric_limits<double>::max();
 
@@ -83,10 +84,10 @@ int main(int argc, char* argv[]) {
   desc.add_options()("help,h", "Print help and exit.")(
       "camera-data-path,c", po::value(&camera_path_opt)->required(),
       "Path to the camera data files.")(
-      "frame-info-schema-path,s",
+      "frame-info-schema-path,f",
       po::value(&camera_frame_schema_path_opt)->required(),
       "Path to the JSON schema for camera frame info files.")(
-      "sensor-config-path,c", po::value(&sensor_config_path_opt)->required(),
+      "sensor-config-path,p", po::value(&sensor_config_path_opt)->required(),
       "Path to the JSON for vehicle/sensor config.")(
       "sensor-config-schema-path,s",
       po::value(&sensor_config_schema_path_opt)->required(),
@@ -94,6 +95,8 @@ int main(int argc, char* argv[]) {
       "include-clock-topic,t",
       po::value<bool>()->default_value(_INCLUDE_CLOCK_TOPIC),
       "Optional: Use timestamps from the data to write a /clock topic.")(
+      "start-time,a", po::value<uint64_t>()->default_value(_START_TIME),
+      "Optional: Start on or after this time (TAI microseconds).")(
       "min-time-offset,m", po::value<double>()->default_value(_MIN_TIME_OFFSET),
       "Optional: Seconds to skip ahead in the data before starting the bag.")(
       "duration,d", po::value<double>()->default_value(_DURATION),
@@ -132,6 +135,7 @@ int main(int argc, char* argv[]) {
   const auto output_path = vm["output-path"].as<std::string>();
   const auto verbose = vm["verbose"].as<bool>();
   const auto include_clock_topic = vm["include-clock-topic"].as<bool>();
+  const auto start_time = vm["start-time"].as<uint64_t>();
   const auto min_time_offset = vm["min-time-offset"].as<double>();
   const auto duration = vm["duration"].as<double>();
 
@@ -352,6 +356,11 @@ int main(int argc, char* argv[]) {
       }
 
       const auto frame_timestamp = d_json["cam_tstamp"].GetUint64();
+
+      if (frame_timestamp < start_time) {
+        continue;
+      }
+
       frame_timestamp_ros = a2d2::a2d2_timestamp_to_ros_time(frame_timestamp);
     }
 
