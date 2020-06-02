@@ -22,7 +22,10 @@ bus_data_subdir=/bus
 data_source="$data_root/$sensor_data"
 sensor_locations=(cam_front_center cam_front_left cam_front_right cam_rear_center cam_side_left cam_side_right)
 
+# approximate duration (in integer seconds) of the data set
 data_set_duration=746
+
+# earliest time in the data set for which all sensor modalities provide data
 record_start_time=1554121595035037
 
 # Convert bus signal data
