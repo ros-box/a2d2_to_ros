@@ -26,7 +26,7 @@ $ rosdep install a2d2_to_ros --ignore-src -r -y
 ## Recommendations
 
 * Use a dedicated download utility, such as `wget`, for downloading the data set files. Using a browser can be unreliable, likely due in part to the large size of the files.
-* Use the `--min-time-offset` and `--duration` converter options to split the converted bag files into smaller timespans (the batch conversion script described below does this). The `rosbag` utility does a [poor job](https://github.com/ros/ros_comm/issues/117) handling extremely large log files, so splitting them up can make them easier to use.
+* Use the `--start-time`, `--min-time-offset`, and `--duration` converter options to split the converted bag files into smaller timespans (see [scripts/convert.sh](scripts/convert.sh) for an example of doing this). The `rosbag` utility does a [poor job](https://github.com/ros/ros_comm/issues/117) handling extremely large log files, so splitting them up can make them easier to use.
 
 ## FAQ
 
