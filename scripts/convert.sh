@@ -4,32 +4,26 @@
 # START: CONFIGURATION OPTIONS
 #
 
-# Duration of the data set recording in seconds
-data_set_duration=746
-
 # Duration to record into a single bag file
 # (try not to make this larger than data_set_duration; output names get confusing otherwise)
-split_duration=10
+split_duration=7
 
 # The below two paths should point to the data set root and ROS package
 package_source=~/catkin_ws/src/a2d2_to_ros
-data_root=~/data/a2d2-preview
+data_root=~/data/a2d2
 
 # This should point to the particular sensor fusion data set being converted
 sensor_data=camera_lidar/20190401_145936
-
-bus_data_subdir_full=/bus
-bus_data_subdir_preview=
-# Set this depending on which data you're converting (preview or full)
-bus_data_subdir=$bus_data_subdir_preview
 
 #
 # END: CONFIGURATION OPTIONS
 #
 
+bus_data_subdir=/bus
 data_source="$data_root/$sensor_data"
 sensor_locations=(cam_front_center cam_front_left cam_front_right cam_rear_center cam_side_left cam_side_right)
 
+data_set_duration=746
 record_start_time=1554121595035037
 
 # Convert bus signal data

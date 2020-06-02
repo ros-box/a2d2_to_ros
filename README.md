@@ -42,33 +42,23 @@ $ rosdep install a2d2_to_ros --ignore-src -r -y
 
 ## Batch conversion
 
-For convenience, a shell script is provided that can batch convert the whole data set. Before running the script, be sure to open it and set the configuration options appropriately.
+For convenience, a shell script is provided that can batch convert an entire sensor fusion data set for a single city. Before running the script, be sure to open it and set the configuration options appropriately.
 
 ```bash
 #
 # START: CONFIGURATION OPTIONS
 #
 
-# Duration of the data set recording in seconds
-preview_duration=2
-full_duration=746
-data_set_duration=$preview_duration
-
 # Duration to record into a single bag file
 # (try not to make this larger than data_set_duration; output names get confusing otherwise)
-split_duration=2
+split_duration=7
 
 # The below two paths should point to the data set root and ROS package
 package_source=~/catkin_ws/src/a2d2_to_ros
-data_root=~/data/a2d2-preview
+data_root=~/data/a2d2
 
 # This should point to the particular sensor fusion data set being converted
 sensor_data=camera_lidar/20190401_145936
-
-bus_data_subdir_full=/bus
-bus_data_subdir_preview=
-# Set this depending on which data you're converting (preview or full)
-bus_data_subdir=$bus_data_subdir_preview
 
 #
 # END: CONFIGURATION OPTIONS
@@ -82,6 +72,8 @@ $ rosrun a2d2_to_ros convert.sh
 ```
 
 > Note: Be aware that the batch converter skips a bit of time at the beginning of certain sensor logs in order to enusre that split bag files are better time aligned; not all logs begin at the same time. See [docs/FAQ.md](docs/FAQ.md).
+
+> Note: Do not run this script on the preview data set. The preview data set uses a slightly different file layout, so it will not work.
 
 ## Visualization
 
