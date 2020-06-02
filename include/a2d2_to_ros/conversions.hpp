@@ -32,6 +32,21 @@
 namespace a2d2_to_ros {
 
 /**
+ * @brief Sensor data is recorded in TAI, bus signal data in UTC. This function
+ * converts TAI to UTC for all times in the dataset so that we can unify time
+ * representations.
+ *
+ * @pre mu_s is in microseconds
+ * @pre mu_s is in TAI
+ * @pre mu_s is a timestamp from the data
+ *
+ * @note THIS IS NOT FOR GENERAL USE, ONLY WITH THE A2D2 DATASET. The delta
+ * between TAI and UTC changes every leap year, so this function is only valid
+ * for a specific range of time.
+ */
+uint64_t TAI_to_UTC(uint64_t mu_s);
+
+/**
  * @brief Convert a 2D index to a 1D index according to CNPY convention.
  */
 size_t flatten_2d_index(size_t width, size_t row, size_t col);

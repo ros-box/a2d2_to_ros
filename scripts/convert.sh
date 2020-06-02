@@ -25,8 +25,8 @@ sensor_locations=(cam_front_center cam_front_left cam_front_right cam_rear_cente
 # approximate duration (in integer seconds) of the data set
 data_set_duration=746
 
-# earliest time in the data set (in TAI microseconds) for which all sensor modalities provide data
-record_start_time=1554121595035037
+# earliest time in the data set (in microseconds) for which all sensor modalities provide data
+record_start_time=1554121593489120
 
 # Convert bus signal data
 start_time=0

@@ -15,7 +15,7 @@ Answers, where available, are given directly below the questions and have come f
 1. **Why do converters only run on portions of the data set instead of the whole thing?**
     * The data set is quite large (~2.3TB). Many people won't be able to download and convert the whole thing at once, which would likely require over 5TB of free storage.
 1. **What convention do the timestamps follow?**
-    * *All timestamps encode microseconds since Epoch begin. Bus signal timestamps are in [UTC](https://en.wikipedia.org/wiki/Coordinated_Universal_Time), all others are [TAI](https://en.wikipedia.org/wiki/International_Atomic_Time)*
+    * *All timestamps encode microseconds since Epoch begin. Bus signal timestamps are in [UTC](https://en.wikipedia.org/wiki/Coordinated_Universal_Time), all others are [TAI](https://en.wikipedia.org/wiki/International_Atomic_Time). By default, all TAI times are converted to UTC by subtracting 37s when generating bag files. The `--keep-tai-times` flag in lidar and camera converters diables this behavior.*
 1. **What is the precision of real-valued data (e.g., single precision, double precision, etc.)?**
     * *None of the data in the data set was recorded with greater than single precision. (For lidar data, note that numpy stores the point data with double precision, but the data itself is only generated with single precision.)*
 1. **Are the labeled data a subset of the unlabeled data, or are they different sets?**
@@ -23,15 +23,15 @@ Answers, where available, are given directly below the questions and have come f
 1. **Do all subsets in the unlabeled data set span the same time?**
     * *No, there are slightly different start times among the sensor locations (largest magnitude times in bold):*
 
-| Sensor       | Start time        |
-| :------------| :---------------: |
-| Bus signals  | 1554121593489120  |
-| Front center | 1554121593909522  |
-| Front left   | 1554121593909500  |
-| Front right  | 1554121593909500  |
-| Rear center  | 1554121595034993  |
-| Side left    | *1554121595035037*  |
-| Side right   | *1554121595035037*  |
+| Sensor       | Start time (UTC)     |
+| :------------| :------------------: |
+| Bus signals  | **1554121593489120** |
+| Front center | 1554121556909522     |
+| Front left   | 1554121556909500     |
+| Front right  | 1554121556909500     |
+| Rear center  | 1554121558034993     |
+| Side left    | 1554121558035037     |
+| Side right   | 1554121558035037     |
 
 ## Conventions
 
