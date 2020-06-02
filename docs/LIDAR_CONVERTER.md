@@ -50,6 +50,7 @@ Available options are listed below. Arguments without default values are require
   -o [ --output-path ] arg (=.)                    Optional: Path for the output bag file.
   -i [ --include-depth-map ] arg (=0)              Optional: Publish a depth map version of the lidar data.
   -v [ --verbose ] arg (=0)                        Optional: Show name of each file after it is processed.
+  -k [ --keep-tai-times ] arg (=0)                 Optional: Leave camera/lidar timestamps in TAI (not recommended).
 ```
 
 ## Type conversions
