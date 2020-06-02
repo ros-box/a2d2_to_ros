@@ -71,6 +71,7 @@ static constexpr auto _ORIGINAL_VALUE_TOPIC = "original_value";
 static constexpr auto _ORIGINAL_UNITS_TOPIC = "original_units";
 static constexpr auto _VALUE_TOPIC = "value";
 static constexpr auto _HEADER_TOPC = "header";
+static constexpr auto _START_TIME = static_cast<uint64_t>(0);
 static constexpr auto _MIN_TIME_OFFSET = 0.0;
 static constexpr auto _VERBOSE = false;
 static constexpr auto _DURATION = std::numeric_limits<double>::max();
@@ -136,6 +137,9 @@ int main(int argc, char* argv[]) {
       "Path to the directory containing the JSON bus signal file.")(
       "bus-signal-schema-path,b", po::value(&schema_path_opt)->required(),
       "Path to the JSON schema for bus signal data.")(
+      "start-time,a", po::value<uint64_t>()->default_value(_START_TIME),
+      "Optional: Only convert data recorded at or after this time (TAI "
+      "microseconds).")(
       "min-time-offset,m", po::value<double>()->default_value(_MIN_TIME_OFFSET),
       "Optional: Seconds to skip ahead in the data before starting the bag.")(
       "duration,d", po::value<double>()->default_value(_DURATION),
@@ -184,11 +188,13 @@ int main(int argc, char* argv[]) {
   const auto include_original = vm["include-original-values"].as<bool>();
   const auto include_converted = vm["include-converted-values"].as<bool>();
   const auto include_clock_topic = vm["include-clock-topic"].as<bool>();
+  const auto start_time = vm["start-time"].as<uint64_t>();
   const auto min_time_offset = vm["min-time-offset"].as<double>();
   const auto duration = vm["duration"].as<double>();
   const auto verbose = vm["verbose"].as<bool>();
 
   const auto valid_min_offset = (std::isfinite(min_time_offset) &&
+
                                  a2d2::strictly_non_negative(min_time_offset));
   const auto valid_duration =
       (std::isfinite(duration) && a2d2::strictly_non_negative(duration));
@@ -445,8 +451,10 @@ int main(int argc, char* argv[]) {
     auto no_units_yet = true;
     boost::optional<ros::Time> first_time;
     for (rapidjson::SizeType idx = 0; idx < values.Size(); ++idx) {
+      constexpr auto TIMESTAMP_IDX = static_cast<rapidjson::SizeType>(0);
+      constexpr auto VALUE_IDX = static_cast<rapidjson::SizeType>(1);
       const rapidjson::Value& t_v = values[idx];
-      const auto time = t_v[static_cast<rapidjson::SizeType>(0)].GetUint64();
+      const auto time = t_v[TIMESTAMP_IDX].GetUint64();
       if (!a2d2::valid_ros_timestamp(time)) {
         X_FATAL("Timestamp "
                 << time
@@ -457,7 +465,11 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
       }
 
-      const auto value = t_v[static_cast<rapidjson::SizeType>(1)].GetDouble();
+      if (time < start_time) {
+        continue;
+      }
+
+      const auto value = t_v[VALUE_IDX].GetDouble();
       const auto data = a2d2::DataPair::build(value, time, _BUS_FRAME_NAME);
 
       const auto& stamp = data.header.stamp;

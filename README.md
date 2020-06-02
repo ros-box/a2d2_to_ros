@@ -1,6 +1,6 @@
 # A2D2 to ROS
 
-![Front center lidar with TF tree](media/screenshot.png "Front center lidar with TF tree")
+![Dataset visualization](media/a2d2.png "Dataset visualization")
 
 Utilities for converting [A2D2 data sets](https://www.a2d2.audi/) to ROS bags.
 
@@ -26,6 +26,7 @@ $ rosdep install a2d2_to_ros --ignore-src -r -y
 ## Recommendations
 
 * Use a dedicated download utility, such as `wget`, for downloading the data set files. Using a browser can be unreliable, likely due in part to the large size of the files.
+* Use the `--min-time-offset` and `--duration` converter options to split the converted bag files into smaller timespans (the batch conversion script described below does this). The `rosbag` utility does a [poor job](https://github.com/ros/ros_comm/issues/117) handling extremely large log files, so splitting them up can make them easier to use.
 
 ## FAQ
 
@@ -41,19 +42,28 @@ $ rosdep install a2d2_to_ros --ignore-src -r -y
 
 ## Batch conversion
 
-For convenience, a shell script is provided that can batch convert the whole data set. Before running the script, be sure to open it and set the configuration options appropriately:
+For convenience, a shell script is provided that can batch convert the whole data set. Before running the script, be sure to open it and set the configuration options appropriately.
 
 ```bash
 #
 # START: CONFIGURATION OPTIONS
 #
 
+# Duration of the data set recording in seconds
+preview_duration=2
+full_duration=746
+data_set_duration=$preview_duration
+
+# Duration to record into a single bag file
+# (try not to make this larger than data_set_duration; output names get confusing otherwise)
+split_duration=2
+
 # The below two paths should point to the data set root and ROS package
 package_source=~/catkin_ws/src/a2d2_to_ros
 data_root=~/data/a2d2-preview
 
 # This should point to the particular sensor fusion data set being converted
-sensor_data=camera_lidar/20180810_150607
+sensor_data=camera_lidar/20190401_145936
 
 bus_data_subdir_full=/bus
 bus_data_subdir_preview=
@@ -70,6 +80,8 @@ To run the script:
 ```console
 $ rosrun a2d2_to_ros convert.sh
 ```
+
+> Note: Be aware that the batch converter skips a bit of time at the beginning of certain sensor logs in order to enusre that split bag files are time aligned. See [docs/FAQ.md](docs/FAQ.md).
 
 ## Visualization
 

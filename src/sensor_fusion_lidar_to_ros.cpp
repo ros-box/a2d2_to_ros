@@ -59,6 +59,7 @@ static constexpr auto _DATASET_SUFFIX = "lidar";
 static constexpr auto _INCLUDE_CLOCK_TOPIC = false;
 static constexpr auto _INCLUDE_DEPTH_MAP = false;
 static constexpr auto _VERBOSE = false;
+static constexpr auto _START_TIME = static_cast<uint64_t>(0);
 static constexpr auto _MIN_TIME_OFFSET = 0.0;
 static constexpr auto _DURATION = std::numeric_limits<double>::max();
 
@@ -89,6 +90,9 @@ int main(int argc, char* argv[]) {
       "include-clock-topic,t",
       po::value<bool>()->default_value(_INCLUDE_CLOCK_TOPIC),
       "Optional: Use timestamps from the data to write a /clock topic.")(
+      "start-time,a", po::value<uint64_t>()->default_value(_START_TIME),
+      "Optional: Only convert data recorded at or after this time (TAI "
+      "microseconds).")(
       "min-time-offset,m", po::value<double>()->default_value(_MIN_TIME_OFFSET),
       "Optional: Seconds to skip ahead in the data before starting the bag.")(
       "duration,d", po::value<double>()->default_value(_DURATION),
@@ -130,6 +134,7 @@ int main(int argc, char* argv[]) {
   const auto include_depth_map = vm["include-depth-map"].as<bool>();
   const auto include_clock_topic = vm["include-clock-topic"].as<bool>();
   const auto verbose = vm["verbose"].as<bool>();
+  const auto start_time = vm["start-time"].as<uint64_t>();
   const auto min_time_offset = vm["min-time-offset"].as<double>();
   const auto duration = vm["duration"].as<double>();
 
@@ -246,6 +251,11 @@ int main(int argc, char* argv[]) {
       }
 
       const auto frame_timestamp = d_json["cam_tstamp"].GetUint64();
+
+      if (frame_timestamp < start_time) {
+        continue;
+      }
+
       frame_timestamp_ros = a2d2::a2d2_timestamp_to_ros_time(frame_timestamp);
     }
 
