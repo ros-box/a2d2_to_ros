@@ -40,7 +40,7 @@
      }
     },
     "acceleration_component": {
-       "description": "Measured acceleration components in reference frame.",
+       "description": "Measured acceleration components of the reference frame with respect to an inertial frame.",
        "properties": {
          "unit": {
            "description": "Units of measure use for values.",
@@ -52,7 +52,7 @@
        "required": ["unit", "values"]
     },
     "angular_velocity_component": {
-       "description": "Measured angular velocity components in reference frame.",
+       "description": "Measured angular velocity components of the reference frame with respect to an inertial frame.",
        "properties": {
          "unit": {
            "description": "Units of measure use for values.",

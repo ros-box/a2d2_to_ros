@@ -62,6 +62,7 @@ static constexpr auto _INCLUDE_CLOCK_TOPIC = false;
 static constexpr auto _START_TIME = static_cast<uint64_t>(0);
 static constexpr auto _MIN_TIME_OFFSET = 0.0;
 static constexpr auto _DURATION = std::numeric_limits<double>::max();
+static constexpr auto _SENSOR_CONFIG_FILENAME = "cams_lidars.json";
 
 int main(int argc, char* argv[]) {
   X_INFO("<Camera Converter>");
@@ -130,7 +131,8 @@ int main(int argc, char* argv[]) {
 
   const auto camera_path = *camera_path_opt;
   const auto camera_frame_schema_path = *camera_frame_schema_path_opt;
-  const auto sensor_config_path = *sensor_config_path_opt + "/cams_lidars.json";
+  const auto sensor_config_path =
+      *sensor_config_path_opt + "/" + _SENSOR_CONFIG_FILENAME;
   const auto sensor_config_schema_path = *sensor_config_schema_path_opt;
   const auto output_path = vm["output-path"].as<std::string>();
   const auto verbose = vm["verbose"].as<bool>();
