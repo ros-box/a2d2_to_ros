@@ -23,15 +23,15 @@ Answers, where available, are given directly below the questions and have come f
 1. **Do all subsets in the unlabeled data set span the same time?**
     * *No, there are slightly different start times among the sensor locations (largest magnitude times in bold):*
 
-| Sensor       | Start time (UTC)   |
-| :------------| :----------------: |
-| Bus signals  | *1554121593489120* |
-| Front center | 1554121556909522   |
-| Front left   | 1554121556909500   |
-| Front right  | 1554121556909500   |
-| Rear center  | 1554121558034993   |
-| Side left    | 1554121558035037   |
-| Side right   | 1554121558035037   |
+| Sensor       | Start time (UTC)     |
+| :------------| :------------------: |
+| Bus signals  | **1554121593489120** |
+| Front center | 1554121556909522     |
+| Front left   | 1554121556909500     |
+| Front right  | 1554121556909500     |
+| Rear center  | 1554121558034993     |
+| Side left    | 1554121558035037     |
+| Side right   | 1554121558035037     |
 
 ## Conventions
 
