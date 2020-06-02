@@ -25,7 +25,7 @@ $ rosdep install a2d2_to_ros --ignore-src -r -y
 
 ## Recommendations
 
-Use a dedicated download utility, such as `wget`, for downloading the data set files. Using a browser can be unreliable, likely due in part to the large size of the files.
+* Use a dedicated download utility, such as `wget`, for downloading the data set files. Using a browser can be unreliable, likely due in part to the large size of the files.
 
 ## FAQ
 
