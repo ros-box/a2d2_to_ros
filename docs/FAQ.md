@@ -21,8 +21,7 @@ Answers, where available, are given directly below the questions and have come f
 1. **Are the labeled data a subset of the unlabeled data, or are they different sets?**
     * *The object detection dataset is a subset of the semantic segmentation dataset. The raw sensor fusion data (Gaimersheim, Ingolstadt, and Munich) is a different set.*
 1. **Do all subsets in the unlabeled data set span the same time?**
-    * *No, there are slightly different start times among the sensor locations (largest magnitude times in bold):*
-
+    * *No, there are slightly different start times among the sensor locations. For example, the table below lists start times for the Ingolstadt logs (largest magnitude time in bold):*
 | Sensor       | Start time (UTC)     |
 | :------------| :------------------: |
 | Bus signals  | **1554121593489120** |
