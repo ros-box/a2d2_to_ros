@@ -42,7 +42,7 @@ $ rosdep install a2d2_to_ros --ignore-src -r -y
 
 ## Batch conversion
 
-For convenience, a shell script is provided that can batch convert an entire sensor fusion data set for a single city. Before running the script, be sure to open it and set the configuration options appropriately.
+For convenience, a shell script is provided in [scripts/convert.sh](scripts/convert.sh) that can batich convert an entire sensor fusion data set for a single city. Before running the script, be sure to open it and set the configuration options appropriately.
 
 ```bash
 #
