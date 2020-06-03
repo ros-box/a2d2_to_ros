@@ -526,7 +526,11 @@ int main(int argc, char* argv[]) {
       }
 
       if (include_converted) {
-        const auto ros_value = a2d2::to_ros_units(units, data.value.data);
+        const auto is_lat_lon =
+            ((name == "longitude_degree") || (name == "latitude_degree"));
+        const auto ros_value =
+            (is_lat_lon ? data.value.data
+                        : a2d2::to_ros_units(units, data.value.data));
         a2d2::DataPair::value_type ros_value_msg;
         ros_value_msg.data = ros_value;
         bus_signal_bag.write(topic_prefix + "/" + name + "/" + _VALUE_TOPIC,
