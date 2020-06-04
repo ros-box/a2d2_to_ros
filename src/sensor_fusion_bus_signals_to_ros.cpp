@@ -402,9 +402,13 @@ int main(int argc, char* argv[]) {
         geometry_msgs::Transform Tx_msg;
         tf::transformEigenToMsg(Tx, Tx_msg);
 
+        // Lidar data is motion compensated, so they are in the 'wheels' frame
+        // Camera data is not motion compensate, so it is in the 'chassis' frame
+        const auto frame = (is_lidar ? "wheels" : "chassis");
+
         geometry_msgs::TransformStamped Tx_stamped_msg;
         Tx_stamped_msg.transform = Tx_msg;
-        Tx_stamped_msg.header.frame_id = "chassis";
+        Tx_stamped_msg.header.frame_id = frame;
         Tx_stamped_msg.child_frame_id = a2d2::tf_frame_name(name, frame);
         msgtf.transforms.push_back(Tx_stamped_msg);
       }
