@@ -475,7 +475,11 @@ int main(int argc, char* argv[]) {
 
       const auto& stamp = data.header.stamp;
       if (!first_time) {
-        first_time = stamp;
+        if (start_time != _START_TIME) {
+          first_time = a2d2::a2d2_timestamp_to_ros_time(start_time);
+        } else {
+          first_time = stamp;
+        }
       }
 
       const auto time_since_begin = (stamp - *first_time).toSec();

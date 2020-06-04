@@ -367,7 +367,11 @@ int main(int argc, char* argv[]) {
     }
 
     if (!first_time) {
-      first_time = frame_timestamp_ros;
+      if (start_time != _START_TIME) {
+        first_time = a2d2::a2d2_timestamp_to_ros_time(start_time);
+      } else {
+        first_time = frame_timestamp_ros;
+      }
     }
 
     const auto time_since_begin = (frame_timestamp_ros - *first_time).toSec();
