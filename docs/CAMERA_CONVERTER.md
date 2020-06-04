@@ -59,7 +59,6 @@ Available options are listed below. Arguments without default values are require
   -d [ --duration ] arg (=1.7976931348623157e+308) Optional: Seconds after min-time-offset to include in bag file.
   -o [ --output-path ] arg (=.)                    Optional: Path for the output bag file.
   -v [ --verbose ] arg (=0)                        Optional: Show name of each file after it is processed.
-  -k [ --keep-tai-times ] arg (=0)                 Optional: Leave camera/lidar timestamps in TAI (not recommended).
 ```
 
 ## Bag file conventions
