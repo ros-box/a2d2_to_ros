@@ -392,10 +392,8 @@ int main(int argc, char* argv[]) {
       {
         const auto& rectime = npz[fields[a2d2::npz::Fields::RECTIME_IDX]];
         const auto data = rectime.data<a2d2::npz::ReadTypes::Rectime>();
-        const auto tai_time =
-            static_cast<a2d2::npz::WriteTypes::Rectime>(data[row]);
         *(iters.rectime) =
-            (keep_tai_times ? tai_time : a2d2::TAI_to_UTC(tai_time));
+            static_cast<a2d2::npz::WriteTypes::Rectime>(data[row]);
       }
 
       {
@@ -414,10 +412,8 @@ int main(int argc, char* argv[]) {
 
       {
         const auto data = timestamp.data<a2d2::npz::ReadTypes::Timestamp>();
-        const auto tai_time =
-            static_cast<a2d2::npz::WriteTypes::Timestamp>(data[row]);
         *(iters.timestamp) =
-            (keep_tai_times ? tai_time : a2d2::TAI_to_UTC(tai_time));
+            static_cast<a2d2::npz::WriteTypes::Timestamp>(data[row]);
       }
 
       {
