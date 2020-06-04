@@ -8,7 +8,10 @@
 package_source=~/catkin_ws/src/a2d2_to_ros
 data_root=~/data/a2d2
 
-# Duration (in integer seconds) to record to a single bag file before splitting off a new one
+# This should point to the particular sensor fusion data set being converted
+sensor_data=camera_lidar/20190401_145936
+
+# Duration (in integer seconds) to record into a single bag file
 split_duration=7
 
 # Relative location of the sensor fusion data set being converted
@@ -22,7 +25,7 @@ sensor_data=$ingolstadt_data
 # Set 'record_start_time' to the appropriate time for the dataset being converted
 munich_start_time= #TODO
 gaimersheim_start_time= #TODO
-ingolstadt_start_time=1554121593489120
+ingolstadt_start_time=1554121595035037
 record_start_time=$ingolstadt_start_time
 
 # Approximate duration (in integer seconds) of the data set
@@ -39,6 +42,8 @@ data_set_duration=$ingolstadt_duration
 bus_data_subdir=/bus
 data_source="$data_root/$sensor_data"
 sensor_locations=(cam_front_center cam_front_left cam_front_right cam_rear_center cam_side_left cam_side_right)
+# earliest time in the data set (in TAI microseconds) for which all sensor modalities provide data
+record_start_time=1554121595035037
 
 # Convert bus signal data
 start_time=0

@@ -59,7 +59,6 @@ static constexpr auto _DATASET_SUFFIX = "lidar";
 static constexpr auto _INCLUDE_CLOCK_TOPIC = false;
 static constexpr auto _INCLUDE_DEPTH_MAP = false;
 static constexpr auto _VERBOSE = false;
-static constexpr auto _KEEP_TAI = false;
 static constexpr auto _START_TIME = static_cast<uint64_t>(0);
 static constexpr auto _MIN_TIME_OFFSET = 0.0;
 static constexpr auto _DURATION = std::numeric_limits<double>::max();
@@ -103,9 +102,7 @@ int main(int argc, char* argv[]) {
       po::value<bool>()->default_value(_INCLUDE_DEPTH_MAP),
       "Optional: Publish a depth map version of the lidar data.")(
       "verbose,v", po::value<bool>()->default_value(_VERBOSE),
-      "Optional: Show name of each file after it is processed.")(
-      "keep-tai-times,k", po::value<bool>()->default_value(_KEEP_TAI),
-      "Optional: Leave camera/lidar timestamps in TAI (not recommended).");
+      "Optional: Show name of each file after it is processed.");
 
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -139,7 +136,6 @@ int main(int argc, char* argv[]) {
   const auto start_time = vm["start-time"].as<uint64_t>();
   const auto min_time_offset = vm["min-time-offset"].as<double>();
   const auto duration = vm["duration"].as<double>();
-  const auto keep_tai_times = vm["keep-tai-times"].as<bool>();
 
   const auto valid_min_offset = (std::isfinite(min_time_offset) &&
                                  a2d2::strictly_non_negative(min_time_offset));
@@ -253,8 +249,7 @@ int main(int argc, char* argv[]) {
         // X_INFO("Validated: " << camera_data_file);
       }
 
-      const auto t = d_json["cam_tstamp"].GetUint64();
-      const auto frame_timestamp = (keep_tai_times ? t : a2d2::TAI_to_UTC(t));
+      const auto frame_timestamp = d_json["cam_tstamp"].GetUint64();
 
       if (frame_timestamp < start_time) {
         continue;
