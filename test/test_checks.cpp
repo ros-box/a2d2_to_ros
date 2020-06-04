@@ -179,7 +179,7 @@ TEST(A2D2_to_ROS_checks, verify_ego_bbox_params) {
 
 TEST(A2D2_to_ROS_checks, valid_ros_timestamp) {
   constexpr auto MAX = std::numeric_limits<uint64_t>::max();
-  constexpr auto TIME = static_cast<uint64_t>(1554122338652775);
+  constexpr auto TIME = static_cast<uint64_t>(1554122338652775ull);
   EXPECT_FALSE(valid_ros_timestamp(MAX));
   EXPECT_TRUE(valid_ros_timestamp(TIME));
 
