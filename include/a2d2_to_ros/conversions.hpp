@@ -32,6 +32,27 @@
 namespace a2d2_to_ros {
 
 /**
+ * @brief Convert seconds to microseconds
+ * @note This function does not protect against overflow
+ * TODO(jeff) should be using a dimensional analysis library
+ */
+uint64_t microseconds_to_nanoseconds(uint64_t s);
+
+/**
+ * @brief Convert seconds to microseconds
+ * @note This function does not protect against overflow
+ * TODO(jeff) should be using a dimensional analysis library
+ */
+uint64_t microseconds_to_seconds(uint64_t s);
+
+/**
+ * @brief Convert seconds to microseconds
+ * @note This function does not protect against overflow
+ * TODO(jeff) should be using a dimensional analysis library
+ */
+uint64_t seconds_to_microseconds(uint64_t s);
+
+/**
  * @brief Convert a 2D index to a 1D index according to CNPY convention.
  */
 size_t flatten_2d_index(size_t width, size_t row, size_t col);
