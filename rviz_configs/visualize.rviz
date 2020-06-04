@@ -24,7 +24,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: Lidar - Front Left
+    SyncSource: Camera - Front Center
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -52,20 +52,32 @@ Visualization Manager:
       Value: true
     - Class: rviz/TF
       Enabled: true
-      Frame Timeout: 9999
+      Frame Timeout: 5
       Frames:
         All Enabled: true
         cameras_front_center:
           Value: true
+        cameras_front_center_point_cloud:
+          Value: true
         cameras_front_left:
+          Value: true
+        cameras_front_left_point_cloud:
           Value: true
         cameras_front_right:
           Value: true
+        cameras_front_right_point_cloud:
+          Value: true
         cameras_rear_center:
+          Value: true
+        cameras_rear_center_point_cloud:
           Value: true
         cameras_side_left:
           Value: true
+        cameras_side_left_point_cloud:
+          Value: true
         cameras_side_right:
+          Value: true
+        cameras_side_right_point_cloud:
           Value: true
         chassis:
           Value: true
@@ -88,6 +100,18 @@ Visualization Manager:
       Show Names: true
       Tree:
         wheels:
+          cameras_front_center_point_cloud:
+            {}
+          cameras_front_left_point_cloud:
+            {}
+          cameras_front_right_point_cloud:
+            {}
+          cameras_rear_center_point_cloud:
+            {}
+          cameras_side_left_point_cloud:
+            {}
+          cameras_side_right_point_cloud:
+            {}
           chassis:
             cameras_front_center:
               {}
@@ -128,9 +152,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 239
+      Max Intensity: 234
       Min Color: 0; 0; 0
-      Min Intensity: 1
+      Min Intensity: 0
       Name: Lidar - Front Center
       Position Transformer: XYZ
       Queue Size: 10
@@ -442,4 +466,4 @@ Window Geometry:
     collapsed: false
   Width: 1286
   X: 428
-  Y: 132
+  Y: 102
