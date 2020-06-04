@@ -30,14 +30,6 @@ namespace a2d2_to_ros {
 
 //------------------------------------------------------------------------------
 
-uint64_t TAI_to_UTC(uint64_t mu_s) {
-  constexpr auto DELTA_AT_RECORD_TIME =
-      (static_cast<uint64_t>(37) * ONE_MILLION);
-  return (mu_s - DELTA_AT_RECORD_TIME);
-}
-
-//------------------------------------------------------------------------------
-
 size_t flatten_2d_index(size_t width, size_t row, size_t col) {
   return ((row * width) + col);
 }
