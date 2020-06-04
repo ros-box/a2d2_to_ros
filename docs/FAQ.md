@@ -30,8 +30,8 @@ Answers, where available, are given directly below the questions and have come f
 | Front left   | 1554121593909500  |
 | Front right  | 1554121593909500  |
 | Rear center  | 1554121595034993  |
-| Side left    | *1554121595035037*  |
-| Side right   | *1554121595035037*  |
+| Side left    | **1554121595035037**  |
+| Side right   | **1554121595035037**  |
 
 ## Conventions
 
