@@ -97,7 +97,7 @@ int main(int argc, char* argv[]) {
       po::value<bool>()->default_value(_INCLUDE_CLOCK_TOPIC),
       "Optional: Use timestamps from the data to write a /clock topic.")(
       "start-time,a", po::value<uint64_t>()->default_value(_START_TIME),
-      "Optional: Start on or after this time (TAI microseconds).")(
+      "Optional: Start on or after this time.")(
       "min-time-offset,m", po::value<double>()->default_value(_MIN_TIME_OFFSET),
       "Optional: Seconds to skip ahead in the data before starting the bag.")(
       "duration,d", po::value<double>()->default_value(_DURATION),

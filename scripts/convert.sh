@@ -42,8 +42,6 @@ data_set_duration=$ingolstadt_duration
 bus_data_subdir=/bus
 data_source="$data_root/$sensor_data"
 sensor_locations=(cam_front_center cam_front_left cam_front_right cam_rear_center cam_side_left cam_side_right)
-# earliest time in the data set (in TAI microseconds) for which all sensor modalities provide data
-record_start_time=1554121595035037
 
 # Convert bus signal data
 start_time=0

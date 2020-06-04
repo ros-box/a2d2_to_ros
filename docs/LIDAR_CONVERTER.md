@@ -44,7 +44,7 @@ Available options are listed below. Arguments without default values are require
   -c [ --camera-data-path ] arg                    Path to the camera data files (for timestamp information).
   -s [ --frame-info-schema-path ] arg              Path to the JSON schema for camera frame info files.
   -t [ --include-clock-topic ] arg (=0)            Optional: Use timestamps from the data to write a /clock topic.
-  -a [ --start-time ] arg (=0)                     Optional: Start on or after this time (TAI microseconds).
+  -a [ --start-time ] arg (=0)                     Optional: Start on or after this time.
   -m [ --min-time-offset ] arg (=0)                Optional: Seconds to skip ahead in the data before starting the bag.
   -d [ --duration ] arg (=1.7976931348623157e+308) Optional: Seconds after min-time-offset to include in bag file.
   -o [ --output-path ] arg (=.)                    Optional: Path for the output bag file.
