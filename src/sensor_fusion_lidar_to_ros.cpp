@@ -259,7 +259,11 @@ int main(int argc, char* argv[]) {
     }
 
     if (!first_time) {
-      first_time = frame_timestamp_ros;
+      if (start_time != _START_TIME) {
+        first_time = a2d2::a2d2_timestamp_to_ros_time(start_time);
+      } else {
+        first_time = frame_timestamp_ros;
+      }
     }
 
     const auto time_since_begin = (frame_timestamp_ros - *first_time).toSec();
@@ -306,8 +310,8 @@ int main(int argc, char* argv[]) {
     const auto lidar_file_name = a2d2::frame_from_filename(f);
     const auto lidar_name =
         a2d2::get_camera_name_from_frame_name(lidar_file_name);
-    const auto frame =
-        a2d2::tf_frame_name(a2d2::sensors::Names::CAMERAS, lidar_name);
+    const auto frame = a2d2::tf_motion_compensated_sensor_frame_name(
+        a2d2::sensors::Names::CAMERAS, lidar_name);
     if (frame.empty()) {
       X_FATAL("Could not find frame name in filename: "
               << f << ". Cannot continue.");

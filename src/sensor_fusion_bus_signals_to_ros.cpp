@@ -409,7 +409,21 @@ int main(int argc, char* argv[]) {
         msgtf.transforms.push_back(Tx_stamped_msg);
       }
 
-      {  // TODO(jeff): Compute this from roll/pitch
+      // Lidar data lives in camera frames, but it is motion corrected, so it
+      // lives in 'wheels' not 'chassis'
+      if (is_camera) {
+        geometry_msgs::Transform Tx_msg;
+        tf::transformEigenToMsg(Tx, Tx_msg);
+
+        geometry_msgs::TransformStamped Tx_stamped_msg;
+        Tx_stamped_msg.transform = Tx_msg;
+        Tx_stamped_msg.header.frame_id = "wheels";
+        Tx_stamped_msg.child_frame_id =
+            a2d2::tf_motion_compensated_sensor_frame_name(name, frame);
+        msgtf.transforms.push_back(Tx_stamped_msg);
+      }
+
+      {
         geometry_msgs::Transform Tx_msg;
         tf::transformEigenToMsg(Eigen::Affine3d::Identity(), Tx_msg);
 
@@ -475,7 +489,11 @@ int main(int argc, char* argv[]) {
 
       const auto& stamp = data.header.stamp;
       if (!first_time) {
-        first_time = stamp;
+        if (start_time != _START_TIME) {
+          first_time = a2d2::a2d2_timestamp_to_ros_time(start_time);
+        } else {
+          first_time = stamp;
+        }
       }
 
       const auto time_since_begin = (stamp - *first_time).toSec();

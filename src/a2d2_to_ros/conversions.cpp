@@ -30,6 +30,18 @@ namespace a2d2_to_ros {
 
 //------------------------------------------------------------------------------
 
+uint64_t microseconds_to_nanoseconds(uint64_t s) { return (s * ONE_THOUSAND); }
+
+//------------------------------------------------------------------------------
+
+uint64_t microseconds_to_seconds(uint64_t s) { return (s / ONE_MILLION); }
+
+//------------------------------------------------------------------------------
+
+uint64_t seconds_to_microseconds(uint64_t s) { return (s * ONE_MILLION); }
+
+//------------------------------------------------------------------------------
+
 size_t flatten_2d_index(size_t width, size_t row, size_t col) {
   return ((row * width) + col);
 }
@@ -37,9 +49,9 @@ size_t flatten_2d_index(size_t width, size_t row, size_t col) {
 //------------------------------------------------------------------------------
 
 ros::Time a2d2_timestamp_to_ros_time(uint64_t time) {
-  const auto truncated_secs = (time / ONE_MILLION);
-  const auto mu_secs = (time - (truncated_secs * ONE_MILLION));
-  const auto n_secs = (mu_secs * ONE_THOUSAND);
+  const auto truncated_secs = microseconds_to_seconds(time);
+  const auto mu_secs = (time - seconds_to_microseconds(truncated_secs));
+  const auto n_secs = microseconds_to_nanoseconds(mu_secs);
   return ros::Time(static_cast<uint32_t>(truncated_secs),
                    static_cast<uint32_t>(n_secs));
 }
