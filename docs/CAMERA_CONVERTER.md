@@ -54,12 +54,11 @@ Available options are listed below. Arguments without default values are require
   -p [ --sensor-config-path ] arg                  Path to the JSON for vehicle/sensor config.
   -s [ --sensor-config-schema-path ] arg           Path to the JSON schema for the vehicle/sensor config.
   -t [ --include-clock-topic ] arg (=0)            Optional: Use timestamps from the data to write a /clock topic.
-  -a [ --start-time ] arg (=0)                     Optional: Start on or after this time (TAI microseconds).
+  -a [ --start-time ] arg (=0)                     Optional: Start on or after this time.
   -m [ --min-time-offset ] arg (=0)                Optional: Seconds to skip ahead in the data before starting the bag.
   -d [ --duration ] arg (=1.7976931348623157e+308) Optional: Seconds after min-time-offset to include in bag file.
   -o [ --output-path ] arg (=.)                    Optional: Path for the output bag file.
   -v [ --verbose ] arg (=0)                        Optional: Show name of each file after it is processed.
-  -k [ --keep-tai-times ] arg (=0)                 Optional: Leave camera/lidar timestamps in TAI (not recommended).
 ```
 
 ## Bag file conventions

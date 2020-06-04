@@ -15,23 +15,23 @@ Answers, where available, are given directly below the questions and have come f
 1. **Why do converters only run on portions of the data set instead of the whole thing?**
     * The data set is quite large (~2.3TB). Many people won't be able to download and convert the whole thing at once, which would likely require over 5TB of free storage.
 1. **What convention do the timestamps follow?**
-    * *All timestamps encode microseconds since Epoch begin. Bus signal timestamps are in [UTC](https://en.wikipedia.org/wiki/Coordinated_Universal_Time), all others are [TAI](https://en.wikipedia.org/wiki/International_Atomic_Time). By default, all TAI times are converted to UTC by subtracting 37s when generating bag files. The `--keep-tai-times` flag in lidar and camera converters diables this behavior.*
+    * *All timestamps encode [UTC](https://en.wikipedia.org/wiki/Coordinated_Universal_Time) microseconds since Epoch begin.*
 1. **What is the precision of real-valued data (e.g., single precision, double precision, etc.)?**
     * *None of the data in the data set was recorded with greater than single precision. (For lidar data, note that numpy stores the point data with double precision, but the data itself is only generated with single precision.)*
 1. **Are the labeled data a subset of the unlabeled data, or are they different sets?**
     * *The object detection dataset is a subset of the semantic segmentation dataset. The raw sensor fusion data (Gaimersheim, Ingolstadt, and Munich) is a different set.*
 1. **Do all subsets in the unlabeled data set span the same time?**
-    * *No, there are slightly different start times among the sensor locations. For example, the table below lists start times for the Ingolstadt logs (largest magnitude time in bold):*
+    * *No, there are slightly different start times among the sensor locations. For example, the table below lists start times for the Ingolstadt logs (largest magnitude times in bold):*
 
-| Sensor       | Start time (UTC)     |
-| :------------| :------------------: |
-| Bus signals  | **1554121593489120** |
-| Front center | 1554121556909522     |
-| Front left   | 1554121556909500     |
-| Front right  | 1554121556909500     |
-| Rear center  | 1554121558034993     |
-| Side left    | 1554121558035037     |
-| Side right   | 1554121558035037     |
+| Sensor       | Start time        |
+| :------------| :---------------: |
+| Bus signals  | 1554121593489120  |
+| Front center | 1554121593909522  |
+| Front left   | 1554121593909500  |
+| Front right  | 1554121593909500  |
+| Rear center  | 1554121595034993  |
+| Side left    | *1554121595035037*  |
+| Side right   | *1554121595035037*  |
 
 ## Conventions
 
@@ -76,7 +76,9 @@ Answers, where available, are given directly below the questions and have come f
 1. **Are the points in the point cloud ordered in any way? If so, what is the ordering?**
     * ?
 1. **What is the `pcloud_attr.rectime` lidar data field?**
-    * *Rectime is the recording time when this data point was recorded. It is in TAI (i.e. no leap seconds) time zone and not UTC. The same is true for the camera timestamps in the json files. However, the bus data is in UTC and therefore there’s a delta of 37s when matching/registering data from camera/lidar to bus.*
+    * *The 'rectime' field contains the recording time when this data point was recorded.*
+1. **What is the `pcloud_attr.timestamp` lidar data field?**
+    * *The 'timestamp' field contains the time when the operating system received the TCP/IP package from the device.*
 1. **What is the `pcloud_attr.boundary` lidar data field?**
     * *Boundary flag is true if the data point is coming from bordering lidar channel, probably ring 0 and ring 15 in the data set (recorded with VLP16).*
 1. **What is the `pcloud_attr.valid` lidar data field?**

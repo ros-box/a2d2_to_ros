@@ -139,7 +139,7 @@ int main(int argc, char* argv[]) {
       "bus-signal-schema-path,b", po::value(&schema_path_opt)->required(),
       "Path to the JSON schema for bus signal data.")(
       "start-time,a", po::value<uint64_t>()->default_value(_START_TIME),
-      "Optional: Start on or after this time (TAI microseconds).")(
+      "Optional: Start on or after this time.")(
       "min-time-offset,m", po::value<double>()->default_value(_MIN_TIME_OFFSET),
       "Optional: Seconds to skip ahead in the data before starting the bag.")(
       "duration,d", po::value<double>()->default_value(_DURATION),

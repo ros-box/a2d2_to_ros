@@ -35,15 +35,6 @@ namespace a2d2_to_ros {
 
 //------------------------------------------------------------------------------
 
-TEST(A2D2_to_ROS_conversions, TAI_to_UTC) {
-  constexpr auto TAI = static_cast<uint64_t>(20);
-  const auto UTC = TAI_to_UTC(TAI);
-  const auto delta_s = ((TAI - UTC) / ONE_MILLION);
-  EXPECT_EQ(delta_s, 37);
-}
-
-//------------------------------------------------------------------------------
-
 TEST(A2D2_to_ROS_conversions, flatten_2d_index) {
   /**
    * 0  1  2  3  4
