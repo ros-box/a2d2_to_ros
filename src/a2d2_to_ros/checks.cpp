@@ -25,7 +25,7 @@
 
 #include <cmath>
 
-static constexpr auto ONE_MILLION = static_cast<uint64_t>(1000000);
+#include "a2d2_to_ros/conversions.hpp"
 
 namespace a2d2_to_ros {
 
@@ -54,7 +54,7 @@ bool axes_are_valid(const Eigen::Vector3d& axis1, const Eigen::Vector3d& axis2,
 //------------------------------------------------------------------------------
 
 bool valid_ros_timestamp(uint64_t time) {
-  const auto secs = (time / ONE_MILLION);
+  const auto secs = microseconds_to_seconds(time);
   const auto boundary =
       static_cast<uint64_t>(std::numeric_limits<uint32_t>::max());
   return (secs <= boundary);
