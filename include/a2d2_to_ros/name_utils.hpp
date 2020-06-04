@@ -32,6 +32,13 @@ namespace a2d2_to_ros {
  * @brief Convenience method to generate a standard TF frame name.
  * @note This function has no test coverage.
  */
+std::string tf_motion_compensated_sensor_frame_name(
+    const std::string& sensor_type, const std::string& sensor_frame);
+
+/**
+ * @brief Convenience method to generate a standard TF frame name.
+ * @note This function has no test coverage.
+ */
 std::string tf_frame_name(const std::string& sensor_type,
                           const std::string& sensor_frame);
 

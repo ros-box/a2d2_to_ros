@@ -29,6 +29,13 @@ namespace a2d2_to_ros {
 
 //------------------------------------------------------------------------------
 
+std::string tf_motion_compensated_sensor_frame_name(
+    const std::string& sensor_type, const std::string& sensor_frame) {
+  return tf_frame_name(sensor_type, sensor_frame + "_motion_compensated");
+}
+
+//------------------------------------------------------------------------------
+
 std::string tf_frame_name(const std::string& sensor_type,
                           const std::string& sensor_frame) {
   return (sensor_type + "_" + sensor_frame);
